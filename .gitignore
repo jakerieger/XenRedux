@@ -1,0 +1,14 @@
+.idea/
+build/
+bin/
+out/
+Debug/
+Release/
+**/*.dll
+**/*.obj
+**/*.a
+**/*.o
+**/*.lib
+**/*.bin
+vcpkg/
+vcpkg_installed/

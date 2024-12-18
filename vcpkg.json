@@ -1,0 +1,16 @@
+{
+  "name": "xen",
+  "version": "0.0.1",
+  "dependencies": [
+    "glm",
+    "glfw3",
+    "pugixml",
+    "sol2",
+    "lua",
+    "catch2",
+    "cli11",
+    "liblzma",
+    "zlib"
+  ],
+  "builtin-baseline": "19847ac3d8cad7599e96bd531f9bc1f0ebae6131"
+}
