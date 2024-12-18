@@ -11,7 +11,7 @@ using namespace x;
 static const str oneMb     = "TestData/1MB.bin";
 static const str tenMb     = "TestData/10MB.bin";
 static const str hundredMb = "TestData/100MB.bin";
-static const str oneGb     = "TestData/1GB.bin";
+static const str oneGb     = "TestData/1000MB.bin";
 
 TEST_CASE("Filesystem I/O (Reading)", "[Filesystem]") {
     using Filesystem::FileReader;
@@ -48,12 +48,8 @@ TEST_CASE("Filesystem::Path", "[Filesystem]") {
     REQUIRE(testData1Mb.isFile());
     REQUIRE(!testData1Mb.isDirectory());
     REQUIRE(testData1Mb.hasExtension());
-<<<<<<< HEAD
     // TODO: Works on linux, not Windows
     // REQUIRE(testData1Mb.parent() == cwd.join("TestData"));
-=======
-    REQUIRE(testData1Mb.parent() == cwd.join("TestData"));
->>>>>>> 12baf7a8499556a6b0099a64477fcb0c0dde07aa
     auto newTestData = testData1Mb.replaceExtension("bin1");
     REQUIRE(newTestData.hasExtension());
     REQUIRE(newTestData.extension() == "bin1");

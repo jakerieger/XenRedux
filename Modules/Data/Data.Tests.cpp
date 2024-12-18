@@ -14,7 +14,7 @@ using namespace x;
 static const str oneMb = "TestData/1MB.bin";
 static const str tenMb = "TestData/10MB.bin";
 // static const str hundredMb = "TestData/100MB.bin";
-// static const str oneGb     = "TestData/1GB.bin";
+// static const str oneGb     = "TestData/1000MB.bin";
 
 TEST_CASE("Compression - GZip", "[Data]") {
     using Compression::GZip;
