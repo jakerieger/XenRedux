@@ -21,6 +21,9 @@ include_directories(
         ${VENDOR}
 )
 
+# Vendor
+include(Vendor/Vendor.cmake)
+
 # Modules
 include(Modules/Audio/Audio.cmake)
 include(Modules/Data/Data.cmake)
@@ -42,11 +45,13 @@ find_package(liblzma CONFIG REQUIRED)
 find_package(ZLIB REQUIRED)
 
 add_library(Xen STATIC
+        ${GLAD_SRCS}
         ${COMMON}/Types.hpp
         ${COMMON}/Panic.hpp
         ${FILESYSTEM_SRCS}
         ${DATA_SRCS}
         ${MEMORY_SRCS}
+        ${GRAPHICS_SRCS}
 )
 
 target_link_libraries(Xen PRIVATE
