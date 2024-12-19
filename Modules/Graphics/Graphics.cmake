@@ -5,7 +5,5 @@ set(GRAPHICS_SRCS
         ${MODULES}/Graphics/RenderTarget.cpp
         ${MODULES}/Graphics/CommandQueue.hpp
         ${MODULES}/Graphics/CommandQueue.cpp
-        ${MODULES}/Graphics/CommandList.hpp
-        ${MODULES}/Graphics/CommandList.cpp
         ${MODULES}/Graphics/Commands.hpp
 )

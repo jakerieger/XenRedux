@@ -4,4 +4,5 @@ add_executable(Tests.Rendering
         Tests.Rendering.cpp
 )
 
-target_link_libraries(Tests.Rendering PRIVATE Xen)
+find_package(glfw3 CONFIG REQUIRED)
+target_link_libraries(Tests.Rendering PRIVATE Xen glfw)
