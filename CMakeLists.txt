@@ -27,7 +27,6 @@ include(Vendor/Vendor.cmake)
 # Modules
 include(Modules/Audio/Audio.cmake)
 include(Modules/Data/Data.cmake)
-include(Modules/Event/Event.cmake)
 include(Modules/Filesystem/Filesystem.cmake)
 include(Modules/Font/Font.cmake)
 include(Modules/Graphics/Graphics.cmake)
@@ -48,16 +47,25 @@ add_library(Xen STATIC
         ${GLAD_SRCS}
         ${COMMON}/Types.hpp
         ${COMMON}/Panic.hpp
+        ${COMMON}/EventSystem.hpp
         ${FILESYSTEM_SRCS}
         ${DATA_SRCS}
         ${MEMORY_SRCS}
+        ${WINDOW_SRCS}
         ${GRAPHICS_SRCS}
 )
 
-target_link_libraries(Xen PRIVATE
-        liblzma::liblzma
-        ZLIB::ZLIB
-)
+if (WIN32)
+    target_link_libraries(Xen PRIVATE
+            liblzma::liblzma
+            ZLIB::ZLIB
+    )
+elseif (UNIX)
+    target_link_libraries(Xen PRIVATE
+            liblzma::liblzma
+            ZLIB::ZLIB
+    )
+endif ()
 
 # Copy test data to bin directory for unit tests
 add_custom_command(TARGET Xen PRE_BUILD

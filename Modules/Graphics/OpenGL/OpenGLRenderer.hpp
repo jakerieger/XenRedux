@@ -5,11 +5,12 @@
 #pragma once
 
 #include "Graphics/Renderer.hpp"
+#include "Window/Window.hpp"
 
 namespace x::Graphics {
     class OpenGLRenderer final : public IRenderer {
     public:
-        OpenGLRenderer(void* window);
+        OpenGLRenderer(Window::IWindow* window);
         ~OpenGLRenderer() override;
 
         void initialize() override;
@@ -21,6 +22,6 @@ namespace x::Graphics {
         void present() override;
 
     private:
-        void* _window;
+        Window::IWindow* _window;
     };
 }  // namespace x::Graphics

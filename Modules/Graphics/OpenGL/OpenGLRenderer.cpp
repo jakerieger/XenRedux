@@ -8,7 +8,7 @@
 #include <glad.h>
 
 namespace x::Graphics {
-    OpenGLRenderer::OpenGLRenderer(void* window) : _window(window) {}
+    OpenGLRenderer::OpenGLRenderer(Window::IWindow* window) : _window(window) {}
 
     OpenGLRenderer::~OpenGLRenderer() {}
 
@@ -42,6 +42,6 @@ namespace x::Graphics {
     }
 
     void OpenGLRenderer::present() {
-        // Swap buffers - platform dependent
+        _window->swapBuffers();
     }
 }  // namespace x::Graphics
