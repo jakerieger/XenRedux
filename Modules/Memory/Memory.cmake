@@ -3,9 +3,8 @@ set(MEMORY_SRCS
         ${MODULES}/Memory/PoolAllocator.cpp
         ${MODULES}/Memory/ArenaAllocator.hpp
         ${MODULES}/Memory/ArenaAllocator.cpp
-        ${MODULES}/Memory/UniquePtr.hpp
-        ${MODULES}/Memory/SharedPtr.hpp
-        ${MODULES}/Memory/WeakPtr.hpp
+        ${MODULES}/Memory/GpuBuffer.hpp
+        ${MODULES}/Memory/GpuBuffer.cpp
 )
 
 set(MEMORY_TESTS

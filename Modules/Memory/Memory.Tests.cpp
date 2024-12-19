@@ -4,9 +4,6 @@
 
 #include "PoolAllocator.hpp"
 #include "ArenaAllocator.hpp"
-#include "UniquePtr.hpp"
-#include "SharedPtr.hpp"
-#include "WeakPtr.hpp"
 
 #include <iostream>
 #include <catch2/catch_test_macros.hpp>
@@ -71,38 +68,4 @@ TEST_CASE("Arena Allocator", "[Memory]") {
 
     arena.reset();
     REQUIRE(arena.getOffset() == 0);
-}
-
-TEST_CASE("Unique Pointer", "[Memory]") {
-    auto arenaObj = makeUnique<ArenaObject>(1, 2, 3);
-    REQUIRE(arenaObj.get() != nullptr);
-    REQUIRE(arenaObj->x == 1);
-    REQUIRE(arenaObj->y == 2);
-    REQUIRE(arenaObj->z == 3);
-    arenaObj.reset();
-    REQUIRE(arenaObj.get() == nullptr);
-}
-
-TEST_CASE("Shared Pointer", "[Memory]") {
-    auto obj1 = makeShared<ArenaObject>(1, 2, 3);
-    REQUIRE(obj1.get() != nullptr);
-    REQUIRE(obj1->x == 1);
-    REQUIRE(obj1->y == 2);
-    REQUIRE(obj1->z == 3);
-    {
-        SharedPtr<ArenaObject> obj2(obj1);
-        REQUIRE(obj1.useCount() == 2);
-    }
-    REQUIRE(obj1.useCount() == 1);
-}
-
-TEST_CASE("Weak Pointer", "[Memory]") {
-    auto sp1                 = makeShared<ArenaObject>(1, 2, 3);
-    WeakPtr<ArenaObject> wp1 = sp1;
-    {
-        SharedPtr<ArenaObject> sp2 = wp1.lock();
-        REQUIRE(sp2.get() != nullptr);
-        REQUIRE(sp1.useCount() == 2);
-    }
-    REQUIRE(sp1.useCount() == 1);
 }
