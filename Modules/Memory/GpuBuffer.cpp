@@ -14,7 +14,7 @@ namespace x::Memory {
                          const void* data)
         : _type(type), _size(size), _renderSystem(renderSystem) {
         _renderSystem->executeImmediately<GenBufferCommand>(1, &_id);
-        bind();
+        bind(true);
         const auto usage = (data == nullptr) ? GL_STATIC_DRAW : GL_DYNAMIC_DRAW;
         _renderSystem->executeImmediately<BufferDataCommand>(GL_ARRAY_BUFFER, size, data, usage);
     }
@@ -23,11 +23,15 @@ namespace x::Memory {
         _renderSystem->submitCommand<DeleteBufferCommand>(1, &_id);
     }
 
-    void GpuBuffer::bind() const {
+    void GpuBuffer::bind(bool immediate) const {
         const auto target = (_type == GpuBufferType::Vertex)  ? GL_ARRAY_BUFFER
                             : (_type == GpuBufferType::Index) ? GL_ELEMENT_ARRAY_BUFFER
                                                               : GL_UNIFORM_BUFFER;
-        _renderSystem->submitCommand<BindBufferCommand>(target, _id);
+        if (immediate) {
+            _renderSystem->executeImmediately<BindBufferCommand>(target, _id);
+        } else {
+            _renderSystem->submitCommand<BindBufferCommand>(target, _id);
+        }
     }
 
     void GpuBuffer::updateData(const void* data, size_t offset) const {

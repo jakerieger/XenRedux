@@ -22,7 +22,7 @@ namespace x::Memory {
                   size_t size,
                   const void* data = nullptr);
         ~GpuBuffer();
-        void bind() const;
+        void bind(bool immediate = false) const;
         void updateData(const void* data, size_t offset = 0) const;
         u32 getId() const;
 
