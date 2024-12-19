@@ -26,5 +26,6 @@ namespace x::Graphics {
         u32 _colorTexture;
         u32 _depthRenderBuffer;
         std::shared_ptr<RenderSystem> _renderSystem;
+        void createRenderTargetCommands(int width, int height, bool depth);
     };
 }  // namespace x::Graphics

@@ -17,9 +17,9 @@ namespace x::Graphics {
         }
 
         template<class Command, class... Args>
-        ScopedBatchQueue* submit(Args&&... args) {
-            RenderSystem::submitToQueue<Command>(std::forward<Args>(args)...);
-            return this;
+        ScopedBatchQueue& submit(Args&&... args) {
+            RenderSystem::submitToQueue<Command>(_queue, std::forward<Args>(args)...);
+            return *this;
         }
 
         void execute() const {

@@ -301,5 +301,46 @@ namespace x::Graphics {
             int _count;
             u32* _id;
         };
+
+        class DeleteFramebufferCommand final : public IRenderCommand {
+        public:
+            DeleteFramebufferCommand(int count, u32* id) : _count(count), _id(id) {}
+
+            void execute() override {
+                glDeleteFramebuffers(_count, _id);
+            }
+
+        private:
+            GLsizei _count;
+            GLuint* _id;
+        };
+
+        class DeleteRenderbufferCommand final : public IRenderCommand {
+        public:
+            DeleteRenderbufferCommand(int count, u32* id) : _count(count), _id(id) {}
+
+            void execute() override {
+                glDeleteRenderbuffers(_count, _id);
+            }
+
+        private:
+            GLsizei _count;
+            GLuint* _id;
+        };
+
+        class DeleteTextureCommand final : public IRenderCommand {
+        public:
+            DeleteTextureCommand(int count, u32* id) : _count(count), _id(id) {}
+
+            void execute() override {
+                glDeleteTextures(_count, _id);
+            }
+
+        private:
+            GLsizei _count;
+            GLuint* _id;
+        };
+
+        class DeleteVertexArrayCommand final : public IRenderCommand {};
     }  // namespace Commands
 }  // namespace x::Graphics
