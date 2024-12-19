@@ -5,9 +5,10 @@
 #include "RenderSystem.hpp"
 
 using namespace x;
+using namespace x::Graphics::Commands;
 
 int main() {
     RenderSystem renderSystem;
-    renderSystem.submitCommand<Graphics::ClearCommand>(0.1, 0.1, 0.1, 1.f);
+    renderSystem.submitCommand<ClearCommand>(0.1, 0.1, 0.1, 1.f);
     renderSystem.executeCommandList();
 }

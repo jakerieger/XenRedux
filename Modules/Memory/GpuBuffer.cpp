@@ -6,28 +6,33 @@
 #include <glad.h>
 
 namespace x::Memory {
-    GpuBuffer::GpuBuffer(GpuBufferType type, size_t size, const void* data)
-        : _type(type), _size(size) {
-        glGenBuffers(1, &_id);
+    using namespace x::Graphics::Commands;
+
+    GpuBuffer::GpuBuffer(const std::shared_ptr<RenderSystem>& renderSystem,
+                         GpuBufferType type,
+                         size_t size,
+                         const void* data)
+        : _type(type), _size(size), _renderSystem(renderSystem) {
+        _renderSystem->executeImmediately<GenBufferCommand>(1, &_id);
         bind();
         const auto usage = (data == nullptr) ? GL_STATIC_DRAW : GL_DYNAMIC_DRAW;
-        glBufferData(GL_ARRAY_BUFFER, size, data, usage);
+        _renderSystem->executeImmediately<BufferDataCommand>(GL_ARRAY_BUFFER, size, data, usage);
     }
 
     GpuBuffer::~GpuBuffer() {
-        glDeleteBuffers(1, &_id);
+        _renderSystem->submitCommand<DeleteBufferCommand>(1, &_id);
     }
 
     void GpuBuffer::bind() const {
         const auto target = (_type == GpuBufferType::Vertex)  ? GL_ARRAY_BUFFER
                             : (_type == GpuBufferType::Index) ? GL_ELEMENT_ARRAY_BUFFER
                                                               : GL_UNIFORM_BUFFER;
-        glBindBuffer(target, _id);
+        _renderSystem->submitCommand<BindBufferCommand>(target, _id);
     }
 
     void GpuBuffer::updateData(const void* data, size_t offset) const {
         bind();
-        glBufferSubData(GL_ARRAY_BUFFER, offset, _size, data);
+        _renderSystem->submitCommand<BufferSubDataCommand>(GL_ARRAY_BUFFER, offset, _size, data);
     }
 
     u32 GpuBuffer::getId() const {

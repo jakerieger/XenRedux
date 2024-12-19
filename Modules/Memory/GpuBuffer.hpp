@@ -5,6 +5,7 @@
 #pragma once
 
 #include "Types.hpp"
+#include "RenderSystem.hpp"
 
 namespace x::Memory {
     enum class GpuBufferType {
@@ -16,7 +17,10 @@ namespace x::Memory {
 
     class GpuBuffer {
     public:
-        GpuBuffer(GpuBufferType type, size_t size, const void* data = nullptr);
+        GpuBuffer(const std::shared_ptr<RenderSystem>& renderSystem,
+                  GpuBufferType type,
+                  size_t size,
+                  const void* data = nullptr);
         ~GpuBuffer();
         void bind() const;
         void updateData(const void* data, size_t offset = 0) const;
@@ -26,5 +30,6 @@ namespace x::Memory {
         u32 _id;
         GpuBufferType _type;
         size_t _size;
+        std::shared_ptr<RenderSystem> _renderSystem;
     };
 }  // namespace x::Memory
