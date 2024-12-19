@@ -33,8 +33,8 @@ namespace x {
                                   Args&&... args) {
             static_assert(std::is_base_of_v<Graphics::IRenderCommand, T>,
                           "T must derive from x::Graphics::IRenderCommand");
-            auto cmd = std::make_unique<T>(std::forward<Args>(args)...);
-            queue->push(cmd.get());
+            auto cmd = std::make_shared<T>(std::forward<Args>(args)...);
+            queue->push([cmd]() { cmd->execute(); });
         }
 
         template<class T, class... Args>
