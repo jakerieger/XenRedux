@@ -28,6 +28,20 @@ namespace x::Graphics {
             float _r, _g, _b, _a;
         };
 
+        class ViewportCommand final : public IRenderCommand {
+        public:
+            ViewportCommand(int x, int y, int width, int height)
+                : _width(width), _height(height), _x(x), _y(y) {}
+
+            void execute() override {
+                glViewport(_x, _y, _width, _height);
+            }
+
+        private:
+            float _width, _height;
+            float _x, _y;
+        };
+
         class BindTextureCommand final : public IRenderCommand {
         public:
             explicit BindTextureCommand(const u32 textureId, const GLenum target = GL_TEXTURE_2D)
@@ -220,8 +234,6 @@ namespace x::Graphics {
             GLuint _id;
         };
 
-        class BindVertexArrayCommand final : public IRenderCommand {};
-
         class BindFramebufferCommand final : public IRenderCommand {
         public:
             BindFramebufferCommand(GLenum target, GLuint buffer)
@@ -342,5 +354,7 @@ namespace x::Graphics {
         };
 
         class DeleteVertexArrayCommand final : public IRenderCommand {};
+
+        class BindVertexArrayCommand final : public IRenderCommand {};
     }  // namespace Commands
 }  // namespace x::Graphics

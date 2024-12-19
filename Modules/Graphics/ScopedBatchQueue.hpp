@@ -9,7 +9,7 @@
 namespace x::Graphics {
     class ScopedBatchQueue {
     public:
-        ScopedBatchQueue() : _queue(RenderSystem::requestBatchQueue()) {}
+        ScopedBatchQueue() : _queue(RenderSystem::requestQueue()) {}
 
         ~ScopedBatchQueue() {
             execute();

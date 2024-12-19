@@ -55,7 +55,7 @@ namespace x {
             queue->execute();
         }
 
-        static std::unique_ptr<Graphics::CommandQueue> requestBatchQueue() {
+        static std::unique_ptr<Graphics::CommandQueue> requestQueue() {
             return std::make_unique<Graphics::CommandQueue>();
         }
 
