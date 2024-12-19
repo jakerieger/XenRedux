@@ -41,4 +41,6 @@ namespace x::Window {
     protected:
         std::shared_ptr<EventDispatcher> _eventDispatcher;
     };
+
+    std::unique_ptr<IWindow> createWindow(cstr title, int width, int height);
 }  // namespace x::Window

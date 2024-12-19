@@ -5,6 +5,7 @@ set(WINDOW_TESTS
 if (WIN32)
     set(WINDOW_SRCS
             ${MODULES}/Window/Window.hpp
+            ${MODULES}/Window/Window.cpp
             ${MODULES}/Window/WindowEvents.hpp
             ${MODULES}/Window/Win32/Win32Window.hpp
             ${MODULES}/Window/Win32/Win32Window.cpp
