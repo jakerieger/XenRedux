@@ -2,6 +2,7 @@
 // Created: 12/18/2024.
 //
 
+#include "OpenGLPipelineState.hpp"
 #include "OpenGlRenderer.hpp"
 #include "Panic.hpp"
 #include <glad.h>
@@ -22,7 +23,7 @@ namespace x::Graphics {
     }
 
     void OpenGLRenderer::setPipeline(IPipelineState* state) {
-        auto* pipelineState = DCAST<IPipelineState*>(state);
+        auto* pipelineState = DCAST<OpenGLPipelineState*>(state);
         if (!pipelineState) { Panic("Invalid pipeline state type passed to OpenGLRenderer"); }
         pipelineState->apply();
     }
