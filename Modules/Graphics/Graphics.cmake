@@ -5,5 +5,6 @@ set(GRAPHICS_SRCS
         ${MODULES}/Graphics/RenderTarget.cpp
         ${MODULES}/Graphics/CommandQueue.hpp
         ${MODULES}/Graphics/CommandQueue.cpp
+        ${MODULES}/Graphics/ScopedBatchQueue.hpp
         ${MODULES}/Graphics/Commands.hpp
 )
