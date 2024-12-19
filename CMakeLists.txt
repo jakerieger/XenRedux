@@ -44,15 +44,20 @@ find_package(liblzma CONFIG REQUIRED)
 find_package(ZLIB REQUIRED)
 
 add_library(Xen STATIC
+        # Vendor sources
         ${GLAD_SRCS}
+        # Modules
+        ${DATA_SRCS}
+        ${FILESYSTEM_SRCS}
+        ${GRAPHICS_SRCS}
+        ${MEMORY_SRCS}
+        ${WINDOW_SRCS}
+        # Engine core
         ${COMMON}/Types.hpp
         ${COMMON}/Panic.hpp
         ${COMMON}/EventSystem.hpp
-        ${FILESYSTEM_SRCS}
-        ${DATA_SRCS}
-        ${MEMORY_SRCS}
-        ${WINDOW_SRCS}
-        ${GRAPHICS_SRCS}
+        ${COMMON}/RenderSystem.hpp
+        ${COMMON}/RenderSystem.cpp
 )
 
 if (WIN32)
@@ -66,6 +71,9 @@ elseif (UNIX)
             ZLIB::ZLIB
     )
 endif ()
+
+# Tests
+add_subdirectory(Tests)
 
 # Copy test data to bin directory for unit tests
 add_custom_command(TARGET Xen PRE_BUILD

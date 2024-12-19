@@ -3,4 +3,7 @@ set(GRAPHICS_SRCS
         ${MODULES}/Graphics/Pipeline.cpp
         ${MODULES}/Graphics/RenderTarget.hpp
         ${MODULES}/Graphics/RenderTarget.cpp
+        ${MODULES}/Graphics/CommandQueue.hpp
+        ${MODULES}/Graphics/CommandQueue.cpp
+        ${MODULES}/Graphics/Commands.hpp
 )
