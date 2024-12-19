@@ -30,7 +30,7 @@ namespace x::Graphics {
 
         class BindTextureCommand final : public IRenderCommand {
         public:
-            explicit BindTextureCommand(u32 textureId, GLenum target = GL_TEXTURE_2D)
+            explicit BindTextureCommand(const u32 textureId, const GLenum target = GL_TEXTURE_2D)
                 : _textureId(textureId), _target(target) {}
 
             void execute() override {
@@ -60,7 +60,66 @@ namespace x::Graphics {
 
         class DrawArraysCommand : public IRenderCommand {};
 
-        class TexParameterCommand final : public IRenderCommand {};
+        class TexParameteriCommand final : public IRenderCommand {
+        public:
+            TexParameteriCommand(const GLenum target, const GLenum name, const GLenum param)
+                : _target(target), _name(name), _param(param) {}
+
+            void execute() override {
+                glTexParameteri(_target, _name, _param);
+            }
+
+        private:
+            GLenum _target;
+            GLenum _name;
+            GLenum _param;
+        };
+
+        class CreateTexture2DCommand final : public IRenderCommand {
+        public:
+            CreateTexture2DCommand(
+              GLenum target, GLenum internalFmt, u32 width, u32 height, GLenum format, GLenum type)
+                : _target(target), _internalFormat(internalFmt), _width(width), _height(height),
+                  _format(format), _type(type) {}
+
+            void execute() override {
+                glTexImage2D(_target,
+                             0,
+                             _internalFormat,
+                             _width,
+                             _height,
+                             0,
+                             _format,
+                             _type,
+                             nullptr);
+            }
+
+        private:
+            GLenum _target;
+            GLenum _internalFormat;
+            GLenum _format;
+            GLenum _type;
+            u32 _width, _height;
+        };
+
+        class CreateFramebufferTexture2DCommand final : public IRenderCommand {
+        public:
+            CreateFramebufferTexture2DCommand(const GLenum target,
+                                              const GLenum attachment,
+                                              const GLenum texTarget,
+                                              const u32 id)
+                : _target(target), _attachment(attachment), _texTarget(texTarget), _id(id) {}
+
+            void execute() override {
+                glFramebufferTexture2D(_target, _attachment, _texTarget, _id, 0);
+            }
+
+        private:
+            GLenum _target;
+            GLenum _attachment;
+            GLenum _texTarget;
+            u32 _id;
+        };
 
         class GenBufferCommand final : public IRenderCommand {
         public:
@@ -75,11 +134,44 @@ namespace x::Graphics {
             u32* _id;
         };
 
-        class GenTextureCommand final : public IRenderCommand {};
+        class GenTextureCommand final : public IRenderCommand {
+        public:
+            GenTextureCommand(const GLsizei count, u32* id) : _count(count), _id(id) {}
 
-        class GenFramebufferCommand final : public IRenderCommand {};
+            void execute() override {
+                glGenTextures(_count, _id);
+            }
 
-        class GenRenderTargetCommand final : public IRenderCommand {};
+        private:
+            GLsizei _count;
+            u32* _id;
+        };
+
+        class GenFramebufferCommand final : public IRenderCommand {
+        public:
+            GenFramebufferCommand(const GLsizei count, u32* id) : _count(count), _id(id) {}
+
+            void execute() override {
+                glGenFramebuffers(_count, _id);
+            }
+
+        private:
+            GLsizei _count;
+            GLuint* _id;
+        };
+
+        class GenRenderBufferCommand final : public IRenderCommand {
+        public:
+            GenRenderBufferCommand(const GLsizei count, u32* id) : _count(count), _id(id) {}
+
+            void execute() override {
+                glGenRenderbuffers(_count, _id);
+            }
+
+        private:
+            GLsizei _count;
+            u32* _id;
+        };
 
         class GenVertexArrayCommand final : public IRenderCommand {};
 
@@ -130,13 +222,72 @@ namespace x::Graphics {
 
         class BindVertexArrayCommand final : public IRenderCommand {};
 
-        class BindFramebufferCommand final : public IRenderCommand {};
+        class BindFramebufferCommand final : public IRenderCommand {
+        public:
+            BindFramebufferCommand(GLenum target, GLuint buffer)
+                : _target(target), _buffer(buffer) {}
 
-        class BindRenderbufferCommand final : public IRenderCommand {};
+            void execute() override {
+                glBindFramebuffer(_target, _buffer);
+            }
 
-        class FramebufferTextureCommand final : public IRenderCommand {};
+        private:
+            GLenum _target;
+            GLuint _buffer;
+        };
 
-        class FramebufferRenderbufferCommand final : public IRenderCommand {};
+        class BindRenderbufferCommand final : public IRenderCommand {
+        public:
+            BindRenderbufferCommand(const GLenum target, const u32 buffer)
+                : _target(target), _id(buffer) {}
+
+            void execute() override {
+                glBindRenderbuffer(_target, _id);
+            }
+
+        private:
+            GLenum _target;
+            u32 _id;
+        };
+
+        class RenderbufferStorageCommand final : public IRenderCommand {
+        public:
+            RenderbufferStorageCommand(const GLenum target,
+                                       const GLenum internalformat,
+                                       GLsizei width,
+                                       GLsizei height)
+                : _target(target), _internalFormat(internalformat), _width(width), _height(height) {
+            }
+
+            void execute() override {
+                glRenderbufferStorage(_target, _internalFormat, _width, _height);
+            }
+
+        private:
+            GLenum _target;
+            GLenum _internalFormat;
+            GLsizei _width, _height;
+        };
+
+        class FramebufferRenderbufferCommand final : public IRenderCommand {
+        public:
+            FramebufferRenderbufferCommand(const GLenum target,
+                                           const GLenum internalformat,
+                                           const GLenum renderbuffer,
+                                           u32 id)
+                : _target(target), _internalFormat(internalformat), _rbTarget(renderbuffer),
+                  _rbId(id) {}
+
+            void execute() override {
+                glFramebufferRenderbuffer(_target, _internalFormat, _rbTarget, _rbId);
+            }
+
+        private:
+            GLenum _target;
+            GLenum _internalFormat;
+            GLenum _rbTarget;
+            u32 _rbId;
+        };
 
         class DeleteBufferCommand final : public IRenderCommand {
         public:

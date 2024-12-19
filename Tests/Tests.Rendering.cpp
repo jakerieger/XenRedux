@@ -10,5 +10,5 @@ using namespace x::Graphics::Commands;
 int main() {
     RenderSystem renderSystem;
     renderSystem.submitCommand<ClearCommand>(0.1, 0.1, 0.1, 1.f);
-    renderSystem.executeCommandList();
+    renderSystem.execute();
 }

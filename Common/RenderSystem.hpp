@@ -8,6 +8,7 @@
 #include "Graphics/Commands.hpp"
 
 #include <memory>
+#include <catch2/internal/catch_unique_ptr.hpp>
 
 namespace x {
     class RenderSystem {
@@ -28,6 +29,15 @@ namespace x {
         }
 
         template<class T, class... Args>
+        static void submitToQueue(const std::unique_ptr<Graphics::CommandQueue>& queue,
+                                  Args&&... args) {
+            static_assert(std::is_base_of_v<Graphics::IRenderCommand, T>,
+                          "T must derive from x::Graphics::IRenderCommand");
+            auto cmd = std::make_unique<T>(std::forward<Args>(args)...);
+            queue->push(cmd.get());
+        }
+
+        template<class T, class... Args>
         void executeImmediately(Args&&... args) {
             static_assert(std::is_base_of_v<Graphics::IRenderCommand, T>,
                           "T must derive from x::Graphics::IRenderCommand");
@@ -36,8 +46,16 @@ namespace x {
             cmd->execute();
         }
 
-        void executeCommandList() const {
+        void execute() const {
             _commandQueue->execute();
+        }
+
+        static void executeQueue(const std::unique_ptr<Graphics::CommandQueue>& queue) {
+            queue->execute();
+        }
+
+        static std::unique_ptr<Graphics::CommandQueue> requestBatchQueue() {
+            return std::make_unique<Graphics::CommandQueue>();
         }
 
     private:

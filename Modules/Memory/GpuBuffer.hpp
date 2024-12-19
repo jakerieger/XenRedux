@@ -27,7 +27,7 @@ namespace x::Memory {
         u32 getId() const;
 
     private:
-        u32 _id;
+        u32 _id{};
         GpuBufferType _type;
         size_t _size;
         std::shared_ptr<RenderSystem> _renderSystem;
