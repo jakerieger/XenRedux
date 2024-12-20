@@ -25,12 +25,12 @@ TEST_CASE("Compression - GZip", "[Data]") {
     REQUIRE(!smallData.empty());
     REQUIRE(!largeData.empty());
 
-    const CompressedData compressedSmall = GZip::Compress(smallData.data(), smallData.size());
+    const CompressedData compressedSmall = GZip::compress(smallData.data(), smallData.size());
     REQUIRE(compressedSmall.getData() != nullptr);
     REQUIRE(compressedSmall.getOriginalSize() == smallData.size());
     REQUIRE(compressedSmall.getCompressionType() == CompressionType::GZIP);
 
-    const CompressedData compressedLarge = GZip::Compress(largeData.data(), largeData.size());
+    const CompressedData compressedLarge = GZip::compress(largeData.data(), largeData.size());
     REQUIRE(compressedLarge.getData() != nullptr);
     REQUIRE(compressedLarge.getOriginalSize() == largeData.size());
     REQUIRE(compressedLarge.getCompressionType() == CompressionType::GZIP);
@@ -45,12 +45,12 @@ TEST_CASE("Compression - LZMA", "[Data]") {
     REQUIRE(!smallData.empty());
     REQUIRE(!largeData.empty());
 
-    const CompressedData compressedSmall = LZMA::Compress(smallData.data(), smallData.size());
+    const CompressedData compressedSmall = LZMA::compress(smallData.data(), smallData.size());
     REQUIRE(compressedSmall.getData() != nullptr);
     REQUIRE(compressedSmall.getOriginalSize() == smallData.size());
     REQUIRE(compressedSmall.getCompressionType() == CompressionType::LZMA);
 
-    const CompressedData compressedLarge = LZMA::Compress(largeData.data(), largeData.size());
+    const CompressedData compressedLarge = LZMA::compress(largeData.data(), largeData.size());
     REQUIRE(compressedLarge.getData() != nullptr);
     REQUIRE(compressedLarge.getOriginalSize() == largeData.size());
     REQUIRE(compressedLarge.getCompressionType() == CompressionType::LZMA);

@@ -42,6 +42,7 @@ include(Modules/Window/Window.cmake)
 
 find_package(liblzma CONFIG REQUIRED)
 find_package(ZLIB REQUIRED)
+find_package(glm CONFIG REQUIRED)
 
 add_library(Xen STATIC
         # Vendor sources
@@ -59,17 +60,21 @@ add_library(Xen STATIC
         ${COMMON}/EventSystem.hpp
         ${COMMON}/RenderSystem.hpp
         ${COMMON}/RenderSystem.cpp
+        ${COMMON}/ShaderManager.hpp
+        ${COMMON}/ShaderManager.cpp
 )
 
 if (WIN32)
     target_link_libraries(Xen PRIVATE
             liblzma::liblzma
             ZLIB::ZLIB
+            glm::glm-header-only
     )
 elseif (UNIX)
     target_link_libraries(Xen PRIVATE
             liblzma::liblzma
             ZLIB::ZLIB
+            glm::glm-header-only
     )
 endif ()
 

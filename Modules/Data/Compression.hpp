@@ -10,17 +10,17 @@
 namespace x::Compression {
     class LZMA {
     public:
-        static CompressedData Compress(const void* data, size_t size);
-        static CompressedData Compress(const std::vector<u8>& data);
-        static CompressedData Compress(const BinaryData& data);
-        static BinaryData Decompress(const CompressedData& data);
+        static CompressedData compress(const void* data, size_t size);
+        static CompressedData compress(const std::vector<u8>& data);
+        static CompressedData compress(const BinaryData& data);
+        static BinaryData decompress(const CompressedData& data);
     };
 
     class GZip {
     public:
-        static CompressedData Compress(const void* data, size_t size);
-        static CompressedData Compress(const std::vector<u8>& data);
-        static CompressedData Compress(const BinaryData& data);
-        static BinaryData Decompress(const CompressedData& data);
+        static CompressedData compress(const void* data, size_t size);
+        static CompressedData compress(const std::vector<u8>& data);
+        static CompressedData compress(const BinaryData& data);
+        static BinaryData decompress(const CompressedData& data);
     };
 }  // namespace x::Compression

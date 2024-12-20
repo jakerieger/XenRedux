@@ -2,6 +2,7 @@
 // Created: 12/19/2024.
 //
 
+#include "Types.hpp"
 #include "CommandQueue.hpp"
 
 namespace x::Graphics {
@@ -24,6 +25,6 @@ namespace x::Graphics {
     }
 
     int CommandQueue::numOfCommands() const {
-        return _queue.size();
+        return CAST<int>(_queue.size());
     }
 }  // namespace x::Graphics

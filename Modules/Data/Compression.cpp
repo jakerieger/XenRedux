@@ -11,7 +11,7 @@
 
 namespace x::Compression {
 #pragma region LZMA
-    CompressedData LZMA::Compress(const void* data, size_t size) {
+    CompressedData LZMA::compress(const void* data, size_t size) {
         if (!data || !size) { throw std::invalid_argument("data is null"); }
         lzma_stream strm = LZMA_STREAM_INIT;
         lzma_ret ret     = lzma_easy_encoder(&strm, LZMA_PRESET_DEFAULT, LZMA_CHECK_CRC32);
@@ -40,15 +40,15 @@ namespace x::Compression {
         return compressedData;
     }
 
-    CompressedData LZMA::Compress(const std::vector<u8>& data) {
-        return Compress(data.data(), data.size());
+    CompressedData LZMA::compress(const std::vector<u8>& data) {
+        return compress(data.data(), data.size());
     }
 
-    CompressedData LZMA::Compress(const BinaryData& data) {
-        return Compress(data.getData(), data.getSize());
+    CompressedData LZMA::compress(const BinaryData& data) {
+        return compress(data.getData(), data.getSize());
     }
 
-    BinaryData LZMA::Decompress(const CompressedData& data) {
+    BinaryData LZMA::decompress(const CompressedData& data) {
         if (data.getSize() == 0 || data.getData() == nullptr) {
             throw std::invalid_argument("data is null");
         }
@@ -78,7 +78,7 @@ namespace x::Compression {
 #pragma endregion
 
 #pragma region GZip
-    CompressedData GZip::Compress(const void* data, size_t size) {
+    CompressedData GZip::compress(const void* data, size_t size) {
         if (!data || !size) { throw std::invalid_argument("data is null"); }
         auto compressedSize   = compressBound(size);
         const auto compressed = new u8[compressedSize];
@@ -90,15 +90,15 @@ namespace x::Compression {
         return compressedData;
     }
 
-    CompressedData GZip::Compress(const std::vector<u8>& data) {
-        return Compress(data.data(), data.size());
+    CompressedData GZip::compress(const std::vector<u8>& data) {
+        return compress(data.data(), data.size());
     }
 
-    CompressedData GZip::Compress(const BinaryData& data) {
-        return Compress(data.getData(), data.getSize());
+    CompressedData GZip::compress(const BinaryData& data) {
+        return compress(data.getData(), data.getSize());
     }
 
-    BinaryData GZip::Decompress(const CompressedData& data) {
+    BinaryData GZip::decompress(const CompressedData& data) {
         if (data.getSize() == 0 || data.getData() == nullptr) {
             throw std::invalid_argument("data is null");
         }

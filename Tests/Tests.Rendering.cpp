@@ -7,9 +7,9 @@
 
 #include "Panic.hpp"
 #include "RenderSystem.hpp"
+#include "ShaderManager.hpp"
 #include "Graphics/RenderTarget.hpp"
-#include "Memory/ArenaAllocator.hpp"
-#include "Memory/GpuBuffer.hpp"
+#include "Graphics/ShaderProgram.hpp"
 using namespace x;
 using namespace x::Graphics::Commands;
 
@@ -24,6 +24,9 @@ static void framebufferCallback(GLFWwindow* window, int width, int height) {
         if (v) v->onResize(width, height);
     }
 }
+
+#include "Graphics/Shaders/Headers/Quad_VS.h"
+#include "Graphics/Shaders/Headers/Quad_FS.h"
 
 int main() {
     renderSystem = RenderSystem::create();
@@ -44,18 +47,16 @@ int main() {
     glViewport(0, 0, 800, 600);
     glfwSetFramebufferSizeCallback(window, framebufferCallback);
 
-    // Test render target
-    Graphics::RenderTarget renderTarget(renderSystem, 800, 600, false);
-    Memory::GpuBuffer gpuBuffer(renderSystem, Memory::GpuBufferType::Vertex, sizeof(f32) * 6 * 4);
+    // Shader testing
+    const auto program = ShaderManager::createProgram(Quad_VS_Source, Quad_FS_Source);
 
     while (!glfwWindowShouldClose(window)) {
-        gpuBuffer.bind();
-        renderTarget.bind();
-        const auto rtTex = renderTarget.getColorTexture();
         renderSystem->submit<ClearCommand>(0.0, 0.2, 0.5, 1.f);
-        // More drawing commands here
-        renderSystem->execute();
 
+        // Draw commands
+        { program->use(renderSystem); }
+
+        renderSystem->execute();
         glfwPollEvents();
         glfwSwapBuffers(window);
     }

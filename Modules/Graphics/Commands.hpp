@@ -359,5 +359,17 @@ namespace x::Graphics {
         class DeleteVertexArrayCommand final : public IRenderCommand {};
 
         class BindVertexArrayCommand final : public IRenderCommand {};
+
+        class UseShaderCommand final : public IRenderCommand {
+        public:
+            explicit UseShaderCommand(GLuint program) : _id(program) {}
+
+            void execute() override {
+                glUseProgram(_id);
+            }
+
+        private:
+            GLuint _id;
+        };
     }  // namespace Commands
 }  // namespace x::Graphics
