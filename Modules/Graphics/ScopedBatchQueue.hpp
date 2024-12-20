@@ -26,7 +26,6 @@ namespace x::Graphics {
         }
 
         void execute() const {
-            printf("Executing batch queue with (%d) command(s)...\n", _queue->numOfCommands());
             RenderSystem::executeQueue(_queue);
         }
 
