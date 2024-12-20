@@ -15,6 +15,8 @@ namespace x::Graphics {
         void execute();
         void clear();
 
+        [[nodiscard]] int numOfCommands() const;
+
     private:
         std::queue<std::function<void()>> _queue;
     };

@@ -14,7 +14,7 @@ static RenderSystem renderSystem;
 static GLFWwindow* window;
 
 static void framebufferCallback(GLFWwindow* window, int width, int height) {
-    renderSystem.executeImmediately<ViewportCommand>(0, 0, width, height);
+    renderSystem.submitCommand<ViewportCommand>(0, 0, width, height);
 }
 
 int main() {

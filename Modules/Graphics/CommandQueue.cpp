@@ -22,4 +22,8 @@ namespace x::Graphics {
             _queue.pop();
         }
     }
+
+    int CommandQueue::numOfCommands() const {
+        return _queue.size();
+    }
 }  // namespace x::Graphics
