@@ -14,25 +14,46 @@ namespace x::Graphics {
                                int height,
                                const bool depth)
         : _renderSystem(renderSystem) {
+        if (!_renderSystem) { Panic("RenderSystem is null!"); }
         createRenderTargetCommands(width, height, depth);
+        _renderSystem->registerVolatile(this);
     }
 
     RenderTarget::~RenderTarget() {
+        if (!_renderSystem) { Panic("RenderSystem is null!"); }
         _renderSystem->submit<Commands::DeleteFramebufferCommand>(1, &_fbo)
           ->submit<Commands::DeleteTextureCommand>(1, &_colorTexture)
           ->submit<Commands::DeleteRenderbufferCommand>(1, &_depthRenderBuffer);
     }
 
     void RenderTarget::bind() const {
+        if (!_renderSystem) { Panic("RenderSystem is null!"); }
         _renderSystem->submit<Commands::BindFramebufferCommand>(GL_FRAMEBUFFER, _fbo);
     }
 
     void RenderTarget::unbind() const {
+        if (!_renderSystem) { Panic("RenderSystem is null!"); }
         _renderSystem->submit<Commands::BindFramebufferCommand>(GL_FRAMEBUFFER, 0);
     }
 
     u32 RenderTarget::getColorTexture() const {
         return _colorTexture;
+    }
+
+    void RenderTarget::onResize(int width, int height) {
+        // Ensure valid dimensions
+        if (width <= 0 || height <= 0) { Panic("Invalid width/height (< zero)!"); }
+        if (!_renderSystem) { Panic("RenderSystem is null!"); }
+
+        _renderSystem->executeImmediate<Commands::DeleteFramebufferCommand>(1, &_fbo)
+          ->executeImmediate<Commands::DeleteTextureCommand>(1, &_colorTexture);
+        if (_depthRenderBuffer) {
+            _renderSystem->executeImmediate<Commands::DeleteRenderbufferCommand>(
+              1,
+              &_depthRenderBuffer);
+        }
+
+        createRenderTargetCommands(width, height, _depthRenderBuffer != 0);
     }
 
     // TODO: Batch queue appears to be broken, re-vist the `submit` method

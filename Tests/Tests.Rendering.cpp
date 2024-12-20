@@ -16,10 +16,15 @@ static GLFWwindow* window;
 
 static void framebufferCallback(GLFWwindow* window, int width, int height) {
     renderSystem->submit<ViewportCommand>(0, 0, width, height);
+
+    // Update all our volatile resources
+    for (const auto& v : renderSystem->getVolatiles()) {
+        if (v) v->onResize(width, height);
+    }
 }
 
 int main() {
-    renderSystem = std::make_shared<RenderSystem>();
+    renderSystem = RenderSystem::create();
 
     if (!glfwInit()) { Panic("Failed to initialize GLFW"); }
 
@@ -42,8 +47,9 @@ int main() {
 
     while (!glfwWindowShouldClose(window)) {
         renderTarget.bind();
-        renderSystem->submit<ClearCommand>(0.05, 0.05, 0.05, 1.f);
+        renderSystem->submit<ClearCommand>(0.0, 0.2, 0.5, 1.f);
         renderTarget.unbind();
+        const auto rtTex = renderTarget.getColorTexture();
         // More drawing commands here
         renderSystem->execute();
 

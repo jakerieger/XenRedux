@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "Volatile.hpp"
 #include "Graphics/CommandQueue.hpp"
 #include "Graphics/Commands.hpp"
 
@@ -17,6 +18,18 @@ namespace x {
 
         ~RenderSystem() {
             _commandQueue.reset();
+        }
+
+        static std::shared_ptr<RenderSystem> create() {
+            return std::make_shared<RenderSystem>();
+        }
+
+        void registerVolatile(Volatile* vol) {
+            _volatiles.push_back(vol);
+        }
+
+        std::vector<Volatile*> getVolatiles() {
+            return _volatiles;
         }
 
         template<class T, class... Args>
@@ -54,5 +67,6 @@ namespace x {
 
     private:
         std::unique_ptr<Graphics::CommandQueue> _commandQueue;
+        std::vector<Volatile*> _volatiles;
     };
 }  // namespace x

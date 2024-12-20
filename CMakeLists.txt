@@ -55,6 +55,7 @@ add_library(Xen STATIC
         # Engine core
         ${COMMON}/Types.hpp
         ${COMMON}/Panic.hpp
+        ${COMMON}/Volatile.hpp
         ${COMMON}/EventSystem.hpp
         ${COMMON}/RenderSystem.hpp
         ${COMMON}/RenderSystem.cpp
