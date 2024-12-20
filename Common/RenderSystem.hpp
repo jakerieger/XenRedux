@@ -39,8 +39,8 @@ namespace x {
         }
 
         void execute() const {
-            printf("Executing command queue with (%d) command(s)...\n",
-                   _commandQueue->numOfCommands());
+            // printf("Executing command queue with (%d) command(s)...\n",
+            //        _commandQueue->numOfCommands());
             _commandQueue->execute();
         }
 

@@ -22,9 +22,9 @@ namespace x::Graphics {
         [[nodiscard]] u32 getColorTexture() const;
 
     private:
-        u32 _fbo;
-        u32 _colorTexture;
-        u32 _depthRenderBuffer;
+        u32 _fbo{};
+        u32 _colorTexture{};
+        u32 _depthRenderBuffer{};
         std::shared_ptr<RenderSystem> _renderSystem;
         void createRenderTargetCommands(int width, int height, bool depth);
     };

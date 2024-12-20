@@ -7,17 +7,20 @@
 
 #include "Panic.hpp"
 #include "RenderSystem.hpp"
+#include "Graphics/RenderTarget.hpp"
 using namespace x;
 using namespace x::Graphics::Commands;
 
-static RenderSystem renderSystem;
+static std::shared_ptr<RenderSystem> renderSystem;
 static GLFWwindow* window;
 
 static void framebufferCallback(GLFWwindow* window, int width, int height) {
-    renderSystem.submit<ViewportCommand>(0, 0, width, height);
+    renderSystem->submit<ViewportCommand>(0, 0, width, height);
 }
 
 int main() {
+    renderSystem = std::make_shared<RenderSystem>();
+
     if (!glfwInit()) { Panic("Failed to initialize GLFW"); }
 
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
@@ -34,10 +37,15 @@ int main() {
     glViewport(0, 0, 800, 600);
     glfwSetFramebufferSizeCallback(window, framebufferCallback);
 
+    // Test render target
+    Graphics::RenderTarget renderTarget(renderSystem, 800, 600, false);
+
     while (!glfwWindowShouldClose(window)) {
-        renderSystem.submit<ClearCommand>(0.05, 0.05, 0.05, 1.f);
+        renderTarget.bind();
+        renderSystem->submit<ClearCommand>(0.05, 0.05, 0.05, 1.f);
+        renderTarget.unbind();
         // More drawing commands here
-        renderSystem.execute();
+        renderSystem->execute();
 
         glfwPollEvents();
         glfwSwapBuffers(window);
