@@ -17,12 +17,16 @@ namespace x::Graphics {
         }
 
         template<class Command, class... Args>
-        ScopedBatchQueue& submit(Args&&... args) {
-            RenderSystem::submitToQueue<Command>(_queue, std::forward<Args>(args)...);
-            return *this;
+        ScopedBatchQueue* submit(Args&&... args) {
+            static_assert(std::is_base_of_v<Graphics::IRenderCommand, Command>,
+                          "T must derive from x::Graphics::IRenderCommand");
+            auto cmd = std::make_shared<Command>(std::forward<Args>(args)...);
+            _queue->push([cmd]() { cmd->execute(); });
+            return this;
         }
 
         void execute() const {
+            printf("Executing batch queue with (%d) command(s)...\n", _queue->numOfCommands());
             RenderSystem::executeQueue(_queue);
         }
 

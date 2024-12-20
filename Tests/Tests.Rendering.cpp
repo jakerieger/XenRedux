@@ -14,7 +14,7 @@ static RenderSystem renderSystem;
 static GLFWwindow* window;
 
 static void framebufferCallback(GLFWwindow* window, int width, int height) {
-    renderSystem.submitCommand<ViewportCommand>(0, 0, width, height);
+    renderSystem.submit<ViewportCommand>(0, 0, width, height);
 }
 
 int main() {
@@ -24,16 +24,18 @@ int main() {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-    window = glfwCreateWindow(640, 480, "Tests", NULL, NULL);
+    window = glfwCreateWindow(800, 600, "Tests", nullptr, nullptr);
     if (!window) { Panic("Failed to create GLFW window"); }
 
     glfwMakeContextCurrent(window);
-    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) { Panic("Failed to initialize GLAD"); }
-    glViewport(0, 0, 640, 480);
+    if (!gladLoadGLLoader(RCAST<GLADloadproc>(glfwGetProcAddress))) {
+        Panic("Failed to initialize GLAD");
+    }
+    glViewport(0, 0, 800, 600);
     glfwSetFramebufferSizeCallback(window, framebufferCallback);
 
     while (!glfwWindowShouldClose(window)) {
-        renderSystem.submitCommand<ClearCommand>(0.1, 0.1, 0.1, 1.f);
+        renderSystem.submit<ClearCommand>(0.05, 0.05, 0.05, 1.f);
         // More drawing commands here
         renderSystem.execute();
 

@@ -13,14 +13,14 @@ namespace x::Memory {
                          size_t size,
                          const void* data)
         : _type(type), _size(size), _renderSystem(renderSystem) {
-        _renderSystem->executeImmediately<GenBufferCommand>(1, &_id);
+        _renderSystem->executeImmediate<GenBufferCommand>(1, &_id);
         bind(true);
         const auto usage = (data == nullptr) ? GL_STATIC_DRAW : GL_DYNAMIC_DRAW;
-        _renderSystem->executeImmediately<BufferDataCommand>(GL_ARRAY_BUFFER, size, data, usage);
+        _renderSystem->executeImmediate<BufferDataCommand>(GL_ARRAY_BUFFER, size, data, usage);
     }
 
     GpuBuffer::~GpuBuffer() {
-        _renderSystem->submitCommand<DeleteBufferCommand>(1, &_id);
+        _renderSystem->submit<DeleteBufferCommand>(1, &_id);
     }
 
     void GpuBuffer::bind(bool immediate) const {
@@ -28,15 +28,15 @@ namespace x::Memory {
                             : (_type == GpuBufferType::Index) ? GL_ELEMENT_ARRAY_BUFFER
                                                               : GL_UNIFORM_BUFFER;
         if (immediate) {
-            _renderSystem->executeImmediately<BindBufferCommand>(target, _id);
+            _renderSystem->executeImmediate<BindBufferCommand>(target, _id);
         } else {
-            _renderSystem->submitCommand<BindBufferCommand>(target, _id);
+            _renderSystem->submit<BindBufferCommand>(target, _id);
         }
     }
 
     void GpuBuffer::updateData(const void* data, size_t offset) const {
         bind();
-        _renderSystem->submitCommand<BufferSubDataCommand>(GL_ARRAY_BUFFER, offset, _size, data);
+        _renderSystem->submit<BufferSubDataCommand>(GL_ARRAY_BUFFER, offset, _size, data);
     }
 
     u32 GpuBuffer::getId() const {
