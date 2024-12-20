@@ -4,6 +4,9 @@
 
 #pragma once
 
+// Type conversion warnings
+#pragma warning(disable : 4244 4267)
+
 #include "Types.hpp"
 #include <glad.h>
 
