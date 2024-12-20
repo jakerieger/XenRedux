@@ -9,7 +9,6 @@
 #include "Graphics/Commands.hpp"
 
 #include <memory>
-#include <catch2/internal/catch_unique_ptr.hpp>
 
 namespace x {
     class RenderSystem {
