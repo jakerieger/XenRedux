@@ -8,6 +8,8 @@
 #include "Panic.hpp"
 #include "RenderSystem.hpp"
 #include "Graphics/RenderTarget.hpp"
+#include "Memory/ArenaAllocator.hpp"
+#include "Memory/GpuBuffer.hpp"
 using namespace x;
 using namespace x::Graphics::Commands;
 
@@ -44,12 +46,13 @@ int main() {
 
     // Test render target
     Graphics::RenderTarget renderTarget(renderSystem, 800, 600, false);
+    Memory::GpuBuffer gpuBuffer(renderSystem, Memory::GpuBufferType::Vertex, sizeof(f32) * 6 * 4);
 
     while (!glfwWindowShouldClose(window)) {
+        gpuBuffer.bind();
         renderTarget.bind();
-        renderSystem->submit<ClearCommand>(0.0, 0.2, 0.5, 1.f);
-        renderTarget.unbind();
         const auto rtTex = renderTarget.getColorTexture();
+        renderSystem->submit<ClearCommand>(0.0, 0.2, 0.5, 1.f);
         // More drawing commands here
         renderSystem->execute();
 
