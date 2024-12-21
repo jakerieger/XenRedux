@@ -82,7 +82,7 @@ namespace x::Compression {
         if (!data || !size) { throw std::invalid_argument("data is null"); }
         auto compressedSize   = compressBound(size);
         const auto compressed = new u8[compressedSize];
-        const auto result     = compress(compressed, &compressedSize, CAST<const u8*>(data), size);
+        const auto result = ::compress(compressed, &compressedSize, CAST<const u8*>(data), size);
         if (result != Z_OK) { throw std::runtime_error("compress failed"); }
 
         const auto compressedData =

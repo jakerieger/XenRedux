@@ -7,6 +7,8 @@ set(GRAPHICS_SRCS
         ${MODULES}/Graphics/CommandQueue.cpp
         ${MODULES}/Graphics/ScopedBatchQueue.hpp
         ${MODULES}/Graphics/Commands.hpp
+        ${MODULES}/Graphics/Primitives.hpp
+        ${MODULES}/Graphics/Primitives.cpp
         ${MODULES}/Graphics/Shader.hpp
         ${MODULES}/Graphics/Shader.cpp
         ${MODULES}/Graphics/ComputeShader.hpp

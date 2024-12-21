@@ -8,6 +8,7 @@
 #include "Panic.hpp"
 #include "RenderSystem.hpp"
 #include "ShaderManager.hpp"
+#include "Graphics/Primitives.hpp"
 #include "Graphics/RenderTarget.hpp"
 #include "Graphics/ShaderProgram.hpp"
 using namespace x;
@@ -49,6 +50,8 @@ int main() {
 
     // Shader testing
     const auto program = ShaderManager::createProgram(Quad_VS_Source, Quad_FS_Source);
+    auto cubeVerts     = Primitives::Cube::Vertices;
+    auto cubeIndices   = Primitives::Cube::Indices;
 
     while (!glfwWindowShouldClose(window)) {
         renderSystem->submit<ClearCommand>(0.0, 0.2, 0.5, 1.f);
