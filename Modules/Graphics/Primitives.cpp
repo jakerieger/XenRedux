@@ -4,9 +4,9 @@
 
 #include "Primitives.hpp"
 
-namespace x::Primitives {
+namespace x {
     // clang-format off
-    std::vector<f32> Cube::Vertices = {
+    std::vector<f32> Primitives::Cube::Vertices = {
         // Positions         // Texture Coords
         // Front face
         -0.5f, -0.5f,  0.5f,  0.0f, 0.0f, // Bottom-left
@@ -39,7 +39,7 @@ namespace x::Primitives {
          0.5f, -0.5f,  0.5f,  0.0f, 0.0f, // Bottom-left
         -0.5f, -0.5f,  0.5f,  1.0f, 0.0f, // Bottom-right
     };
-    std::vector<u32> Cube::Indices  = {
+    std::vector<u32> Primitives::Cube::Indices  = {
         // Front face
         0, 1, 2,
         2, 3, 0,
@@ -60,10 +60,7 @@ namespace x::Primitives {
         22, 23, 20,
     };
 
-    std::vector<f32> Quad::Vertices = {};
-    std::vector<u32> Quad::Indices  = {};
-
-    std::vector<f32> Triangle::Vertices = {};
-    std::vector<u32> Triangle::Indices  = {0};
+    std::vector<f32> Primitives::Quad::Vertices = {};
+    std::vector<u32> Primitives::Quad::Indices  = {};
     // clang-format on
-}  // namespace x::Primitives
+}  // namespace x

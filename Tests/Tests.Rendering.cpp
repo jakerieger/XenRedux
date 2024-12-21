@@ -50,19 +50,62 @@ int main() {
 
     // Shader testing
     const auto program = ShaderManager::createProgram(Quad_VS_Source, Quad_FS_Source);
-    auto cubeVerts     = Primitives::Cube::Vertices;
+    auto cubeVertices  = Primitives::Cube::Vertices;
     auto cubeIndices   = Primitives::Cube::Indices;
+
+    // OpenGL setup
+    u32 vao, vbo, ebo;
+    {
+        glGenVertexArrays(1, &vao);
+        glGenBuffers(1, &vbo);
+        glGenBuffers(1, &ebo);
+
+        glBindVertexArray(vao);
+
+        glBindBuffer(GL_ARRAY_BUFFER, vbo);
+        glBufferData(GL_ARRAY_BUFFER,
+                     cubeVertices.size() * sizeof(float),
+                     cubeVertices.data(),
+                     GL_STATIC_DRAW);
+
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER,
+                     cubeIndices.size() * sizeof(u32),
+                     cubeIndices.data(),
+                     GL_STATIC_DRAW);
+
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);  // Position
+        glEnableVertexAttribArray(0);
+        glVertexAttribPointer(1,
+                              2,
+                              GL_FLOAT,
+                              GL_FALSE,
+                              5 * sizeof(float),
+                              (void*)(3 * sizeof(float)));  // Texture coords
+        glEnableVertexAttribArray(1);
+        glBindVertexArray(0);
+    }
 
     while (!glfwWindowShouldClose(window)) {
         renderSystem->submit<ClearCommand>(0.0, 0.2, 0.5, 1.f);
 
         // Draw commands
-        { program->use(renderSystem); }
+        {
+            program->use(renderSystem);
+            renderSystem->getQueue().push([&]() {
+                glBindVertexArray(vao);
+                glDrawElements(GL_TRIANGLES, cubeIndices.size(), GL_UNSIGNED_INT, 0);
+            });
+        }
 
         renderSystem->execute();
         glfwPollEvents();
         glfwSwapBuffers(window);
     }
+
+    glDeleteVertexArrays(1, &vao);
+    glDeleteBuffers(1, &vbo);
+    glDeleteBuffers(1, &ebo);
 
     glfwDestroyWindow(window);
     glfwTerminate();

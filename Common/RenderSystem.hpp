@@ -62,6 +62,10 @@ namespace x {
             return std::make_unique<Graphics::CommandQueue>();
         }
 
+        Graphics::CommandQueue& getQueue() const {
+            return *_commandQueue;
+        }
+
     private:
         std::unique_ptr<Graphics::CommandQueue> _commandQueue;
         std::vector<Volatile*> _volatiles;

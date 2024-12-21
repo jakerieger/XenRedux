@@ -7,31 +7,25 @@
 #include <vector>
 #include "Types.hpp"
 
-namespace x::Primitives {
-    class Cube {
+namespace x {
+    class Primitives {
     public:
-        static std::vector<f32> Vertices;
-        static std::vector<u32> Indices;
+        class Cube {
+        public:
+            static std::vector<f32> Vertices;
+            static std::vector<u32> Indices;
 
-    private:
-        Cube() = default;
+        private:
+            Cube() = default;
+        };
+
+        class Quad {
+        public:
+            static std::vector<f32> Vertices;
+            static std::vector<u32> Indices;
+
+        private:
+            Quad() = default;
+        };
     };
-
-    class Quad {
-    public:
-        static std::vector<f32> Vertices;
-        static std::vector<u32> Indices;
-
-    private:
-        Quad() = default;
-    };
-
-    class Triangle {
-    public:
-        static std::vector<f32> Vertices;
-        static std::vector<u32> Indices;
-
-    private:
-        Triangle() = default;
-    };
-}  // namespace x::Primitives
+}  // namespace x
