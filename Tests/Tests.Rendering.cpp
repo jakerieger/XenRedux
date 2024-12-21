@@ -2,10 +2,13 @@
 // Created: 12/19/2024.
 //
 
+#include "Camera.hpp"
+
 #include <glad.h>
 #include <GLFW/glfw3.h>
 
 #include "Panic.hpp"
+#include "PerspectiveCamera.hpp"
 #include "RenderSystem.hpp"
 #include "ShaderManager.hpp"
 #include "Graphics/DebugOpenGL.hpp"
@@ -87,6 +90,16 @@ int main() {
     // Pipeline config
     Graphics::Pipeline::setPolygonMode(false);  // for debug purposes
 
+    auto camera = Camera::create<PerspectiveCamera>(45.f,
+                                                    800.f / 600.f,
+                                                    0.1f,
+                                                    100.0f,
+                                                    glm::vec3(0.0f, 0.0f, 5.0f),
+                                                    glm::vec3(0.0f, 0.0f, 0.0f),
+                                                    glm::vec3(0.0f, 1.0f, 0.0f));
+    renderSystem->registerVolatile(camera.get());
+    const auto vp = camera->getViewProjection();
+
     while (!glfwWindowShouldClose(window)) {
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -98,6 +111,8 @@ int main() {
             eboBuffer.bind();
             glDrawElements(GL_TRIANGLES, cubeIndices.size(), GL_UNSIGNED_INT, 0);
         }
+
+        camera->update(0.016f);
 
         glfwPollEvents();
         glfwSwapBuffers(window);

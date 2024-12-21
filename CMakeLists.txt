@@ -57,11 +57,14 @@ add_library(Xen STATIC
         ${COMMON}/Types.hpp
         ${COMMON}/Panic.hpp
         ${COMMON}/Volatile.hpp
+        ${COMMON}/Camera.hpp
         ${COMMON}/EventSystem.hpp
         ${COMMON}/RenderSystem.hpp
         ${COMMON}/RenderSystem.cpp
         ${COMMON}/ShaderManager.hpp
         ${COMMON}/ShaderManager.cpp
+        ${COMMON}/PerspectiveCamera.hpp
+        ${COMMON}/PerspectiveCamera.cpp
 )
 
 if (WIN32)
