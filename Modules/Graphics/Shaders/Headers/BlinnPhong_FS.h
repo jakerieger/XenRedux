@@ -1,0 +1,12 @@
+const char* BlinnPhong_FS_Source = R"(
+#version 450 core
+
+in vec4 VertexPosition;
+in vec2 TexCoord;
+
+out vec4 FragColor;
+
+void main() {
+    FragColor = vec4(1.0, 0.5, 0.2, 1.0);
+}
+)";
