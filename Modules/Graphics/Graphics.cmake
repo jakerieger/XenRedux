@@ -15,4 +15,5 @@ set(GRAPHICS_SRCS
         ${MODULES}/Graphics/ComputeShader.cpp
         ${MODULES}/Graphics/ShaderProgram.hpp
         ${MODULES}/Graphics/ShaderProgram.cpp
+        ${MODULES}/Graphics/DebugOpenGL.hpp
 )

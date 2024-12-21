@@ -24,8 +24,8 @@ namespace x::Graphics {
         checkErrors();
     }
 
-    void ShaderProgram::use(const std::shared_ptr<RenderSystem>& renderSystem) const {
-        renderSystem->submit<Commands::UseShaderCommand>(_id);
+    void ShaderProgram::use() const {
+        glUseProgram(_id);
     }
 
     GLuint ShaderProgram::getId() const {

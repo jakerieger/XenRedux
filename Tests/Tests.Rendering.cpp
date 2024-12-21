@@ -8,10 +8,12 @@
 #include "Panic.hpp"
 #include "RenderSystem.hpp"
 #include "ShaderManager.hpp"
+#include "Graphics/DebugOpenGL.hpp"
 #include "Graphics/Pipeline.hpp"
 #include "Graphics/Primitives.hpp"
 #include "Graphics/RenderTarget.hpp"
 #include "Graphics/ShaderProgram.hpp"
+#include "Memory/GpuBuffer.hpp"
 using namespace x;
 using namespace x::Graphics::Commands;
 
@@ -46,72 +48,62 @@ int main() {
     if (!gladLoadGLLoader(RCAST<GLADloadproc>(glfwGetProcAddress))) {
         Panic("Failed to initialize GLAD");
     }
+    glEnable(GL_DEBUG_OUTPUT);
+    glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);  // Makes callbacks synchronous
+    glDebugMessageCallback(Graphics::glDebugOutput, nullptr);
+    glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, nullptr, GL_TRUE);
     glViewport(0, 0, 800, 600);
     glfwSetFramebufferSizeCallback(window, framebufferCallback);
 
     // Shader testing
-    const auto program = ShaderManager::createProgram(Quad_VS_Source, Quad_FS_Source);
-    auto cubeVertices  = Primitives::Cube::Vertices;
-    auto cubeIndices   = Primitives::Cube::Indices;
+    const auto program      = ShaderManager::createProgram(Quad_VS_Source, Quad_FS_Source);
+    const auto cubeVertices = Primitives::Cube::Vertices;
+    const auto cubeIndices  = Primitives::Cube::Indices;
 
     // OpenGL setup
-    u32 vao, vbo, ebo;
-    const auto cubeSetupCmd = [&]() {
-        glGenVertexArrays(1, &vao);
-        glGenBuffers(1, &vbo);
-        glGenBuffers(1, &ebo);
-        glBindVertexArray(vao);
-        glBindBuffer(GL_ARRAY_BUFFER, vbo);
-        glBufferData(GL_ARRAY_BUFFER,
-                     cubeVertices.size() * sizeof(float),
-                     cubeVertices.data(),
-                     GL_STATIC_DRAW);
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER,
-                     cubeIndices.size() * sizeof(u32),
-                     cubeIndices.data(),
-                     GL_STATIC_DRAW);
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);  // Position
-        glEnableVertexAttribArray(0);
-        glVertexAttribPointer(1,
-                              2,
-                              GL_FLOAT,
-                              GL_FALSE,
-                              5 * sizeof(float),
-                              (void*)(3 * sizeof(float)));  // Texture coords
-        glEnableVertexAttribArray(1);
-        glBindVertexArray(0);
-    };
-    renderSystem->getQueue().push(cubeSetupCmd);
+    u32 vao;
+    glGenVertexArrays(1, &vao);
+    const Memory::GpuBuffer vboBuffer(Memory::GpuBufferType::Vertex,
+                                      cubeVertices.size() * sizeof(f32));
+    vboBuffer.bind();
+    vboBuffer.updateData(cubeVertices.data(), 0);
+    const Memory::GpuBuffer eboBuffer(Memory::GpuBufferType::Index,
+                                      cubeIndices.size() * sizeof(u32));
+    eboBuffer.bind();
+    eboBuffer.updateData(cubeIndices.data(), 0);
+    glBindVertexArray(vao);
+    vboBuffer.bind();
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);  // Position
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(1,
+                          2,
+                          GL_FLOAT,
+                          GL_FALSE,
+                          5 * sizeof(float),
+                          (void*)(3 * sizeof(float)));  // Texture coords
+    glEnableVertexAttribArray(1);
+    glBindVertexArray(0);
 
     // Pipeline config
-    Graphics::Pipeline::setPolygonMode(true);  // for debug purposes
+    Graphics::Pipeline::setPolygonMode(false);  // for debug purposes
 
     while (!glfwWindowShouldClose(window)) {
-        renderSystem->clear(0.f, 0.f, 0.f, 1.f);
+        glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         // Draw commands
         {
-            program->use(renderSystem);
-            const auto drawCmd = [&]() {
-                glBindVertexArray(vao);
-                glDrawElements(GL_TRIANGLES, cubeIndices.size(), GL_UNSIGNED_INT, 0);
-            };
-            renderSystem->getQueue().push(drawCmd);
+            program->use();
+            glBindVertexArray(vao);
+            eboBuffer.bind();
+            glDrawElements(GL_TRIANGLES, cubeIndices.size(), GL_UNSIGNED_INT, 0);
         }
 
-        renderSystem->execute();
         glfwPollEvents();
         glfwSwapBuffers(window);
     }
 
-    const auto cleanupCmd = [&]() {
-        glDeleteVertexArrays(1, &vao);
-        glDeleteBuffers(1, &vbo);
-        glDeleteBuffers(1, &ebo);
-    };
-    renderSystem->getQueue().push(cleanupCmd);
-    renderSystem->execute();
+    glDeleteVertexArrays(1, &vao);
 
     glfwDestroyWindow(window);
     glfwTerminate();

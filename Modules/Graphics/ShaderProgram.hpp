@@ -18,7 +18,7 @@ namespace x::Graphics {
 
         void attachShader(const Shader& shader) const;
         void link() const;
-        void use(const std::shared_ptr<RenderSystem>& renderSystem) const;
+        void use() const;
         GLuint getId() const;
 
         void setBool(const std::string& name, bool value) const;

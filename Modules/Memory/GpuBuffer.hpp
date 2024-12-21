@@ -17,19 +17,16 @@ namespace x::Memory {
 
     class GpuBuffer {
     public:
-        GpuBuffer(const std::shared_ptr<RenderSystem>& renderSystem,
-                  GpuBufferType type,
-                  size_t size,
-                  const void* data = nullptr);
+        GpuBuffer(GpuBufferType type, size_t size, const void* data = nullptr);
         ~GpuBuffer();
-        void bind(bool immediate = false) const;
+        void bind() const;
         void updateData(const void* data, size_t offset = 0) const;
         u32 getId() const;
 
     private:
-        u32 _id{};
+        u32 _id = 0;
         GpuBufferType _type;
         size_t _size;
-        std::shared_ptr<RenderSystem> _renderSystem;
+        GLenum getTarget() const;
     };
 }  // namespace x::Memory
