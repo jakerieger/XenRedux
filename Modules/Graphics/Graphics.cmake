@@ -16,4 +16,6 @@ set(GRAPHICS_SRCS
         ${MODULES}/Graphics/ShaderProgram.hpp
         ${MODULES}/Graphics/ShaderProgram.cpp
         ${MODULES}/Graphics/DebugOpenGL.hpp
+        ${MODULES}/Graphics/VertexArray.hpp
+        ${MODULES}/Graphics/VertexArray.cpp
 )

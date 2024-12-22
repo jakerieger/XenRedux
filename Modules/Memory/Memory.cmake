@@ -4,7 +4,6 @@ set(MEMORY_SRCS
         ${MODULES}/Memory/ArenaAllocator.hpp
         ${MODULES}/Memory/ArenaAllocator.cpp
         ${MODULES}/Memory/GpuBuffer.hpp
-        ${MODULES}/Memory/GpuBuffer.cpp
 )
 
 set(MEMORY_TESTS

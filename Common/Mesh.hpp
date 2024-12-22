@@ -11,6 +11,7 @@
 #include "Graphics/ShaderProgram.hpp"
 #include "Memory/GpuBuffer.hpp"
 #include "Camera.hpp"
+#include "Graphics/VertexArray.hpp"
 
 #include <glm/glm.hpp>
 
@@ -35,12 +36,10 @@ namespace x {
 
     private:
         std::shared_ptr<Transform> _transform;
-        std::unique_ptr<Memory::GpuBuffer> _vertexBuffer;
-        std::unique_ptr<Memory::GpuBuffer> _indexBuffer;
+        std::unique_ptr<Graphics::VertexArray> _vertexArray;
         std::weak_ptr<Graphics::ShaderProgram> _shader;
         const u32 _numVertices;
         const u32 _numIndices;
-        GLuint _vao;
     };
 
 }  // namespace x
