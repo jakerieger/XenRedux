@@ -22,6 +22,12 @@ namespace x {
              const std::weak_ptr<Graphics::ShaderProgram>& shader);
         ~Mesh();
 
+        static std::shared_ptr<Mesh> create(const std::vector<f32>& vertices,
+                                            const std::vector<u32>& indices,
+                                            const std::weak_ptr<Graphics::ShaderProgram>& shader) {
+            return std::make_shared<Mesh>(vertices, indices, shader);
+        }
+
         void draw(const std::shared_ptr<ICamera>& camera) const;
         const Transform& getTransform() const;
         u32 getIndexCount() const;

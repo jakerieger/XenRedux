@@ -95,4 +95,11 @@ namespace x::Graphics {
         std::cout << std::endl;
         std::cout << std::endl;
     }
+
+    static void enableDebugOutput() {
+        glEnable(GL_DEBUG_OUTPUT);
+        glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);  // Makes callbacks synchronous
+        glDebugMessageCallback(glDebugOutput, nullptr);
+        glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, nullptr, GL_TRUE);
+    }
 }  // namespace x::Graphics

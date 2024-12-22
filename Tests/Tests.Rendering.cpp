@@ -16,16 +16,20 @@
 #include "Graphics/Pipeline.hpp"
 #include "Graphics/Primitives.hpp"
 #include "Graphics/RenderTarget.hpp"
-#include "Graphics/ShaderProgram.hpp"
-#include "Memory/GpuBuffer.hpp"
+
 using namespace x;
-using namespace x::Graphics::Commands;
 
 static std::shared_ptr<RenderSystem> renderSystem;
 static GLFWwindow* window;
 
+#pragma region Shaders
+#include "Graphics/Shaders/Headers/BlinnPhong_VS.h"
+#include "Graphics/Shaders/Headers/BlinnPhong_FS.h"
+#pragma endregion
+
+#pragma region Setup
 static void framebufferCallback(GLFWwindow* window, int width, int height) {
-    renderSystem->submit<ViewportCommand>(0, 0, width, height);
+    renderSystem->submit<Graphics::Commands::ViewportCommand>(0, 0, width, height);
 
     // Update all our volatile resources
     for (const auto& v : renderSystem->getVolatiles()) {
@@ -33,12 +37,7 @@ static void framebufferCallback(GLFWwindow* window, int width, int height) {
     }
 }
 
-#pragma region Shaders
-#include "Graphics/Shaders/Headers/BlinnPhong_VS.h"
-#include "Graphics/Shaders/Headers/BlinnPhong_FS.h"
-#pragma endregion
-
-int main() {
+void initGL() {
     renderSystem = RenderSystem::create();
 
     if (!glfwInit()) { Panic("Failed to initialize GLFW"); }
@@ -54,18 +53,20 @@ int main() {
     if (!gladLoadGLLoader(RCAST<GLADloadproc>(glfwGetProcAddress))) {
         Panic("Failed to initialize GLAD");
     }
-    glEnable(GL_DEBUG_OUTPUT);
-    glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);  // Makes callbacks synchronous
-    glDebugMessageCallback(Graphics::glDebugOutput, nullptr);
-    glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, nullptr, GL_TRUE);
+    Graphics::enableDebugOutput();
     glViewport(0, 0, 800, 600);
     glfwSetFramebufferSizeCallback(window, framebufferCallback);
+}
+#pragma endregion
+
+int main() {
+    initGL();
 
     // Shader testing
     const auto program = ShaderManager::createProgram(BlinnPhong_VS_Source, BlinnPhong_FS_Source);
     const auto cubeVertices = Primitives::Cube::Vertices;
     const auto cubeIndices  = Primitives::Cube::Indices;
-    const auto cubeMesh     = std::make_shared<Mesh>(cubeVertices, cubeIndices, program);
+    const auto cubeMesh     = Mesh::create(cubeVertices, cubeIndices, program);
 
     // Pipeline config
     Graphics::Pipeline::setPolygonMode(false);  // for debug purposes

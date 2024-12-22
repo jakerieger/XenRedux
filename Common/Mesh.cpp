@@ -8,7 +8,8 @@ namespace x {
     Mesh::Mesh(const std::vector<f32>& vertices,
                const std::vector<u32>& indices,
                const std::weak_ptr<Graphics::ShaderProgram>& shader)
-        : _shader(shader), _numVertices(vertices.size()), _numIndices(indices.size()) {
+        : _transform(std::make_shared<Transform>()), _shader(shader), _numVertices(vertices.size()),
+          _numIndices(indices.size()) {
         glGenVertexArrays(1, &_vao);
         _vertexBuffer = std::make_unique<Memory::GpuBuffer>(Memory::GpuBufferType::Vertex,
                                                             _numVertices * sizeof(f32));
@@ -43,7 +44,7 @@ namespace x {
         shader->use();
         // TODO: Consider a different way of updating uniforms, because they can be different.
         shader->setMat4("uVP", camera->getViewProjection());
-        shader->setMat4("uModel", glm::mat4(1.0f));
+        shader->setMat4("uModel", _transform->getMatrix());
         glBindVertexArray(_vao);
         _indexBuffer->bind();
         glDrawElements(GL_TRIANGLES, _numIndices, GL_UNSIGNED_INT, 0);
