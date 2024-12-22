@@ -1,5 +1,5 @@
 const char* BlinnPhong_FS_Source = R"(
-#version 450 core
+#version 460 core
 
 in vec4 VertexPosition;
 in vec2 TexCoord;

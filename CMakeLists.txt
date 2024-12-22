@@ -65,6 +65,10 @@ add_library(Xen STATIC
         ${COMMON}/ShaderManager.cpp
         ${COMMON}/PerspectiveCamera.hpp
         ${COMMON}/PerspectiveCamera.cpp
+        ${COMMON}/Mesh.hpp
+        ${COMMON}/Mesh.cpp
+        ${COMMON}/Transform.hpp
+        ${COMMON}/Transform.cpp
 )
 
 if (WIN32)

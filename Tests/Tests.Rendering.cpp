@@ -3,6 +3,7 @@
 //
 
 #include "Camera.hpp"
+#include "Mesh.hpp"
 
 #include <glad.h>
 #include <GLFW/glfw3.h>
@@ -32,8 +33,10 @@ static void framebufferCallback(GLFWwindow* window, int width, int height) {
     }
 }
 
-#include "Graphics/Shaders/Headers/Quad_VS.h"
-#include "Graphics/Shaders/Headers/Quad_FS.h"
+#pragma region Shaders
+#include "Graphics/Shaders/Headers/BlinnPhong_VS.h"
+#include "Graphics/Shaders/Headers/BlinnPhong_FS.h"
+#pragma endregion
 
 int main() {
     renderSystem = RenderSystem::create();
@@ -59,44 +62,21 @@ int main() {
     glfwSetFramebufferSizeCallback(window, framebufferCallback);
 
     // Shader testing
-    const auto program      = ShaderManager::createProgram(Quad_VS_Source, Quad_FS_Source);
+    const auto program = ShaderManager::createProgram(BlinnPhong_VS_Source, BlinnPhong_FS_Source);
     const auto cubeVertices = Primitives::Cube::Vertices;
     const auto cubeIndices  = Primitives::Cube::Indices;
-
-    // OpenGL setup
-    u32 vao;
-    glGenVertexArrays(1, &vao);
-    const Memory::GpuBuffer vboBuffer(Memory::GpuBufferType::Vertex,
-                                      cubeVertices.size() * sizeof(f32));
-    vboBuffer.bind();
-    vboBuffer.updateData(cubeVertices.data(), 0);
-    const Memory::GpuBuffer eboBuffer(Memory::GpuBufferType::Index,
-                                      cubeIndices.size() * sizeof(u32));
-    eboBuffer.bind();
-    eboBuffer.updateData(cubeIndices.data(), 0);
-    glBindVertexArray(vao);
-    vboBuffer.bind();
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);  // Position
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(1,
-                          2,
-                          GL_FLOAT,
-                          GL_FALSE,
-                          5 * sizeof(float),
-                          (void*)(3 * sizeof(float)));  // Texture coords
-    glEnableVertexAttribArray(1);
-    glBindVertexArray(0);
+    const auto cubeMesh     = std::make_shared<Mesh>(cubeVertices, cubeIndices, program);
 
     // Pipeline config
     Graphics::Pipeline::setPolygonMode(false);  // for debug purposes
 
-    auto camera = Camera::create<PerspectiveCamera>(45.f,
-                                                    800.f / 600.f,
-                                                    0.1f,
-                                                    100.0f,
-                                                    glm::vec3(0.0f, 0.0f, 5.0f),
-                                                    glm::vec3(0.0f, 0.0f, 0.0f),
-                                                    glm::vec3(0.0f, 1.0f, 0.0f));
+    const auto camera = Camera::create<PerspectiveCamera>(45.f,
+                                                          800.f / 600.f,
+                                                          0.1f,
+                                                          100.0f,
+                                                          glm::vec3(0.0f, 0.0f, 5.0f),
+                                                          glm::vec3(0.0f, 0.0f, 0.0f),
+                                                          glm::vec3(0.0f, 1.0f, 0.0f));
     renderSystem->registerVolatile(camera.get());
     const auto vp = camera->getViewProjection();
 
@@ -105,20 +85,13 @@ int main() {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         // Draw commands
-        {
-            program->use();
-            glBindVertexArray(vao);
-            eboBuffer.bind();
-            glDrawElements(GL_TRIANGLES, cubeIndices.size(), GL_UNSIGNED_INT, 0);
-        }
+        { cubeMesh->draw(camera); }
 
-        camera->update(0.016f);
+        // camera->update(0.016f);
 
         glfwPollEvents();
         glfwSwapBuffers(window);
     }
-
-    glDeleteVertexArrays(1, &vao);
 
     glfwDestroyWindow(window);
     glfwTerminate();

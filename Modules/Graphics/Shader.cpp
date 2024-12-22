@@ -53,7 +53,8 @@ namespace x::Graphics {
         glGetShaderiv(_id, GL_COMPILE_STATUS, &success);
         if (!success) {
             glGetShaderInfoLog(_id, 1024, nullptr, infoLog);
-            Panic(infoLog);
+            cstr type = _shaderType == GL_VERTEX_SHADER ? "Vertex" : "Fragment";
+            Panic("Shader compilation error (%s):\n%s", type, infoLog);
         }
     }
 }  // namespace x::Graphics
