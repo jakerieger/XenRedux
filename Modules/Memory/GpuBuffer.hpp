@@ -6,6 +6,7 @@
 
 #include "Types.hpp"
 #include "RenderSystem.hpp"
+#include "Graphics/DebugOpenGL.hpp"
 
 namespace x::Memory {
     enum GpuBufferType {
@@ -27,18 +28,22 @@ namespace x::Memory {
                          _size,
                          data.data(),
                          dynamic ? GL_DYNAMIC_DRAW : GL_STATIC_DRAW);
+            CHECK_GL_ERROR();
         }
 
         ~GpuBuffer() {
             glDeleteBuffers(1, &_id);
+            CHECK_GL_ERROR();
         }
 
         void bind() const {
             glBindBuffer(getTarget(), _id);
+            CHECK_GL_ERROR();
         }
 
         void updateData(const void* data, size_t offset = 0) const {
             glBufferSubData(getTarget(), offset, _size, data);
+            CHECK_GL_ERROR();
         }
 
         u32 getId() const {

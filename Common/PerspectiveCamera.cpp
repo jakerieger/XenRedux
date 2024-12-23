@@ -3,6 +3,9 @@
 //
 
 #include "PerspectiveCamera.hpp"
+
+#include "Panic.hpp"
+
 #include <glm/gtc/matrix_transform.hpp>
 
 namespace x {
@@ -22,12 +25,18 @@ namespace x {
         return _viewProjection;
     }
 
-    void PerspectiveCamera::update(f32 dT) {
-        updateViewProjection();
+    void PerspectiveCamera::update(const std::weak_ptr<Clock>& clock) {
+        if (const auto lock = clock.lock()) {
+            updateViewProjection();
+        } else {
+            Panic("Clock is no longer valid.");
+        }
     }
 
     void PerspectiveCamera::onResize(int newWidth, int newHeight) {
-        _aspect = newWidth / newHeight;
+        const auto fWidth  = CAST<f32>(newWidth);
+        const auto fHeight = CAST<f32>(newHeight);
+        _aspect            = fWidth / fHeight;
         updateViewProjection();
     }
 

@@ -69,6 +69,8 @@ add_library(Xen STATIC
         ${COMMON}/Mesh.cpp
         ${COMMON}/Transform.hpp
         ${COMMON}/Transform.cpp
+        ${COMMON}/Clock.hpp
+        ${COMMON}/Clock.cpp
 )
 
 if (WIN32)

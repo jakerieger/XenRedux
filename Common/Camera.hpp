@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "Clock.hpp"
 #include "Types.hpp"
 #include "Volatile.hpp"
 
@@ -13,8 +14,8 @@
 namespace x {
     class ICamera : public Volatile {
     public:
-        virtual glm::mat4 getViewProjection() const = 0;
-        virtual void update(f32 dT)                 = 0;
+        virtual glm::mat4 getViewProjection() const            = 0;
+        virtual void update(const std::weak_ptr<Clock>& clock) = 0;
 
         template<class Camera>
         Camera* as() {

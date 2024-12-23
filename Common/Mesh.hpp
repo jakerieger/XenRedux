@@ -11,6 +11,7 @@
 #include "Graphics/ShaderProgram.hpp"
 #include "Memory/GpuBuffer.hpp"
 #include "Camera.hpp"
+#include "Clock.hpp"
 #include "Graphics/VertexArray.hpp"
 
 #include <glm/glm.hpp>
@@ -29,7 +30,10 @@ namespace x {
             return std::make_shared<Mesh>(vertices, indices, shader);
         }
 
+        void update(const std::weak_ptr<Clock>& clock) const;
         void draw(const std::shared_ptr<ICamera>& camera) const;
+        void destroy();
+
         const Transform& getTransform() const;
         u32 getIndexCount() const;
         u32 getVertexCount() const;

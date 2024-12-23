@@ -5,6 +5,7 @@
 #pragma once
 
 #include "Camera.hpp"
+#include "Clock.hpp"
 
 namespace x {
     class PerspectiveCamera final : public ICamera {
@@ -17,7 +18,7 @@ namespace x {
                           const glm::vec3& lookAt,
                           const glm::vec3& up);
         glm::mat4 getViewProjection() const override;
-        void update(f32 dT) override;
+        void update(const std::weak_ptr<Clock>& clock) override;
         void onResize(int newWidth, int newHeight) override;  // From Volatile
 
         void setPosition(const glm::vec3& position);

@@ -19,8 +19,12 @@
 
 using namespace x;
 
+// TODO: Re-work the RenderSystem class
 static std::shared_ptr<RenderSystem> renderSystem;
 static GLFWwindow* window;
+static constexpr int kWidth    = 1600;
+static constexpr int kHeight   = 900;
+static constexpr float kAspect = (float)kWidth / (float)kHeight;
 
 #pragma region Shaders
 #include "Graphics/Shaders/Headers/BlinnPhong_VS.h"
@@ -29,7 +33,7 @@ static GLFWwindow* window;
 
 #pragma region Setup
 static void framebufferCallback(GLFWwindow* window, int width, int height) {
-    renderSystem->submit<Graphics::Commands::ViewportCommand>(0, 0, width, height);
+    glViewport(0, 0, width, height);
 
     // Update all our volatile resources
     for (const auto& v : renderSystem->getVolatiles()) {
@@ -46,7 +50,7 @@ void initGL() {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-    window = glfwCreateWindow(800, 600, "Tests", nullptr, nullptr);
+    window = glfwCreateWindow(kWidth, kHeight, "XEN Engine", nullptr, nullptr);
     if (!window) { Panic("Failed to create GLFW window"); }
 
     glfwMakeContextCurrent(window);
@@ -54,7 +58,7 @@ void initGL() {
         Panic("Failed to initialize GLAD");
     }
     Graphics::enableDebugOutput();
-    glViewport(0, 0, 800, 600);
+    glViewport(0, 0, kWidth, kHeight);
     glfwSetFramebufferSizeCallback(window, framebufferCallback);
 }
 #pragma endregion
@@ -62,17 +66,16 @@ void initGL() {
 int main() {
     initGL();
 
-    // Shader testing
-    const auto program = ShaderManager::createProgram(BlinnPhong_VS_Source, BlinnPhong_FS_Source);
-    const auto cubeVertices = Primitives::Cube::Vertices;
-    const auto cubeIndices  = Primitives::Cube::Indices;
-    const auto cubeMesh     = Mesh::create(cubeVertices, cubeIndices, program);
-
     // Pipeline config
     Graphics::Pipeline::setPolygonMode(false);  // for debug purposes
 
+    // Shader testing
+    const auto program = ShaderManager::createProgram(BlinnPhong_VS_Source, BlinnPhong_FS_Source);
+    const auto cubeMesh =
+      Mesh::create(Primitives::Cube::Vertices, Primitives::Cube::Indices, program);
+
     const auto camera = Camera::create<PerspectiveCamera>(45.f,
-                                                          800.f / 600.f,
+                                                          kAspect,
                                                           0.1f,
                                                           100.0f,
                                                           glm::vec3(0.0f, 0.0f, 5.0f),
@@ -81,18 +84,33 @@ int main() {
     renderSystem->registerVolatile(camera.get());
     const auto vp = camera->getViewProjection();
 
+    const auto clock = std::make_shared<Clock>();
+    clock->start();
+
     while (!glfwWindowShouldClose(window)) {
+        clock->tick();
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+        // Update stuff
+        {
+            cubeMesh->update(clock);
+            camera->update(clock);
+        }
 
         // Draw commands
         { cubeMesh->draw(camera); }
 
-        // camera->update(0.016f);
-
         glfwPollEvents();
         glfwSwapBuffers(window);
+
+        clock->update();
     }
+
+    clock->stop();
+
+    cubeMesh->destroy();  // This shouldn't be necessary to do manually once embedded in Xen's
+                          // runtime framework
 
     glfwDestroyWindow(window);
     glfwTerminate();

@@ -23,6 +23,16 @@ namespace x {
         _vertexArray.reset();
     }
 
+    void Mesh::update(const std::weak_ptr<Clock>& clock) const {
+        if (const auto c = clock.lock()) {
+            const float time = c->getElapsedTime();
+            float angle      = time * 0.001f;
+            _transform->rotate({angle, angle, 0.f});
+        } else {
+            Panic("Failed to get clock lock in Mesh instance.");
+        }
+    }
+
     void Mesh::draw(const std::shared_ptr<ICamera>& camera) const {
         const auto shader = _shader.lock();
         shader->use();
@@ -32,6 +42,11 @@ namespace x {
         _vertexArray->bind();
         _vertexArray->bindIndex();
         glDrawElements(GL_TRIANGLES, _numIndices, GL_UNSIGNED_INT, 0);
+        CHECK_GL_ERROR();
+    }
+
+    void Mesh::destroy() {
+        _vertexArray.reset();
     }
 
     const Transform& Mesh::getTransform() const {
