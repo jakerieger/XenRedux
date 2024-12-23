@@ -1,4 +1,4 @@
-const char* Gaussian_CS_Source = R"(
+static const char* Gaussian_CS_Source = R""(
 #version 460
 
 layout (local_size_x = 16, local_size_y = 16) in;
@@ -38,4 +38,4 @@ void main() {
 
     imageStore(uOutputTexture, texelCoord, color);
 }
-)";
+)"";

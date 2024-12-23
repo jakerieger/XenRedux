@@ -11,7 +11,7 @@ def generate_shader_header(shader_file, output_file):
         print(f"Error: {e}")
 
     name = os.path.splitext(os.path.basename(shader_file))[0] + "_Source"
-    header_content = f'const char* {name} = R"(\n{source}\n)";\n'
+    header_content = f'static const char* {name} = R""(\n{source}\n)"";\n'
 
     with open(output_file, 'w') as out:
         out.write(header_content)

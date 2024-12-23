@@ -1,4 +1,4 @@
-const char* Quad_FS_Source = R"(
+static const char* Quad_FS_Source = R""(
 #version 460 core
 out vec4 FragColor;
 
@@ -9,4 +9,4 @@ uniform sampler2D uRenderTexture;
 void main() {
     FragColor = texture(uRenderTexture, TexCoords);
 }
-)";
+)"";

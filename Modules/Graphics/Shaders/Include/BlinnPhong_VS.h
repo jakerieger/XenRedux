@@ -1,4 +1,4 @@
-const char* BlinnPhong_VS_Source = R"(
+static const char* BlinnPhong_VS_Source = R""(
 #version 460 core
 layout (location = 0) in vec3 aPos;
 layout (location = 1) in vec2 aTexCoord;
@@ -15,4 +15,4 @@ void main() {
     VertexPosition = pos;
     TexCoord = aTexCoord;
 }
-)";
+)"";

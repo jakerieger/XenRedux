@@ -1,4 +1,4 @@
-const char* BlinnPhong_FS_Source = R"(
+static const char* BlinnPhong_FS_Source = R""(
 #version 460 core
 
 in vec4 VertexPosition;
@@ -9,4 +9,4 @@ out vec4 FragColor;
 void main() {
     FragColor = vec4(1.0, 0.5, 0.2, 1.0);
 }
-)";
+)"";
