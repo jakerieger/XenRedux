@@ -3,10 +3,6 @@ set(GRAPHICS_SRCS
         ${MODULES}/Graphics/Pipeline.cpp
         ${MODULES}/Graphics/RenderTarget.hpp
         ${MODULES}/Graphics/RenderTarget.cpp
-        ${MODULES}/Graphics/CommandQueue.hpp
-        ${MODULES}/Graphics/CommandQueue.cpp
-        ${MODULES}/Graphics/ScopedBatchQueue.hpp
-        ${MODULES}/Graphics/Commands.hpp
         ${MODULES}/Graphics/Primitives.hpp
         ${MODULES}/Graphics/Primitives.cpp
         ${MODULES}/Graphics/Shader.hpp
@@ -18,4 +14,6 @@ set(GRAPHICS_SRCS
         ${MODULES}/Graphics/DebugOpenGL.hpp
         ${MODULES}/Graphics/VertexArray.hpp
         ${MODULES}/Graphics/VertexArray.cpp
+        ${MODULES}/Graphics/BigTriangle.hpp
+        ${MODULES}/Graphics/BigTriangle.cpp
 )

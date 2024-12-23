@@ -12,6 +12,7 @@
 #include "PerspectiveCamera.hpp"
 #include "RenderSystem.hpp"
 #include "ShaderManager.hpp"
+#include "Graphics/BigTriangle.hpp"
 #include "Graphics/DebugOpenGL.hpp"
 #include "Graphics/Pipeline.hpp"
 #include "Graphics/Primitives.hpp"
@@ -27,8 +28,8 @@ static constexpr int kHeight   = 900;
 static constexpr float kAspect = (float)kWidth / (float)kHeight;
 
 #pragma region Shaders
-#include "Graphics/Shaders/Headers/BlinnPhong_VS.h"
-#include "Graphics/Shaders/Headers/BlinnPhong_FS.h"
+#include "Graphics/Shaders/Include/BlinnPhong_VS.h"
+#include "Graphics/Shaders/Include/BlinnPhong_FS.h"
 #pragma endregion
 
 #pragma region Setup
@@ -84,6 +85,11 @@ int main() {
     renderSystem->registerVolatile(camera.get());
     const auto vp = camera->getViewProjection();
 
+    const auto renderTarget = new Graphics::RenderTarget(kWidth, kHeight, true);
+    renderSystem->registerVolatile(renderTarget);
+
+    const auto ppQuad = new Graphics::PostProcessQuad;
+
     const auto clock = std::make_shared<Clock>();
     clock->start();
 
@@ -98,8 +104,13 @@ int main() {
             camera->update(clock);
         }
 
+        renderTarget->bind();
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         // Draw commands
         { cubeMesh->draw(camera); }
+        renderTarget->unbind();
+
+        ppQuad->draw(renderTarget->getColorTexture());
 
         glfwPollEvents();
         glfwSwapBuffers(window);
@@ -112,6 +123,8 @@ int main() {
     cubeMesh->destroy();  // This shouldn't be necessary to do manually once embedded in Xen's
                           // runtime framework
 
+    delete renderTarget;
+    delete ppQuad;
     glfwDestroyWindow(window);
     glfwTerminate();
     return 0;
