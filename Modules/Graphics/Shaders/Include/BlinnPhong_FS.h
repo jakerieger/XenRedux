@@ -1,3 +1,4 @@
+#pragma once
 static const char* BlinnPhong_FS_Source = R""(
 #version 460 core
 

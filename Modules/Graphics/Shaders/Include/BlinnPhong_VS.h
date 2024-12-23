@@ -1,3 +1,4 @@
+#pragma once
 static const char* BlinnPhong_VS_Source = R""(
 #version 460 core
 layout (location = 0) in vec3 aPos;

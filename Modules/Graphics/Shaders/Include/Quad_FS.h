@@ -1,3 +1,4 @@
+#pragma once
 static const char* Quad_FS_Source = R""(
 #version 460 core
 out vec4 FragColor;

@@ -1,3 +1,4 @@
+#pragma once
 static const char* Quad_VS_Source = R""(
 #version 460 core
 layout (location = 0) in vec2 aPosition;

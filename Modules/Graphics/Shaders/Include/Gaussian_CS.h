@@ -1,3 +1,4 @@
+#pragma once
 static const char* Gaussian_CS_Source = R""(
 #version 460
 
