@@ -80,6 +80,8 @@ int main() {
     // Pipeline config
     Graphics::Pipeline::setPolygonMode(false);  // for debug purposes
     Graphics::Pipeline::setDepthTest(true);
+    Graphics::Pipeline::setCullMode(true);
+    Graphics::Pipeline::setBlendMode(true);
 
     // Main Engine Scope
     {
