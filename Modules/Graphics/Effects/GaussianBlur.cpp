@@ -6,7 +6,9 @@
 #include "Graphics/Shaders/Include/Gaussian_CS.h"
 
 namespace x::Graphics {
-    static constexpr float kKernel[5] = {0.06136f, 0.24477f, 0.38774f, 0.24477f, 0.06136f};
+    static constexpr size_t kKernelSize         = 9;
+    static constexpr float kKernel[kKernelSize] = {
+      0.0545f, 0.0850f, 0.1185f, 0.1475f, 0.1600f, 0.1475f, 0.1185f, 0.0850f, 0.0545f};
 
     GaussianBlurEffect::GaussianBlurEffect() {
         const auto computeShader =
@@ -43,7 +45,8 @@ namespace x::Graphics {
         _shaderProgram->use();
         _shaderProgram->setInt("uInputTexture", 0);
         _shaderProgram->setVec2i("uTextureSize", _textureWidth, _textureHeight);
-        _shaderProgram->setFloatArray("uKernel", kKernel, 5);
+        _shaderProgram->setFloatArray("uKernel", kKernel, kKernelSize);
+        _shaderProgram->setFloat("uBlurStrength", _blurStrength);
 
         constexpr u32 kWorkGroups = 16;
         const auto x              = (_textureWidth + (kWorkGroups - 1)) / kWorkGroups;
@@ -66,6 +69,10 @@ namespace x::Graphics {
                      GL_RGBA,
                      GL_FLOAT,
                      nullptr);
+    }
+
+    void GaussianBlurEffect::setBlurStrength(f32 strength) {
+        _blurStrength = strength;
     }
 
     u32 GaussianBlurEffect::getOutputTexture() const {

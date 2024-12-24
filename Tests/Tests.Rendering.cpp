@@ -87,13 +87,6 @@ int main() {
                                                               glm::vec3(0.0f, 0.0f, 0.0f),
                                                               glm::vec3(0.0f, 1.0f, 0.0f));
         renderSystem->registerVolatile(camera.get());
-        const auto vp = camera->getViewProjection();
-
-        // const auto renderTarget = new Graphics::RenderTarget(kWidth, kHeight, true);
-        // renderSystem->registerVolatile(renderTarget);
-        //
-        // const auto ppQuad     = new Graphics::PostProcessQuad;
-        // const auto blurEffect = new Graphics::GaussianBlurEffect;
 
         Graphics::RenderTarget renderTarget(kWidth, kHeight, true);
         renderSystem->registerVolatile(dynamic_cast<Volatile*>(&renderTarget));
@@ -104,6 +97,7 @@ int main() {
         blurEffect.setInputTexture(renderTarget.getColorTexture());
         blurEffect.setRenderTarget(0);  // Back-buffer since it's our final output
         blurEffect.setTextureSize(kWidth, kHeight);
+        blurEffect.setBlurStrength(1.0f);
 
         const auto clock = std::make_shared<Clock>();
         clock->start();

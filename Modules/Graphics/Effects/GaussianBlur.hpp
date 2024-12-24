@@ -17,6 +17,7 @@ namespace x::Graphics {
 
         void apply() const override;
         void setTextureSize(i32 width, i32 height);
+        void setBlurStrength(f32 strength);
         u32 getOutputTexture() const;
 
     private:
@@ -24,5 +25,6 @@ namespace x::Graphics {
         u32 _textureWidth  = 0;
         u32 _textureHeight = 0;
         u32 _outputTexture = 0;
+        f32 _blurStrength  = 0.5f;
     };
 }  // namespace x::Graphics
