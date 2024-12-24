@@ -14,6 +14,6 @@ set(GRAPHICS_SRCS
         ${MODULES}/Graphics/DebugOpenGL.hpp
         ${MODULES}/Graphics/VertexArray.hpp
         ${MODULES}/Graphics/VertexArray.cpp
-        ${MODULES}/Graphics/BigTriangle.hpp
-        ${MODULES}/Graphics/BigTriangle.cpp
+        ${MODULES}/Graphics/PostProcessQuad.hpp
+        ${MODULES}/Graphics/PostProcessQuad.cpp
 )

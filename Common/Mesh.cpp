@@ -24,10 +24,11 @@ namespace x {
     }
 
     void Mesh::update(const std::weak_ptr<Clock>& clock) const {
+        static constexpr auto kRotateAmount = 45.0f;
         if (const auto c = clock.lock()) {
-            const float time = c->getElapsedTime();
-            float angle      = time * 0.001f;
-            _transform->rotate({angle, angle, 0.f});
+            const auto dt = c->getDeltaTime();
+            const auto t  = kRotateAmount * dt;
+            _transform->rotate({t, t, 0.f});
         } else {
             Panic("Failed to get clock lock in Mesh instance.");
         }

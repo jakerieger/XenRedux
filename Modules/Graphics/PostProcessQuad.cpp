@@ -2,7 +2,7 @@
 // Created: 12/23/2024.
 //
 
-#include "BigTriangle.hpp"
+#include "PostProcessQuad.hpp"
 #include "ShaderManager.hpp"
 
 #include <glad.h>

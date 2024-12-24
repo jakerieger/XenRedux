@@ -12,7 +12,7 @@
 #include "PerspectiveCamera.hpp"
 #include "RenderSystem.hpp"
 #include "ShaderManager.hpp"
-#include "Graphics/BigTriangle.hpp"
+#include "Graphics/PostProcessQuad.hpp"
 #include "Graphics/DebugOpenGL.hpp"
 #include "Graphics/Pipeline.hpp"
 #include "Graphics/Primitives.hpp"
@@ -25,7 +25,7 @@ static std::shared_ptr<RenderSystem> renderSystem;
 static GLFWwindow* window;
 static constexpr int kWidth    = 1600;
 static constexpr int kHeight   = 900;
-static constexpr float kAspect = (float)kWidth / (float)kHeight;
+static constexpr float kAspect = (f32)kWidth / (f32)kHeight;
 
 #pragma region Shaders
 #include "Graphics/Shaders/Include/BlinnPhong_VS.h"
