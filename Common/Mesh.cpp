@@ -6,12 +6,15 @@
 
 namespace x {
     Mesh::Mesh(const std::vector<Graphics::VertexAttribute>& attributes,
-               const std::vector<f32>& vertices,
-               const std::vector<u32>& indices,
-               const std::weak_ptr<Graphics::ShaderProgram>& shader)
-        : _transform(std::make_shared<Transform>()), _shader(shader), _numVertices(vertices.size()),
-          _numIndices(indices.size()), _attributes(attributes) {
-        _vertexArray = std::make_unique<Graphics::VertexArray>(attributes, vertices, indices);
+               const std::vector<Graphics::VertexPosNormTanBiTanTex>& vertices,
+               const std::vector<u32>& indices)
+        : _numVertices(CAST<u32>(vertices.size())), _numIndices(CAST<u32>(indices.size())),
+          _attributes(attributes) {
+        _vertexArray =
+          std::make_unique<Graphics::VertexArray<Graphics::VertexPosNormTanBiTanTex, u32>>(
+            attributes,
+            vertices,
+            indices);
         _vertexArray->bind();
         if (!_vertexArray) { Panic("Failed to create vertex array in Mesh instance."); }
     }
@@ -21,34 +24,25 @@ namespace x {
     }
 
     void Mesh::update(const std::weak_ptr<Clock>& clock) const {
-        static constexpr auto kRotateAmount = 45.0f;
-        if (const auto c = clock.lock()) {
-            const auto dt = c->getDeltaTime();
-            const auto t  = kRotateAmount * dt;
-            _transform->rotate({t, t, 0.f});
-        } else {
-            Panic("Failed to get clock lock in Mesh instance.");
-        }
+        // static constexpr auto kRotateAmount = 45.0f;
+        // if (const auto c = clock.lock()) {
+        //     const auto dt = c->getDeltaTime();
+        //     const auto t  = kRotateAmount * dt;
+        //     _transform->rotate({t, t, 0.f});
+        // } else {
+        //     Panic("Failed to get clock lock in Mesh instance.");
+        // }
     }
 
-    void Mesh::draw(const std::shared_ptr<ICamera>& camera) const {
-        const auto shader = _shader.lock();
-        shader->use();
-        // TODO: Consider a different way of updating uniforms, because they can be different.
-        shader->setMat4("uVP", camera->getViewProjection());
-        shader->setMat4("uModel", _transform->getMatrix());
+    void Mesh::draw() const {
         _vertexArray->bind();
-        _vertexArray->bindIndex();
+        _vertexArray->bindIndexBuffer();
         glDrawElements(GL_TRIANGLES, _numIndices, GL_UNSIGNED_INT, 0);
         CHECK_GL_ERROR();
     }
 
     void Mesh::destroy() {
         _vertexArray.reset();
-    }
-
-    const Transform& Mesh::getTransform() const {
-        return *_transform;
     }
 
     u32 Mesh::getIndexCount() const {

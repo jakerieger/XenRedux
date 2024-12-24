@@ -106,7 +106,7 @@ namespace x {
     }
 
     u32 Material::getUniformLocation(const str& name) {
-        if (_uniforms.find(name) != _uniforms.end()) {
+        if (_uniforms.find(name) == _uniforms.end()) {
             const u32 location = glGetUniformLocation(_shaderProgram->getId(), name.c_str());
             _uniforms[name]    = location;
         }

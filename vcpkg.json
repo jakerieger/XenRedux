@@ -10,7 +10,8 @@
     "catch2",
     "cli11",
     "liblzma",
-    "zlib"
+    "zlib",
+    "assimp"
   ],
   "builtin-baseline": "19847ac3d8cad7599e96bd531f9bc1f0ebae6131"
 }

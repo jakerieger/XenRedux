@@ -4,6 +4,7 @@
 
 #include "Camera.hpp"
 #include "Mesh.hpp"
+#include "Model.hpp"
 
 #include <glad.h>
 #include <GLFW/glfw3.h>
@@ -84,10 +85,12 @@ int main() {
         // Shader testing
         const auto program =
           ShaderManager::createProgram(BlinnPhong_VS_Source, BlinnPhong_FS_Source);
-        const auto cubeMesh = Mesh::create(Graphics::VertexAttributes::VertexPosition3_Tex2,
-                                           Primitives::Cube::Vertices,
-                                           Primitives::Cube::Indices,
-                                           program);
+        // const auto cubeMesh = Mesh::create(Graphics::VertexAttributes::VertexPosition3_Tex2,
+        //                                    Primitives::Cube::Vertices,
+        //                                    Primitives::Cube::Indices,
+        //                                    program);
+        const auto shaderBall = std::make_unique<Model>();
+        shaderBall->loadFromFile((getDataPath() / "ShaderBall.glb").toString());
 
         const auto camera = Camera::create<PerspectiveCamera>(45.f,
                                                               kAspect,
@@ -120,15 +123,11 @@ int main() {
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
             // Update stuff
-            {
-                cubeMesh->update(clock);
-                camera->update(clock);
-            }
+            { camera->update(clock); }
 
             renderTarget.bind();
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-            // Draw commands
-            { cubeMesh->draw(camera); }
+            shaderBall->draw(camera);
             renderTarget.unbind();
             ppQuad.draw(renderTarget.getColorTexture());
 
@@ -144,9 +143,6 @@ int main() {
         }
 
         clock->stop();
-
-        cubeMesh->destroy();  // This shouldn't be necessary to do manually once embedded in Xen's
-                              // runtime framework
     }
 
     glfwDestroyWindow(window);

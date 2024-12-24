@@ -18,6 +18,7 @@ set(GRAPHICS_SRCS
         ${MODULES}/Graphics/PostProcessEffect.hpp
         ${MODULES}/Graphics/Texture.hpp
         ${MODULES}/Graphics/Texture.cpp
+        ${MODULES}/Graphics/Vertex.hpp
         # Post processing effects
         ${MODULES}/Graphics/Effects/GaussianBlur.hpp
         ${MODULES}/Graphics/Effects/GaussianBlur.cpp

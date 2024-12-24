@@ -18,11 +18,11 @@ namespace x::Graphics {
         ~PostProcessQuad();
 
         void draw(u32 renderTexture) const;
-        VertexArray* getVertexArray() const;
+        VertexArray<f32, u32>* getVertexArray() const;
         std::shared_ptr<ShaderProgram> getShader() const;
 
     private:
-        std::unique_ptr<VertexArray> _vertexArray;
+        std::unique_ptr<VertexArray<f32, u32>> _vertexArray;
         std::shared_ptr<ShaderProgram> _shader;
     };
 }  // namespace x::Graphics

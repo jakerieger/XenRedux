@@ -6,45 +6,27 @@
 
 #include <glad.h>
 #include "Types.hpp"
-#include "Panic.hpp"
-#include "Transform.hpp"
-#include "Graphics/ShaderProgram.hpp"
-#include "Memory/GpuBuffer.hpp"
-#include "Camera.hpp"
 #include "Clock.hpp"
 #include "Graphics/VertexArray.hpp"
-
-#include <glm/glm.hpp>
 
 namespace x {
     class Mesh {
     public:
         Mesh(const std::vector<Graphics::VertexAttribute>& attributes,
-             const std::vector<f32>& vertices,
-             const std::vector<u32>& indices,
-             const std::weak_ptr<Graphics::ShaderProgram>& shader);
+             const std::vector<Graphics::VertexPosNormTanBiTanTex>& vertices,
+             const std::vector<u32>& indices);
         ~Mesh();
 
-        static std::shared_ptr<Mesh>
-        create(const std::vector<Graphics::VertexAttribute>& attributes,
-               const std::vector<f32>& vertices,
-               const std::vector<u32>& indices,
-               const std::weak_ptr<Graphics::ShaderProgram>& shader) {
-            return std::make_shared<Mesh>(attributes, vertices, indices, shader);
-        }
-
         void update(const std::weak_ptr<Clock>& clock) const;
-        void draw(const std::shared_ptr<ICamera>& camera) const;
+        void draw() const;
         void destroy();
 
-        const Transform& getTransform() const;
         u32 getIndexCount() const;
         u32 getVertexCount() const;
 
     private:
-        std::shared_ptr<Transform> _transform;
-        std::unique_ptr<Graphics::VertexArray> _vertexArray;
-        std::weak_ptr<Graphics::ShaderProgram> _shader;
+        std::unique_ptr<Graphics::VertexArray<Graphics::VertexPosNormTanBiTanTex, u32>>
+          _vertexArray;
         const u32 _numVertices;
         const u32 _numIndices;
         const std::vector<Graphics::VertexAttribute>& _attributes;

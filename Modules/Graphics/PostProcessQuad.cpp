@@ -28,7 +28,8 @@ namespace x {
               {0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(f32), (void*)0},
               {1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(f32), (void*)(2 * sizeof(f32))},
             };
-            _vertexArray = std::make_unique<VertexArray>(vertexAttributes, vertices, indices);
+            _vertexArray =
+              std::make_unique<VertexArray<f32, u32>>(vertexAttributes, vertices, indices);
             _vertexArray->bind();
             if (!_vertexArray) { Panic("Failed to create vertex array in Mesh instance."); }
         }
@@ -45,13 +46,13 @@ namespace x {
             CHECK_GL_ERROR();
 
             _vertexArray->bind();
-            _vertexArray->bindIndex();
+            _vertexArray->bindIndexBuffer();
             glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_INT, 0);
             CHECK_GL_ERROR();
             _vertexArray->unbind();
         }
 
-        VertexArray* PostProcessQuad::getVertexArray() const {
+        VertexArray<f32, u32>* PostProcessQuad::getVertexArray() const {
             return _vertexArray.get();
         }
 

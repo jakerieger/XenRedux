@@ -43,6 +43,7 @@ include(Modules/Window/Window.cmake)
 find_package(liblzma CONFIG REQUIRED)
 find_package(ZLIB REQUIRED)
 find_package(glm CONFIG REQUIRED)
+find_package(assimp CONFIG REQUIRED)
 
 add_library(Xen STATIC
         # Vendor sources
@@ -70,6 +71,8 @@ add_library(Xen STATIC
         ${COMMON}/Material.cpp
         ${COMMON}/Mesh.hpp
         ${COMMON}/Mesh.cpp
+        ${COMMON}/Model.hpp
+        ${COMMON}/Model.cpp
         ${COMMON}/Transform.hpp
         ${COMMON}/Transform.cpp
         ${COMMON}/Clock.hpp
@@ -81,12 +84,14 @@ if (WIN32)
             liblzma::liblzma
             ZLIB::ZLIB
             glm::glm-header-only
+            assimp::assimp
     )
 elseif (UNIX)
     target_link_libraries(Xen PRIVATE
             liblzma::liblzma
             ZLIB::ZLIB
             glm::glm-header-only
+            assimp::assimp
     )
 endif ()
 
