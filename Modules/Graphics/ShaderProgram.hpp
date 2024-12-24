@@ -26,23 +26,39 @@ namespace x::Graphics {
 
         // Common setters
         void setBool(const str& name, bool value) const;
+        void setBool(const u32 location, bool value) const;
         void setInt(const str& name, i32 value) const;
+        void setInt(const u32 location, i32 value) const;
         void setFloat(const str& name, f32 value) const;
+        void setFloat(const u32 location, f32 value) const;
         void setVec2(const str& name, const glm::vec2& value) const;
+        void setVec2(const u32 location, const glm::vec2& value) const;
         void setVec2(const str& name, f32 x, f32 y) const;
+        void setVec2(const u32 location, f32 x, f32 y) const;
         void setVec3(const str& name, const glm::vec3& value) const;
+        void setVec3(const u32 location, const glm::vec3& value) const;
         void setVec3(const str& name, f32 x, f32 y, f32 z) const;
+        void setVec3(const u32 location, f32 x, f32 y, f32 z) const;
         void setVec4(const str& name, const glm::vec4& value) const;
+        void setVec4(const u32 location, const glm::vec4& value) const;
         void setVec4(const str& name, f32 x, f32 y, f32 z, f32 w) const;
+        void setVec4(const u32 location, f32 x, f32 y, f32 z, f32 w) const;
         void setMat2(const str& name, const glm::mat2& mat) const;
+        void setMat2(const u32 location, const glm::mat2& mat) const;
         void setMat3(const str& name, const glm::mat3& mat) const;
+        void setMat3(const u32 location, const glm::mat3& mat) const;
         void setMat4(const str& name, const glm::mat4& mat) const;
+        void setMat4(const u32 location, const glm::mat4& mat) const;
 
         // Additional setters
         void setVec2i(const str& name, i32 x, i32 y) const;
+        void setVec2i(const u32 location, i32 x, i32 y) const;
         void setVec3i(const str& name, i32 x, i32 y, i32 z) const;
+        void setVec3i(const u32 location, i32 x, i32 y, i32 z) const;
         void setVec4i(const str& name, i32 x, i32 y, i32 z, i32 w) const;
+        void setVec4i(const u32 location, i32 x, i32 y, i32 z, i32 w) const;
         void setFloatArray(const str& name, const f32* values, size_t count) const;
+        void setFloatArray(const u32 location, const f32* values, size_t count) const;
 
     private:
         u32 _id;

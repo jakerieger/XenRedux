@@ -84,8 +84,10 @@ int main() {
         // Shader testing
         const auto program =
           ShaderManager::createProgram(BlinnPhong_VS_Source, BlinnPhong_FS_Source);
-        const auto cubeMesh =
-          Mesh::create(Primitives::Cube::Vertices, Primitives::Cube::Indices, program);
+        const auto cubeMesh = Mesh::create(Graphics::VertexAttributes::VertexPosition3_Tex2,
+                                           Primitives::Cube::Vertices,
+                                           Primitives::Cube::Indices,
+                                           program);
 
         const auto camera = Camera::create<PerspectiveCamera>(45.f,
                                                               kAspect,

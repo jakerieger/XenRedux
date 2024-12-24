@@ -19,15 +19,18 @@
 namespace x {
     class Mesh {
     public:
-        Mesh(const std::vector<f32>& vertices,
+        Mesh(const std::vector<Graphics::VertexAttribute>& attributes,
+             const std::vector<f32>& vertices,
              const std::vector<u32>& indices,
              const std::weak_ptr<Graphics::ShaderProgram>& shader);
         ~Mesh();
 
-        static std::shared_ptr<Mesh> create(const std::vector<f32>& vertices,
-                                            const std::vector<u32>& indices,
-                                            const std::weak_ptr<Graphics::ShaderProgram>& shader) {
-            return std::make_shared<Mesh>(vertices, indices, shader);
+        static std::shared_ptr<Mesh>
+        create(const std::vector<Graphics::VertexAttribute>& attributes,
+               const std::vector<f32>& vertices,
+               const std::vector<u32>& indices,
+               const std::weak_ptr<Graphics::ShaderProgram>& shader) {
+            return std::make_shared<Mesh>(attributes, vertices, indices, shader);
         }
 
         void update(const std::weak_ptr<Clock>& clock) const;
@@ -44,6 +47,7 @@ namespace x {
         std::weak_ptr<Graphics::ShaderProgram> _shader;
         const u32 _numVertices;
         const u32 _numIndices;
+        const std::vector<Graphics::VertexAttribute>& _attributes;
     };
 
 }  // namespace x

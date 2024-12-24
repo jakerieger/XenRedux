@@ -55,9 +55,73 @@ namespace x::Graphics {
         }
     }
 
+    void ShaderProgram::setBool(const u32 location, bool value) const {
+        setInt(location, value);
+    }
+
+    void ShaderProgram::setInt(const u32 location, i32 value) const {
+        glUniform1i(location, value);
+    }
+
+    void ShaderProgram::setFloat(const u32 location, f32 value) const {
+        glUniform1f(location, value);
+    }
+
+    void ShaderProgram::setVec2(const u32 location, const glm::vec2& value) const {
+        glUniform2fv(location, 1, &value[0]);
+    }
+
+    void ShaderProgram::setVec2(const u32 location, f32 x, f32 y) const {
+        glUniform2f(location, x, y);
+    }
+
+    void ShaderProgram::setVec3(const u32 location, const glm::vec3& value) const {
+        glUniform3fv(location, 1, &value[0]);
+    }
+
+    void ShaderProgram::setVec3(const u32 location, f32 x, f32 y, f32 z) const {
+        glUniform3f(location, x, y, z);
+    }
+
+    void ShaderProgram::setVec4(const u32 location, const glm::vec4& value) const {
+        glUniform4fv(location, 1, &value[0]);
+    }
+
+    void ShaderProgram::setVec4(const u32 location, f32 x, f32 y, f32 z, f32 w) const {
+        glUniform4f(location, x, y, z, w);
+    }
+
+    void ShaderProgram::setMat2(const u32 location, const glm::mat2& mat) const {
+        glUniformMatrix2fv(location, 1, GL_FALSE, &mat[0][0]);
+    }
+
+    void ShaderProgram::setMat3(const u32 location, const glm::mat3& mat) const {
+        glUniformMatrix3fv(location, 1, GL_FALSE, &mat[0][0]);
+    }
+
+    void ShaderProgram::setMat4(const u32 location, const glm::mat4& mat) const {
+        glUniformMatrix4fv(location, 1, GL_FALSE, &mat[0][0]);
+    }
+
+    void ShaderProgram::setVec2i(const u32 location, i32 x, i32 y) const {
+        glUniform2i(location, x, y);
+    }
+
+    void ShaderProgram::setVec3i(const u32 location, i32 x, i32 y, i32 z) const {
+        glUniform3i(location, x, y, z);
+    }
+
+    void ShaderProgram::setVec4i(const u32 location, i32 x, i32 y, i32 z, i32 w) const {
+        glUniform4i(location, x, y, z, w);
+    }
+
+    void ShaderProgram::setFloatArray(const u32 location, const f32* values, size_t count) const {
+        glUniform1fv(location, count, values);
+    }
+
     void ShaderProgram::setInt(const str& name, int value) const {
         if (const auto location = getUniformLocation(name); location != -1) {
-            glUniform1i(glGetUniformLocation(_id, name.c_str()), value);
+            glUniform1i(location, value);
         }
     }
 

@@ -8,19 +8,11 @@
 #include "Types.hpp"
 #include "Panic.hpp"
 #include "Memory/GpuBuffer.hpp"
+#include "VertexAttribute.hpp"
 
 #include <vector>
 
 namespace x::Graphics {
-    struct VertexAttribute {
-        GLuint index;
-        GLsizei size;
-        GLenum type;
-        GLboolean normalized;
-        GLsizei stride;
-        const void* offset;
-    };
-
     class VertexArray {
     public:
         VertexArray(const std::vector<VertexAttribute>& attributes,

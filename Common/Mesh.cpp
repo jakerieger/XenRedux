@@ -5,16 +5,13 @@
 #include "Mesh.hpp"
 
 namespace x {
-    Mesh::Mesh(const std::vector<f32>& vertices,
+    Mesh::Mesh(const std::vector<Graphics::VertexAttribute>& attributes,
+               const std::vector<f32>& vertices,
                const std::vector<u32>& indices,
                const std::weak_ptr<Graphics::ShaderProgram>& shader)
         : _transform(std::make_shared<Transform>()), _shader(shader), _numVertices(vertices.size()),
-          _numIndices(indices.size()) {
-        std::vector<Graphics::VertexAttribute> vertexAttributes = {
-          {0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(f32), (void*)0},
-          {1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(f32), (void*)(3 * sizeof(f32))},
-        };
-        _vertexArray = std::make_unique<Graphics::VertexArray>(vertexAttributes, vertices, indices);
+          _numIndices(indices.size()), _attributes(attributes) {
+        _vertexArray = std::make_unique<Graphics::VertexArray>(attributes, vertices, indices);
         _vertexArray->bind();
         if (!_vertexArray) { Panic("Failed to create vertex array in Mesh instance."); }
     }
