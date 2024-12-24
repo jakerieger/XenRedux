@@ -2,8 +2,9 @@
 // Created: 12/23/2024.
 //
 
+#include <stb_image.h>
+#include "Panic.hpp"
 #include "Texture.hpp"
-
 #include "DebugOpenGL.hpp"
 
 namespace x::Graphics {

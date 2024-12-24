@@ -5,10 +5,8 @@
 #pragma once
 
 #include <glad.h>
-#include <stb_image.h>
 
 #include "Types.hpp"
-#include "Panic.hpp"
 #include "Data/BinaryData.hpp"
 
 namespace x::Graphics {
