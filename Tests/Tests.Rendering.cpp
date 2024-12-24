@@ -85,13 +85,6 @@ int main() {
 
     // Main Engine Scope
     {
-        // Shader testing
-        const auto program =
-          ShaderManager::createProgram(BlinnPhong_VS_Source, BlinnPhong_FS_Source);
-        // const auto cubeMesh = Mesh::create(Graphics::VertexAttributes::VertexPosition3_Tex2,
-        //                                    Primitives::Cube::Vertices,
-        //                                    Primitives::Cube::Indices,
-        //                                    program);
         const auto shaderBall = std::make_unique<Model>();
         shaderBall->loadFromFile((getDataPath() / "shaderBall.fbx").toString());
 
@@ -122,16 +115,22 @@ int main() {
 
         while (!glfwWindowShouldClose(window)) {
             clock->tick();
+            // clear back buffer
             glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
             // Update stuff
             { camera->update(clock); }
 
+            // bind render texture
             renderTarget.bind();
+            // clear texture
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+            // draw ball to texture
             shaderBall->draw(camera);
+            // unbind texture (and rebind to back buffer)
             renderTarget.unbind();
+            // draw texture to fullscreen quad
             ppQuad.draw(renderTarget.getColorTexture());
 
             glfwPollEvents();
