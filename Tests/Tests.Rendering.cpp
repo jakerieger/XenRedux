@@ -17,6 +17,7 @@
 #include "Graphics/Pipeline.hpp"
 #include "Graphics/Primitives.hpp"
 #include "Graphics/RenderTarget.hpp"
+#include "Graphics/Effects/GaussianBlur.hpp"
 
 using namespace x;
 
@@ -70,61 +71,80 @@ int main() {
     // Pipeline config
     Graphics::Pipeline::setPolygonMode(false);  // for debug purposes
 
-    // Shader testing
-    const auto program = ShaderManager::createProgram(BlinnPhong_VS_Source, BlinnPhong_FS_Source);
-    const auto cubeMesh =
-      Mesh::create(Primitives::Cube::Vertices, Primitives::Cube::Indices, program);
+    // Main Engine Scope
+    {
+        // Shader testing
+        const auto program =
+          ShaderManager::createProgram(BlinnPhong_VS_Source, BlinnPhong_FS_Source);
+        const auto cubeMesh =
+          Mesh::create(Primitives::Cube::Vertices, Primitives::Cube::Indices, program);
 
-    const auto camera = Camera::create<PerspectiveCamera>(45.f,
-                                                          kAspect,
-                                                          0.1f,
-                                                          100.0f,
-                                                          glm::vec3(0.0f, 0.0f, 5.0f),
-                                                          glm::vec3(0.0f, 0.0f, 0.0f),
-                                                          glm::vec3(0.0f, 1.0f, 0.0f));
-    renderSystem->registerVolatile(camera.get());
-    const auto vp = camera->getViewProjection();
+        const auto camera = Camera::create<PerspectiveCamera>(45.f,
+                                                              kAspect,
+                                                              0.1f,
+                                                              100.0f,
+                                                              glm::vec3(0.0f, 0.0f, 5.0f),
+                                                              glm::vec3(0.0f, 0.0f, 0.0f),
+                                                              glm::vec3(0.0f, 1.0f, 0.0f));
+        renderSystem->registerVolatile(camera.get());
+        const auto vp = camera->getViewProjection();
 
-    const auto renderTarget = new Graphics::RenderTarget(kWidth, kHeight, true);
-    renderSystem->registerVolatile(renderTarget);
+        // const auto renderTarget = new Graphics::RenderTarget(kWidth, kHeight, true);
+        // renderSystem->registerVolatile(renderTarget);
+        //
+        // const auto ppQuad     = new Graphics::PostProcessQuad;
+        // const auto blurEffect = new Graphics::GaussianBlurEffect;
 
-    const auto ppQuad = new Graphics::PostProcessQuad;
+        Graphics::RenderTarget renderTarget(kWidth, kHeight, true);
+        renderSystem->registerVolatile(dynamic_cast<Volatile*>(&renderTarget));
 
-    const auto clock = std::make_shared<Clock>();
-    clock->start();
+        const Graphics::PostProcessQuad ppQuad;
+        Graphics::GaussianBlurEffect blurEffect;
 
-    while (!glfwWindowShouldClose(window)) {
-        clock->tick();
-        glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        blurEffect.setInputTexture(renderTarget.getColorTexture());
+        blurEffect.setRenderTarget(0);  // Back-buffer since it's our final output
+        blurEffect.setTextureSize(kWidth, kHeight);
 
-        // Update stuff
-        {
-            cubeMesh->update(clock);
-            camera->update(clock);
+        const auto clock = std::make_shared<Clock>();
+        clock->start();
+
+        while (!glfwWindowShouldClose(window)) {
+            clock->tick();
+            glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+            // Update stuff
+            {
+                cubeMesh->update(clock);
+                camera->update(clock);
+            }
+
+            renderTarget.bind();
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+            // Draw commands
+            { cubeMesh->draw(camera); }
+            renderTarget.unbind();
+
+            blurEffect.apply();
+            ppQuad.draw(blurEffect.getOutputTexture());
+
+            glfwPollEvents();
+            glfwSwapBuffers(window);
+
+            using ::std::literals::string_literals::operator""s;
+            glfwSetWindowTitle(
+              window,
+              ("XEN Engine | FPS: "s + std::to_string(clock->getFrameRate())).c_str());
+
+            clock->update();
         }
 
-        renderTarget->bind();
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        // Draw commands
-        { cubeMesh->draw(camera); }
-        renderTarget->unbind();
+        clock->stop();
 
-        ppQuad->draw(renderTarget->getColorTexture());
-
-        glfwPollEvents();
-        glfwSwapBuffers(window);
-
-        clock->update();
+        cubeMesh->destroy();  // This shouldn't be necessary to do manually once embedded in Xen's
+                              // runtime framework
     }
 
-    clock->stop();
-
-    cubeMesh->destroy();  // This shouldn't be necessary to do manually once embedded in Xen's
-                          // runtime framework
-
-    delete renderTarget;
-    delete ppQuad;
     glfwDestroyWindow(window);
     glfwTerminate();
     return 0;

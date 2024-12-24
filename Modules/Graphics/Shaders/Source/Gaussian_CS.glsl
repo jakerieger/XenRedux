@@ -3,37 +3,33 @@
 layout (local_size_x = 16, local_size_y = 16) in;
 
 uniform sampler2D uInputTexture;
-uniform ivec2 uTextureSize; // The size of the texture in pixels (width, height)
+uniform ivec2 uTextureSize; // Texture size in pixels
 uniform float uKernel[5]; // Gaussian kernel
 
 layout (binding = 0) writeonly uniform image2D uOutputTexture;
 
-vec4 verticalPass(ivec2 texelCoord) {
-    // Sample the input texture in the vertical direction
-    vec4 color = vec4(0.0);
-    for (int i = -2; i <= 2; i++) {
-        vec2 offset = vec2(0, i);
-        color += texture(uInputTexture, (texelCoord + offset) / vec2(uTextureSize)) * uKernel[i + 2];
-    }
-    return color;
-}
-
-vec4 horizontalPass(ivec2 texelCoord) {
-    // Sample the input texture in the horizontal direction
-    vec4 color = vec4(0.0);
-    for (int i = -2; i <= 2; i++) {
-        vec2 offset = vec2(i, 0);
-        color += texture(uInputTexture, (texelCoord + offset) / vec2(uTextureSize)) * uKernel[i + 2];
-    }
-    return color;
-}
-
 void main() {
-    ivec2 texelCoord = ivec2(gl_GlobalInvocationID.xy);
+    ivec2 globalID = ivec2(gl_GlobalInvocationID.xy); // Get pixel position
+    if (globalID.x >= uTextureSize.x || globalID.y >= uTextureSize.y) return;
 
-    vec4 vertical = verticalPass(texelCoord);
-    vec4 horizontal = horizontalPass(texelCoord);
-    vec4 color = mix(vertical, horizontal, 0.5); // I have no idea if this is right but we'll see
+    // To store the final color after applying the kernel
+    vec4 color = vec4(0.0);
 
-    imageStore(uOutputTexture, texelCoord, color);
+    // Horizontal blur (in x-direction)
+    for (int i = -2; i <= 2; ++i) {
+        ivec2 texCoord = globalID + ivec2(i, 0); // Get neighboring pixel in x-direction
+        texCoord = clamp(texCoord, ivec2(0), uTextureSize - ivec2(1)); // Clamp to valid texture coordinates
+        color += texture(uInputTexture, texCoord / vec2(uTextureSize)) * uKernel[i + 2]; // Apply kernel weight
+    }
+
+    // Vertical blur (in y-direction)
+    vec4 finalColor = vec4(0.0);
+    for (int i = -2; i <= 2; ++i) {
+        ivec2 texCoord = globalID + ivec2(0, i); // Get neighboring pixel in y-direction
+        texCoord = clamp(texCoord, ivec2(0), uTextureSize - ivec2(1)); // Clamp to valid texture coordinates
+        finalColor += texture(uInputTexture, texCoord / vec2(uTextureSize)) * uKernel[i + 2]; // Apply kernel weight
+    }
+
+    // Write the final color to the output texture
+    imageStore(uOutputTexture, globalID, finalColor);
 }

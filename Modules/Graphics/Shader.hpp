@@ -16,18 +16,22 @@ namespace x::Graphics {
     };
 
     class Shader {
+        friend class ComputeShader;
+
     public:
         Shader(ShaderType shaderType, const str& shaderSource);
         ~Shader();
 
         GLuint getId() const;
         const str& getSource() const;
+        ShaderType getType() const;
 
     private:
         GLuint _id;
-        GLenum _shaderType;
+        ShaderType _shaderType;
         const str _shaderSource;
         bool compile();
         void checkErrors() const;
+        static GLenum shaderTypeToEnum(const ShaderType shaderType);
     };
 }  // namespace x::Graphics

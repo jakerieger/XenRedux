@@ -5,15 +5,15 @@
 #pragma once
 
 #include "Graphics/ShaderProgram.hpp"
-#include "Graphics/ComputeShader.hpp"
+
+#include <memory>
 
 namespace x {
     class ShaderManager {
     public:
         static std::shared_ptr<Graphics::ShaderProgram> createProgram(const str& vertexSource,
                                                                       const str& fragmentSource);
-        static std::shared_ptr<Graphics::ComputeShader>
-        createComputeShader(const str& computeSource);
+        static std::shared_ptr<Graphics::ShaderProgram> createProgram(const str& computeSource);
 
     private:
         ShaderManager() = default;

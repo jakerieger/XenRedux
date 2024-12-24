@@ -7,8 +7,6 @@ set(GRAPHICS_SRCS
         ${MODULES}/Graphics/Primitives.cpp
         ${MODULES}/Graphics/Shader.hpp
         ${MODULES}/Graphics/Shader.cpp
-        ${MODULES}/Graphics/ComputeShader.hpp
-        ${MODULES}/Graphics/ComputeShader.cpp
         ${MODULES}/Graphics/ShaderProgram.hpp
         ${MODULES}/Graphics/ShaderProgram.cpp
         ${MODULES}/Graphics/DebugOpenGL.hpp
@@ -16,4 +14,8 @@ set(GRAPHICS_SRCS
         ${MODULES}/Graphics/VertexArray.cpp
         ${MODULES}/Graphics/PostProcessQuad.hpp
         ${MODULES}/Graphics/PostProcessQuad.cpp
+        ${MODULES}/Graphics/PostProcessEffect.hpp
+        # Post processing effects
+        ${MODULES}/Graphics/Effects/GaussianBlur.hpp
+        ${MODULES}/Graphics/Effects/GaussianBlur.cpp
 )

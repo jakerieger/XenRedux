@@ -4,10 +4,10 @@
 
 #pragma once
 
+#include <glad.h>
+
 #include "Shader.hpp"
 #include "Types.hpp"
-#include "RenderSystem.hpp"
-#include <glad.h>
 #include <glm/glm.hpp>
 
 namespace x::Graphics {
@@ -16,26 +16,42 @@ namespace x::Graphics {
         ShaderProgram();
         ~ShaderProgram();
 
-        void attachShader(const Shader& shader) const;
+        void attachShader(const Shader& shader);
         void link() const;
         void use() const;
-        GLuint getId() const;
+        u32 getId() const;
+        void dispatchCompute(u32 x, u32 y, u32 z) const;
 
-        void setBool(const std::string& name, bool value) const;
-        void setInt(const std::string& name, int value) const;
-        void setFloat(const std::string& name, float value) const;
-        void setVec2(const std::string& name, const glm::vec2& value) const;
-        void setVec2(const std::string& name, float x, float y) const;
-        void setVec3(const std::string& name, const glm::vec3& value) const;
-        void setVec3(const std::string& name, float x, float y, float z) const;
-        void setVec4(const std::string& name, const glm::vec4& value) const;
-        void setVec4(const std::string& name, float x, float y, float z, float w) const;
-        void setMat2(const std::string& name, const glm::mat2& mat) const;
-        void setMat3(const std::string& name, const glm::mat3& mat) const;
-        void setMat4(const std::string& name, const glm::mat4& mat) const;
+        // TODO: Refactor these to use templates / generics
+
+        // Common setters
+        void setBool(const str& name, bool value) const;
+        void setInt(const str& name, i32 value) const;
+        void setFloat(const str& name, f32 value) const;
+        void setVec2(const str& name, const glm::vec2& value) const;
+        void setVec2(const str& name, f32 x, f32 y) const;
+        void setVec3(const str& name, const glm::vec3& value) const;
+        void setVec3(const str& name, f32 x, f32 y, f32 z) const;
+        void setVec4(const str& name, const glm::vec4& value) const;
+        void setVec4(const str& name, f32 x, f32 y, f32 z, f32 w) const;
+        void setMat2(const str& name, const glm::mat2& mat) const;
+        void setMat3(const str& name, const glm::mat3& mat) const;
+        void setMat4(const str& name, const glm::mat4& mat) const;
+
+        // Additional setters
+        void setVec2i(const str& name, i32 x, i32 y) const;
+        void setVec3i(const str& name, i32 x, i32 y, i32 z) const;
+        void setVec4i(const str& name, i32 x, i32 y, i32 z, i32 w) const;
+        void setFloatArray(const str& name, const f32* values, size_t count) const;
 
     private:
-        GLuint _id;
+        u32 _id;
+        bool _containsCompute = false;
         void checkErrors() const;
+        i32 getUniformLocation(const str& name) const;
     };
+
+    // Template implementations
+
+    // template<typename Number>
 }  // namespace x::Graphics

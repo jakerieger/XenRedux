@@ -50,5 +50,13 @@ namespace x {
             CHECK_GL_ERROR();
             _vertexArray->unbind();
         }
+
+        VertexArray* PostProcessQuad::getVertexArray() const {
+            return _vertexArray.get();
+        }
+
+        std::shared_ptr<ShaderProgram> PostProcessQuad::getShader() const {
+            return _shader;
+        }
     }  // namespace Graphics
 }  // namespace x

@@ -16,8 +16,8 @@ namespace x {
         return program;
     }
 
-    std::shared_ptr<Graphics::ComputeShader>
-    ShaderManager::createComputeShader(const str& computeSource) {
-        return std::make_shared<Graphics::ComputeShader>(computeSource);
+    std::shared_ptr<Graphics::ShaderProgram>
+    ShaderManager::createProgram(const str& computeSource) {
+        return nullptr;
     }
 }  // namespace x

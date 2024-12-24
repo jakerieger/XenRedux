@@ -7,8 +7,7 @@
 
 namespace x::Graphics {
     Shader::Shader(ShaderType shaderType, const str& shaderSource)
-        : _shaderType(shaderType == ShaderType::Vertex ? GL_VERTEX_SHADER : GL_FRAGMENT_SHADER),
-          _shaderSource(shaderSource) {
+        : _shaderType(shaderType), _shaderSource(shaderSource) {
         compile();
     }
 
@@ -24,27 +23,17 @@ namespace x::Graphics {
         return _shaderSource;
     }
 
+    ShaderType Shader::getType() const {
+        return _shaderType;
+    }
+
     bool Shader::compile() {
-        switch (_shaderType) {
-            case GL_VERTEX_SHADER: {
-                _id                = glCreateShader(GL_VERTEX_SHADER);
-                const char* source = _shaderSource.c_str();
-                glShaderSource(_id, 1, &source, nullptr);
-                glCompileShader(_id);
-                checkErrors();
-                return true;
-            }
-            case GL_FRAGMENT_SHADER: {
-                _id                = glCreateShader(GL_FRAGMENT_SHADER);
-                const char* source = _shaderSource.c_str();
-                glShaderSource(_id, 1, &source, nullptr);
-                glCompileShader(_id);
-                checkErrors();
-                return true;
-            }
-            default:
-                return false;
-        }
+        _id                = glCreateShader(shaderTypeToEnum(_shaderType));
+        const char* source = _shaderSource.c_str();
+        glShaderSource(_id, 1, &source, nullptr);
+        glCompileShader(_id);
+        checkErrors();
+        return true;
     }
 
     void Shader::checkErrors() const {
@@ -53,8 +42,26 @@ namespace x::Graphics {
         glGetShaderiv(_id, GL_COMPILE_STATUS, &success);
         if (!success) {
             glGetShaderInfoLog(_id, 1024, nullptr, infoLog);
-            cstr type = _shaderType == GL_VERTEX_SHADER ? "Vertex" : "Fragment";
+            const char* type = _shaderType == ShaderType::Vertex     ? "Vertex"
+                               : _shaderType == ShaderType::Fragment ? "Fragment"
+                                                                     : "Compute";
             Panic("Shader compilation error (%s):\n%s", type, infoLog);
+        }
+    }
+
+    GLenum Shader::shaderTypeToEnum(const ShaderType shaderType) {
+        switch (shaderType) {
+            case ShaderType::Vertex: {
+                return GL_VERTEX_SHADER;
+            }
+            case ShaderType::Fragment: {
+                return GL_FRAGMENT_SHADER;
+            }
+            case ShaderType::Compute: {
+                return GL_COMPUTE_SHADER;
+            }
+            default:
+                return false;
         }
     }
 }  // namespace x::Graphics
