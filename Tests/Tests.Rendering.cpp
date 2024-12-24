@@ -12,11 +12,13 @@
 #include "PerspectiveCamera.hpp"
 #include "RenderSystem.hpp"
 #include "ShaderManager.hpp"
+#include "Filesystem/Filesystem.hpp"
 #include "Graphics/PostProcessQuad.hpp"
 #include "Graphics/DebugOpenGL.hpp"
 #include "Graphics/Pipeline.hpp"
 #include "Graphics/Primitives.hpp"
 #include "Graphics/RenderTarget.hpp"
+#include "Graphics/Texture.hpp"
 #include "Graphics/Effects/GaussianBlur.hpp"
 
 using namespace x;
@@ -65,6 +67,12 @@ void initGL() {
 }
 #pragma endregion
 
+static Filesystem::Path getDataPath() {
+    const Filesystem::Path currentFile(__FILE__);
+    const auto dataPath = currentFile.parent() / "Data";
+    return dataPath;
+}
+
 int main() {
     initGL();
 
@@ -92,12 +100,14 @@ int main() {
         renderSystem->registerVolatile(dynamic_cast<Volatile*>(&renderTarget));
 
         const Graphics::PostProcessQuad ppQuad;
-        Graphics::GaussianBlurEffect blurEffect;
 
-        blurEffect.setInputTexture(renderTarget.getColorTexture());
-        blurEffect.setRenderTarget(0);  // Back-buffer since it's our final output
-        blurEffect.setTextureSize(kWidth, kHeight);
-        blurEffect.setBlurStrength(1.0f);
+        const auto texturePath = getDataPath() / "jake.jpg";
+        if (!texturePath.exists()) { Panic("Texture file not found: %s", texturePath.toString()); }
+        auto texture = Graphics::Texture();
+        auto result  = texture.loadFromFile(texturePath.toString(), true);
+        if (!result) { Panic("Failed to load texture from %s", texturePath.toString()); }
+
+        // Graphics::Texture texture;
 
         const auto clock = std::make_shared<Clock>();
         clock->start();
@@ -118,9 +128,7 @@ int main() {
             // Draw commands
             { cubeMesh->draw(camera); }
             renderTarget.unbind();
-
-            blurEffect.apply();
-            ppQuad.draw(blurEffect.getOutputTexture());
+            ppQuad.draw(renderTarget.getColorTexture());
 
             glfwPollEvents();
             glfwSwapBuffers(window);

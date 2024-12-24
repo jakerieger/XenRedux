@@ -47,6 +47,7 @@ find_package(glm CONFIG REQUIRED)
 add_library(Xen STATIC
         # Vendor sources
         ${GLAD_SRCS}
+        ${STB_SRCS}
         # Modules
         ${DATA_SRCS}
         ${FILESYSTEM_SRCS}

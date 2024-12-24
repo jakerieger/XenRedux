@@ -103,12 +103,16 @@ namespace x::Graphics {
         glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, nullptr, GL_TRUE);
     }
 
-    static void checkError(const char* file, int line) {
+    static bool checkError(const char* file, int line) {
         GLenum error;
+        int count = 0;
         while ((error = glGetError()) != GL_NO_ERROR) {
             std::cout << file << ":" << line << '\n';
             std::cout << "OpenGL Error: " << error << std::endl;
+            count++;
         }
+        if (count > 0) { return true; }
+        return false;
     }
 }  // namespace x::Graphics
 
