@@ -9,11 +9,17 @@ uniform mat4 uVP;
 uniform mat4 uModel;
 
 out vec4 VertexPosition;
+out vec3 Normal;
+out vec3 Tangent;
+out vec3 BiTangent;
 out vec2 TexCoord;
 
 void main() {
     vec4 pos = vec4(aPos, 1.0);
     gl_Position = uVP * uModel * pos;
     VertexPosition = pos;
+    Normal = aNormal;
+    Tangent = aTangent;
+    BiTangent = aBiTangent;
     TexCoord = aTexCoord;
 }

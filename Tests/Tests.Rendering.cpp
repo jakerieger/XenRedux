@@ -79,6 +79,7 @@ int main() {
 
     // Pipeline config
     Graphics::Pipeline::setPolygonMode(false);  // for debug purposes
+    Graphics::Pipeline::setDepthTest(true);
 
     // Main Engine Scope
     {
@@ -90,7 +91,7 @@ int main() {
         //                                    Primitives::Cube::Indices,
         //                                    program);
         const auto shaderBall = std::make_unique<Model>();
-        shaderBall->loadFromFile((getDataPath() / "ShaderBall.glb").toString());
+        shaderBall->loadFromFile((getDataPath() / "shaderBall.fbx").toString());
 
         const auto camera = Camera::create<PerspectiveCamera>(45.f,
                                                               kAspect,

@@ -17,7 +17,8 @@ namespace x {
     Model::Model() {
         auto program = ShaderManager::createProgram(BlinnPhong_VS_Source, BlinnPhong_FS_Source);
         _material    = std::make_unique<Material>(program);
-        _transform.setPosition(glm::vec3(0.0f, -2.0f, -5.0f));
+        _transform.setScale(glm::vec3(0.01f));
+        _transform.setPosition(glm::vec3(0.0f, -1.4f, -3.0f));
     }
 
     bool Model::loadFromFile(const str& filename) {
