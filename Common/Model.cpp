@@ -16,8 +16,9 @@
 
 namespace x {
     Model::Model() {
-        auto program = ShaderManager::createProgram(BlinnPhong_VS_Source, BlinnPhong_FS_Source);
-        _material    = std::make_shared<BlinnPhongMaterial>(program,
+        auto program =
+          ShaderManager::get().getShaderProgram(BlinnPhong_VS_Source, BlinnPhong_FS_Source);
+        _material = std::make_shared<BlinnPhongMaterial>(program,
                                                          glm::vec3(0.1f),
                                                          glm::vec3(1.f, 0.2f, 0.f),
                                                          glm::vec3(1.f),

@@ -15,7 +15,7 @@
 namespace x {
     namespace Graphics {
         PostProcessQuad::PostProcessQuad() {
-            _shader = ShaderManager::createProgram(Quad_VS_Source, Quad_FS_Source);
+            _shader = ShaderManager::get().getShaderProgram(Quad_VS_Source, Quad_FS_Source);
             // clang-format off
             std::vector<f32> vertices = {
                 -1.0f, -1.0f,  0.0f, 0.0f,

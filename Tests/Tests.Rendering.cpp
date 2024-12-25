@@ -102,7 +102,7 @@ int main() {
         Graphics::RenderTarget renderTarget(kWidth, kHeight, true);
         renderSystem->registerVolatile(dynamic_cast<Volatile*>(&renderTarget));
 
-        const Graphics::PostProcessQuad ppQuad;
+        // const Graphics::PostProcessQuad ppQuad;
 
         const auto texturePath = getDataPath() / "jake.jpg";
         if (!texturePath.exists()) { Panic("Texture file not found: %s", texturePath.toString()); }
@@ -111,9 +111,13 @@ int main() {
         if (!result) { Panic("Failed to load texture from %s", texturePath.toString()); }
 
         DirectionalLight sun;
+        sun.setIntensity(1.f);
+        sun.setColor(glm::vec3(0.5f));
 
         const auto clock = std::make_shared<Clock>();
         clock->start();
+
+        auto& shaderManager = ShaderManager::get();
 
         while (!glfwWindowShouldClose(window)) {
             clock->tick();
@@ -149,10 +153,9 @@ int main() {
             glfwPollEvents();
             glfwSwapBuffers(window);
 
-            using ::std::literals::string_literals::operator""s;
             glfwSetWindowTitle(
               window,
-              ("XEN Engine | FPS: "s + std::to_string(clock->getFrameRate())).c_str());
+              ("XEN Engine | FPS: " + std::to_string(clock->getFrameRate())).c_str());
 
             clock->update();
         }

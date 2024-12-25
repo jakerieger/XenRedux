@@ -44,6 +44,8 @@ find_package(liblzma CONFIG REQUIRED)
 find_package(ZLIB REQUIRED)
 find_package(glm CONFIG REQUIRED)
 find_package(assimp CONFIG REQUIRED)
+find_package(xxHash CONFIG REQUIRED)
+
 
 add_library(Xen STATIC
         # Vendor sources
@@ -91,6 +93,7 @@ if (WIN32)
             ZLIB::ZLIB
             glm::glm-header-only
             assimp::assimp
+            xxHash::xxhash
     )
 elseif (UNIX)
     target_link_libraries(Xen PRIVATE
@@ -98,6 +101,7 @@ elseif (UNIX)
             ZLIB::ZLIB
             glm::glm-header-only
             assimp::assimp
+            xxHash::xxhash
     )
 endif ()
 
