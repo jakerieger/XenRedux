@@ -10,19 +10,18 @@ layout (location = 4) in vec2 aTexCoord;
 uniform mat4 uVP;
 uniform mat4 uModel;
 
-out vec4 VertexPosition;
-out vec3 Normal;
-out vec3 Tangent;
-out vec3 BiTangent;
 out vec2 TexCoord;
+out vec3 FragPos;
+out vec3 FragNormal;
 
 void main() {
-    vec4 pos = vec4(aPos, 1.0);
-    gl_Position = uVP * uModel * pos;
-    VertexPosition = pos;
-    Normal = aNormal;
-    Tangent = aTangent;
-    BiTangent = aBiTangent;
+    FragPos = vec3(uModel * vec4(aPos, 1.0));
+
+    mat3 normalMatrix = mat3(transpose(inverse(uModel)));
+    FragNormal = normalize(normalMatrix * aNormal);
+
     TexCoord = aTexCoord;
+
+    gl_Position = uVP * vec4(FragPos, 1.0);
 }
 )"";

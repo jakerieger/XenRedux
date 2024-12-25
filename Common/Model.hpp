@@ -7,6 +7,7 @@
 #include "Mesh.hpp"
 #include "Types.hpp"
 #include "Camera.hpp"
+#include "DirectionalLight.hpp"
 #include "Material.hpp"
 #include "Transform.hpp"
 
@@ -20,14 +21,16 @@ namespace x {
         Model();
 
         bool loadFromFile(const str& filename);
-        void draw(const std::shared_ptr<ICamera>& camera);
+        void draw(const std::shared_ptr<ICamera>& camera,
+                  DirectionalLight& sun,
+                  const std::vector<std::weak_ptr<ILight>>& lights = {});
 
         Transform& getTransform();
 
     private:
         std::vector<std::unique_ptr<Mesh>> _meshes;
         // TODO: Allow mapping different materials to different meshes
-        std::unique_ptr<Material> _material;
+        std::shared_ptr<IMaterial> _material;
         Transform _transform;
         void processNode(const aiNode* node, const aiScene* scene);
         std::unique_ptr<Mesh> processMesh(aiMesh* mesh, const aiScene* scene) const;

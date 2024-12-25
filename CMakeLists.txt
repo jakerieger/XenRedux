@@ -77,6 +77,12 @@ add_library(Xen STATIC
         ${COMMON}/Transform.cpp
         ${COMMON}/Clock.hpp
         ${COMMON}/Clock.cpp
+        ${COMMON}/Light.hpp
+        ${COMMON}/Light.cpp
+        ${COMMON}/DirectionalLight.hpp
+        ${COMMON}/DirectionalLight.cpp
+        ${COMMON}/BlinnPhongMaterial.hpp
+        ${COMMON}/BlinnPhongMaterial.cpp
 )
 
 if (WIN32)

@@ -4,6 +4,7 @@
 
 #include "Model.hpp"
 
+#include "BlinnPhongMaterial.hpp"
 #include "ShaderManager.hpp"
 #include "Graphics/Vertex.hpp"
 
@@ -16,7 +17,11 @@
 namespace x {
     Model::Model() {
         auto program = ShaderManager::createProgram(BlinnPhong_VS_Source, BlinnPhong_FS_Source);
-        _material    = std::make_unique<Material>(program);
+        _material    = std::make_shared<BlinnPhongMaterial>(program,
+                                                         glm::vec3(0.1f),
+                                                         glm::vec3(1.f, 0.2f, 0.f),
+                                                         glm::vec3(1.f),
+                                                         1.f);
         _transform.setScale(glm::vec3(0.01f));
         _transform.setPosition(glm::vec3(0.0f, -1.4f, -3.0f));
     }
@@ -35,10 +40,22 @@ namespace x {
         return true;
     }
 
-    void Model::draw(const std::shared_ptr<ICamera>& camera) {
-        _material->apply();
-        _material->setUniform("uVP", camera->getViewProjection());
-        _material->setUniform("uModel", _transform.getMatrix());
+    void Model::draw(const std::shared_ptr<ICamera>& camera,
+                     DirectionalLight& sun,
+                     const std::vector<std::weak_ptr<ILight>>& lights) {
+        const auto vp    = camera->getViewProjection();
+        const auto model = _transform.getMatrix();
+
+        _material->apply(camera);
+        _material->setUniform("uVP", vp);
+        _material->setUniform("uModel", model);
+        sun.updateUniforms(_material);  // Should be done after material has been applied
+
+        // Other scene lights
+        for (auto& light : lights) {
+            const auto ptr = light.lock();
+            if (ptr) { ptr->updateUniforms(_material); }
+        }
 
         for (const auto& mesh : _meshes) {
             mesh->draw();

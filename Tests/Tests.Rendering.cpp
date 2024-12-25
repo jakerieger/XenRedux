@@ -3,6 +3,7 @@
 //
 
 #include "Camera.hpp"
+#include "DirectionalLight.hpp"
 #include "Mesh.hpp"
 #include "Model.hpp"
 
@@ -38,12 +39,13 @@ static constexpr float kAspect = (f32)kWidth / (f32)kHeight;
 
 #pragma region Setup
 static void framebufferCallback(GLFWwindow* window, int width, int height) {
-    glViewport(0, 0, width, height);
-
     // Update all our volatile resources
     for (const auto& v : renderSystem->getVolatiles()) {
         if (v) v->onResize(width, height);
     }
+
+    // Finally, resize viewport
+    glViewport(0, 0, width, height);
 }
 
 void initGL() {
@@ -81,7 +83,7 @@ int main() {
     Graphics::Pipeline::setPolygonMode(false);  // for debug purposes
     Graphics::Pipeline::setDepthTest(true);
     Graphics::Pipeline::setCullMode(true);
-    Graphics::Pipeline::setBlendMode(true);
+    // Graphics::Pipeline::setBlendMode(true);
 
     // Main Engine Scope
     {
@@ -104,11 +106,11 @@ int main() {
 
         const auto texturePath = getDataPath() / "jake.jpg";
         if (!texturePath.exists()) { Panic("Texture file not found: %s", texturePath.toString()); }
-        auto texture = Graphics::Texture();
-        auto result  = texture.loadFromFile(texturePath.toString(), true);
+        auto texture      = Graphics::Texture();
+        const auto result = texture.loadFromFile(texturePath.toString(), true);
         if (!result) { Panic("Failed to load texture from %s", texturePath.toString()); }
 
-        // Graphics::Texture texture;
+        DirectionalLight sun;
 
         const auto clock = std::make_shared<Clock>();
         clock->start();
@@ -129,16 +131,19 @@ int main() {
 
             // Draw stuff
             {
-                // bind render texture
-                renderTarget.bind();
-                // clear texture
-                glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-                // draw ball to texture
-                shaderBall->draw(camera);
-                // unbind texture (and rebind to back buffer)
-                renderTarget.unbind();
-                // draw texture to fullscreen quad
-                ppQuad.draw(renderTarget.getColorTexture());
+                shaderBall->draw(camera, sun);
+
+                // TODO: Resizing causes face orientations to invert, caused by something down here
+                // // bind render texture
+                // renderTarget.bind();
+                // // clear texture
+                // glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+                // // draw ball to texture
+                // shaderBall->draw(camera, sun);
+                // // unbind texture (and rebind to back buffer)
+                // renderTarget.unbind();
+                // // draw texture to fullscreen quad
+                // ppQuad.draw(renderTarget.getColorTexture());
             }
 
             glfwPollEvents();

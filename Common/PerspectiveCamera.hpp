@@ -26,6 +26,8 @@ namespace x {
         void setUp(const glm::vec3& up);
         void setPerspective(f32 fov, f32 aspect, f32 nearZ, f32 farZ);
 
+        glm::vec3 getPosition() const;
+
     private:
         f32 _fov;
         f32 _aspect;
