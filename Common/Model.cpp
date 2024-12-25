@@ -5,6 +5,7 @@
 #include "Model.hpp"
 
 #include "BlinnPhongMaterial.hpp"
+#include "PBRMaterial.hpp"
 #include "ShaderManager.hpp"
 #include "Graphics/Vertex.hpp"
 
@@ -17,11 +18,7 @@
 namespace x {
     Model::Model() {
         auto program = ShaderManager::get().getShaderProgram(PBR_VS_Source, PBR_FS_Source);
-        _material    = std::make_shared<BlinnPhongMaterial>(program,
-                                                         glm::vec3(0.1f),
-                                                         glm::vec3(1.f, 0.2f, 0.f),
-                                                         glm::vec3(1.f),
-                                                         1.f);
+        _material    = std::make_shared<PBRMaterial>(program);
         _transform.setScale(glm::vec3(0.01f));
         _transform.setPosition(glm::vec3(0.0f, -1.4f, -3.0f));
     }

@@ -13,7 +13,6 @@ namespace x {
         setUniform("uMaterial.diffuse", _diffuse);
         setUniform("uMaterial.specular", _specular);
         setUniform("uMaterial.shininess", _shininess);
-        setUniform("uMaterial.shininess", _shininess);
 
         const auto cameraPtr = camera.lock();
         if (cameraPtr) {

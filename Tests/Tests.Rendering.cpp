@@ -7,6 +7,7 @@
 #include "DirectionalLight.hpp"
 #include "Mesh.hpp"
 #include "Model.hpp"
+#include "PBRMaterial.hpp"
 
 #include <glad.h>
 #include <GLFW/glfw3.h>
@@ -92,12 +93,13 @@ int main() {
     {
         const auto shaderBall = std::make_unique<Model>();
         shaderBall->loadFromFile((getDataPath() / "shaderBall.fbx").toString());
-        shaderBall->getMaterial<BlinnPhongMaterial>()->setDiffuse(glm::vec3(1.f, 0.4f, 0.0f));
+        shaderBall->getMaterial<PBRMaterial>()->setMetallic(0.0f);
+        shaderBall->getMaterial<PBRMaterial>()->setRoughness(0.1f);
 
         const auto groundPlane = std::make_unique<Model>();
         groundPlane->loadFromFile((getDataPath() / "GroundPlane.glb").toString());
         groundPlane->getTransform().setScale(glm::vec3(100.f));
-        groundPlane->getMaterial<BlinnPhongMaterial>()->setDiffuse(glm::vec3(0.5f));
+        // groundPlane->getMaterial<BlinnPhongMaterial>()->setDiffuse(glm::vec3(0.5f));
 
         const auto camera = Camera::create<PerspectiveCamera>(45.f,
                                                               kAspect,
@@ -127,7 +129,7 @@ int main() {
 
         DirectionalLight sun;
         sun.setIntensity(1.f);
-        sun.setColor(glm::vec3(0.5f));
+        sun.setColor(glm::vec3(1.f));
 
         const auto clock = std::make_shared<Clock>();
         clock->start();
@@ -154,7 +156,7 @@ int main() {
                 // clear texture
                 glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
                 // draw ball to texture
-                groundPlane->draw(camera, sun);
+                // groundPlane->draw(camera, sun);
                 shaderBall->draw(camera, sun);
                 // unbind texture (and rebind to back buffer)
                 renderTarget->unbind();

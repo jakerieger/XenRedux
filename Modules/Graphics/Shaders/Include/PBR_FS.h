@@ -17,6 +17,7 @@ struct Sun {
 
 uniform Sun uSun;
 uniform vec3 uViewPosition;
+uniform Material uMaterial;
 
 in vec2 TexCoord;
 in vec3 FragPos;
@@ -62,11 +63,56 @@ float GeometrySmith(vec3 N, vec3 V, vec3 L, float roughness) {
 
 // Calculate Fresnel equation using Fresnel-Schlick approximation
 vec3 FresnelSchlick(float cosTheta, vec3 F0) {
-    return F0 + (1.0 - F0) * pow(clamp(1.0 - cosTheta, 0.0, 1.0), 5.0);
+    return F0 + (vec3(1.0) - F0) * pow(1.0 - cosTheta, 5.0);
 }
 
 void main() {
-    vec3 color = vec3(20.1, 20.4, 50.3);
+    vec3 N = normalize(FragNormal);
+    vec3 V = normalize(uViewPosition - FragPos);
+    float roughness = max(0.05, uMaterial.roughness);
+
+    // Calculate base reflectivity (F0)
+    // Dialectrics (non-metals) have F0 of 0.04
+    // Metals use their albedo as F0
+    vec3 F0 = vec3(0.04);
+    F0 = mix(F0, uMaterial.albedo, uMaterial.metallic);
+
+    // Initialize reflectance
+    vec3 Lo = vec3(0.0);
+
+    // TODO: Loop over each light in the scene, hard-coded as one for now
+    // since we only have a single directional light.
+
+    // Normalize sun direction to position vector
+    vec3 L = normalize(-uSun.direction);
+    vec3 H = normalize(V + L);
+    //    float distance = length(uSun.direction - FragPos);
+    //    float attenuation = 1.0 / (distance * distance);
+    // vec3 radiance = uSun.color * attenuation; // No attenuation for directional lights
+    vec3 radiance = uSun.color * uSun.intensity;
+
+    // Cook-Torrance BRDF
+    float NDF = DistributionGGX(N, H, roughness);
+    float G = GeometrySmith(N, V, L, roughness);
+    float cosTheta = clamp(dot(H, V), 0.0, 1.0);
+    vec3 F = FresnelSchlick(cosTheta, F0);
+
+    vec3 numerator = NDF * G * F;
+    float denominator = 4.0 * max(dot(N, V), 0.0) * max(dot(N, L), 0.0) + 0.0001;
+    vec3 specular = numerator / denominator;
+
+    // Calculate energy conservation
+    vec3 kS = F;
+    vec3 kD = vec3(1.0) - kS;
+    kD *= 1.0 - uMaterial.metallic;
+
+    // Add to outgoing radiance Lo
+    float NdotL = max(dot(N, L), 0.0);
+    Lo += (kD * uMaterial.albedo / PI + specular) * radiance * NdotL;
+
+    vec3 ambient = uSun.color * 0.01 * uMaterial.albedo * uMaterial.ao;
+    vec3 color = ambient + Lo;
+
     FragColor = vec4(color, 1.0);
 }
 )"";
