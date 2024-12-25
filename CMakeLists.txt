@@ -85,6 +85,8 @@ add_library(Xen STATIC
         ${COMMON}/DirectionalLight.cpp
         ${COMMON}/BlinnPhongMaterial.hpp
         ${COMMON}/BlinnPhongMaterial.cpp
+        ${COMMON}/PBRMaterial.hpp
+        ${COMMON}/PBRMaterial.cpp
 )
 
 if (WIN32)

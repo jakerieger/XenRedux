@@ -11,14 +11,13 @@
 #include <assimp/Importer.hpp>
 #include <assimp/postprocess.h>
 
-#include "Graphics/Shaders/Include/BlinnPhong_VS.h"
-#include "Graphics/Shaders/Include/BlinnPhong_FS.h"
+#include "Graphics/Shaders/Include/PBR_FS.h"
+#include "Graphics/Shaders/Include/PBR_VS.h"
 
 namespace x {
     Model::Model() {
-        auto program =
-          ShaderManager::get().getShaderProgram(BlinnPhong_VS_Source, BlinnPhong_FS_Source);
-        _material = std::make_shared<BlinnPhongMaterial>(program,
+        auto program = ShaderManager::get().getShaderProgram(PBR_VS_Source, PBR_FS_Source);
+        _material    = std::make_shared<BlinnPhongMaterial>(program,
                                                          glm::vec3(0.1f),
                                                          glm::vec3(1.f, 0.2f, 0.f),
                                                          glm::vec3(1.f),

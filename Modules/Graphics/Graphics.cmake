@@ -22,4 +22,6 @@ set(GRAPHICS_SRCS
         # Post processing effects
         ${MODULES}/Graphics/Effects/GaussianBlur.hpp
         ${MODULES}/Graphics/Effects/GaussianBlur.cpp
+        ${MODULES}/Graphics/Effects/Tonemapper.hpp
+        ${MODULES}/Graphics/Effects/Tonemapper.cpp
 )

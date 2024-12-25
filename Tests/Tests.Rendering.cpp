@@ -23,6 +23,7 @@
 #include "Graphics/RenderTarget.hpp"
 #include "Graphics/Texture.hpp"
 #include "Graphics/Effects/GaussianBlur.hpp"
+#include "Graphics/Effects/Tonemapper.hpp"
 
 using namespace x;
 
@@ -84,7 +85,8 @@ int main() {
     Graphics::Pipeline::setPolygonMode(false);  // for debug purposes
     Graphics::Pipeline::setDepthTest(true);
     Graphics::Pipeline::setCullMode(true);
-    // Graphics::Pipeline::setBlendMode(true);
+    Graphics::Pipeline::setBlendMode(true);
+    Graphics::Pipeline::setEnableHDR(true);
 
     // Main Engine Scope
     {
@@ -106,10 +108,16 @@ int main() {
                                                               glm::vec3(0.0f, 1.0f, 0.0f));
         renderSystem->registerVolatile(camera.get());
 
-        Graphics::RenderTarget renderTarget(kWidth, kHeight, true);
-        renderSystem->registerVolatile(dynamic_cast<Volatile*>(&renderTarget));
+        // Graphics::RenderTarget renderTarget(kWidth, kHeight, true);
+        // renderSystem->registerVolatile(dynamic_cast<Volatile*>(&renderTarget));
+        auto renderTarget = std::make_unique<Graphics::RenderTarget>(kWidth, kHeight, true);
+        renderSystem->registerVolatile(renderTarget.get());
 
-        // const Graphics::PostProcessQuad ppQuad;
+        const Graphics::PostProcessQuad ppQuad;
+
+        Graphics::TonemapperEffect tonemapper;
+        tonemapper.setTextureSize(kWidth, kHeight);
+        tonemapper.setInputTexture(renderTarget->getColorTexture());
 
         const auto texturePath = getDataPath() / "jake.jpg";
         if (!texturePath.exists()) { Panic("Texture file not found: %s", texturePath.toString()); }
@@ -140,20 +148,19 @@ int main() {
 
             // Draw stuff
             {
-                shaderBall->draw(camera, sun);
-                groundPlane->draw(camera, sun);
-
                 // TODO: Resizing causes face orientations to invert, caused by something down here
-                // // bind render texture
-                // renderTarget.bind();
-                // // clear texture
-                // glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-                // // draw ball to texture
-                // shaderBall->draw(camera, sun);
-                // // unbind texture (and rebind to back buffer)
-                // renderTarget.unbind();
-                // // draw texture to fullscreen quad
-                // ppQuad.draw(renderTarget.getColorTexture());
+                // bind render texture
+                renderTarget->bind();
+                // clear texture
+                glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+                // draw ball to texture
+                groundPlane->draw(camera, sun);
+                shaderBall->draw(camera, sun);
+                // unbind texture (and rebind to back buffer)
+                renderTarget->unbind();
+                // draw texture to fullscreen quad
+                tonemapper.apply();
+                ppQuad.draw(tonemapper.getOutputTexture());
             }
 
             glfwPollEvents();

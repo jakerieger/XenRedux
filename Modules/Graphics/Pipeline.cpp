@@ -2,9 +2,8 @@
 // Created: 12/19/2024.
 //
 
-#include "Pipeline.hpp"
-
 #include <glad.h>
+#include "Pipeline.hpp"
 
 namespace x::Graphics {
     void Pipeline::setBlendMode(bool enable) {
@@ -36,5 +35,9 @@ namespace x::Graphics {
 
     void Pipeline::setPolygonMode(bool wireframe) {
         glPolygonMode(GL_FRONT_AND_BACK, wireframe ? GL_LINE : GL_FILL);
+    }
+
+    void Pipeline::setEnableHDR(bool enable) {
+        glClampColor(GL_CLAMP_READ_COLOR, GL_FALSE);
     }
 }  // namespace x::Graphics

@@ -11,5 +11,6 @@ namespace x::Graphics {
         static void setDepthTest(bool enable);
         static void setCullMode(bool enable);
         static void setPolygonMode(bool wireframe);
+        static void setEnableHDR(bool enable);
     };
 }  // namespace x::Graphics
