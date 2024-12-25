@@ -120,18 +120,26 @@ int main() {
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
             // Update stuff
-            { camera->update(clock); }
+            {
+                camera->update(clock);
+                // rotate shader ball
+                shaderBall->getTransform().rotate(
+                  glm::vec3(0.0f, 10.0f * clock->getDeltaTime(), 0.0f));
+            }
 
-            // bind render texture
-            renderTarget.bind();
-            // clear texture
-            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-            // draw ball to texture
-            shaderBall->draw(camera);
-            // unbind texture (and rebind to back buffer)
-            renderTarget.unbind();
-            // draw texture to fullscreen quad
-            ppQuad.draw(renderTarget.getColorTexture());
+            // Draw stuff
+            {
+                // bind render texture
+                renderTarget.bind();
+                // clear texture
+                glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+                // draw ball to texture
+                shaderBall->draw(camera);
+                // unbind texture (and rebind to back buffer)
+                renderTarget.unbind();
+                // draw texture to fullscreen quad
+                ppQuad.draw(renderTarget.getColorTexture());
+            }
 
             glfwPollEvents();
             glfwSwapBuffers(window);

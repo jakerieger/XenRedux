@@ -22,6 +22,8 @@ namespace x {
         bool loadFromFile(const str& filename);
         void draw(const std::shared_ptr<ICamera>& camera);
 
+        Transform& getTransform();
+
     private:
         std::vector<std::unique_ptr<Mesh>> _meshes;
         // TODO: Allow mapping different materials to different meshes

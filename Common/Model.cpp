@@ -45,6 +45,10 @@ namespace x {
         }
     }
 
+    Transform& Model::getTransform() {
+        return _transform;
+    }
+
     void Model::processNode(const aiNode* node, const aiScene* scene) {
         for (u32 i = 0; i < node->mNumMeshes; i++) {
             aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
