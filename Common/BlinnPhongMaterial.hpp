@@ -20,6 +20,11 @@ namespace x {
               _shininess(shininess) {}
         void apply(const std::weak_ptr<ICamera>& camera) override;
 
+        void setAmbient(const glm::vec3& ambient);
+        void setDiffuse(const glm::vec3& diffuse);
+        void setSpecular(const glm::vec3& specular);
+        void setShininess(f32 shininess);
+
     private:
         glm::vec3 _ambient;
         glm::vec3 _diffuse;

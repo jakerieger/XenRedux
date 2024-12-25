@@ -67,6 +67,10 @@ namespace x {
         return _transform;
     }
 
+    std::shared_ptr<IMaterial>& Model::getMaterial() {
+        return _material;
+    }
+
     void Model::processNode(const aiNode* node, const aiScene* scene) {
         for (u32 i = 0; i < node->mNumMeshes; i++) {
             aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];

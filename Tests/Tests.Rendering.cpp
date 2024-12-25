@@ -2,6 +2,7 @@
 // Created: 12/19/2024.
 //
 
+#include "BlinnPhongMaterial.hpp"
 #include "Camera.hpp"
 #include "DirectionalLight.hpp"
 #include "Mesh.hpp"
@@ -89,6 +90,12 @@ int main() {
     {
         const auto shaderBall = std::make_unique<Model>();
         shaderBall->loadFromFile((getDataPath() / "shaderBall.fbx").toString());
+        shaderBall->getMaterial<BlinnPhongMaterial>()->setDiffuse(glm::vec3(1.f, 0.4f, 0.0f));
+
+        const auto groundPlane = std::make_unique<Model>();
+        groundPlane->loadFromFile((getDataPath() / "GroundPlane.glb").toString());
+        groundPlane->getTransform().setScale(glm::vec3(100.f));
+        groundPlane->getMaterial<BlinnPhongMaterial>()->setDiffuse(glm::vec3(0.5f));
 
         const auto camera = Camera::create<PerspectiveCamera>(45.f,
                                                               kAspect,
@@ -117,8 +124,6 @@ int main() {
         const auto clock = std::make_shared<Clock>();
         clock->start();
 
-        auto& shaderManager = ShaderManager::get();
-
         while (!glfwWindowShouldClose(window)) {
             clock->tick();
             // clear back buffer
@@ -136,6 +141,7 @@ int main() {
             // Draw stuff
             {
                 shaderBall->draw(camera, sun);
+                groundPlane->draw(camera, sun);
 
                 // TODO: Resizing causes face orientations to invert, caused by something down here
                 // // bind render texture

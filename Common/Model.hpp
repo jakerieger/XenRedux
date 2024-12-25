@@ -26,6 +26,13 @@ namespace x {
                   const std::vector<std::weak_ptr<ILight>>& lights = {});
 
         Transform& getTransform();
+        std::shared_ptr<IMaterial>& getMaterial();
+
+        template<class T>
+        T* getMaterial() {
+            static_assert(std::is_base_of_v<IMaterial, T>, "T must derive from IMaterial");
+            return DCAST<T*>(getMaterial().get());
+        }
 
     private:
         std::vector<std::unique_ptr<Mesh>> _meshes;

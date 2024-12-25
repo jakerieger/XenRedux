@@ -18,7 +18,7 @@ namespace x {
         if (_cache.find(hash) == _cache.end()) {
             // Create program
             auto program = createProgram(vertexSource, fragmentSource);
-            _cache.insert_or_assign(hash, program);
+            _cache.insert({hash, program});
         }
         return _cache.at(hash);
     }
@@ -29,7 +29,7 @@ namespace x {
         if (_cache.find(hash) == _cache.end()) {
             // Create program
             auto program = createProgram(computeSource);
-            _cache.insert_or_assign(hash, program);
+            _cache.insert({hash, program});
         }
         return _cache.at(hash);
     }

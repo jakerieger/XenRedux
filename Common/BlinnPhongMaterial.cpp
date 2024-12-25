@@ -24,4 +24,20 @@ namespace x {
             }
         }
     }
+
+    void BlinnPhongMaterial::setAmbient(const glm::vec3& ambient) {
+        _ambient = ambient;
+    }
+
+    void BlinnPhongMaterial::setDiffuse(const glm::vec3& diffuse) {
+        _diffuse = diffuse;
+    }
+
+    void BlinnPhongMaterial::setSpecular(const glm::vec3& specular) {
+        _specular = specular;
+    }
+
+    void BlinnPhongMaterial::setShininess(f32 shininess) {
+        _shininess = shininess;
+    }
 }  // namespace x
