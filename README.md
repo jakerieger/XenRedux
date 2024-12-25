@@ -12,3 +12,7 @@ how to structure and organize my C++ projects.
 
 As I said above, I want to consolidate all my years of progress into this one project. At this point
 I firmly believe if I start over again, XEN will never get finished.
+
+![](Resources/screenshot_01.png)
+
+> Simple BRDF implementation.
