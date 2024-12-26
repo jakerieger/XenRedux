@@ -38,6 +38,16 @@ private:
     std::unique_ptr<Graphics::RenderTarget> _renderTarget;
     std::unique_ptr<Graphics::PostProcessQuad> _postProcessQuad;
     std::unique_ptr<Graphics::TonemapperEffect> _tonemapper;
+
+    // Debug UI vars
+    glm::vec3 _albedo       = glm::vec3(1.0f, 1.0f, 1.0f);
+    float _metallic         = 1.0f;
+    float _roughness        = 1.0f;
+    float _ao               = 1.0f;
+    glm::vec3 _sunColor     = glm::vec3(1.0f, 1.0f, 1.0f);
+    glm::vec3 _sunDirection = glm::vec3(0.0f, 0.0f, 1.0f);
+    float _sunIntensity     = 1.0f;
+    PBRMaterial* _material  = nullptr;
 };
 
 SpaceGame::SpaceGame() : IGame("SpaceGame", 1600, 900, true) {
@@ -63,9 +73,20 @@ SpaceGame::SpaceGame() : IGame("SpaceGame", 1600, 900, true) {
 void SpaceGame::loadContent() {
     const auto shaderBallPath = getDataPath() / "ShaderBall.fbx";
     _shaderBall->loadFromFile(shaderBallPath.toString());
-    _shaderBall->getMaterial<PBRMaterial>()->setMetallic(0.0f);
-    _shaderBall->getMaterial<PBRMaterial>()->setRoughness(0.1f);
-    _shaderBall->getMaterial<PBRMaterial>()->setAlbedo(glm::vec3(1.f, 0.f, 1.f));
+    _material = _shaderBall->getMaterial<PBRMaterial>();
+    _material->setMetallic(1.0f);
+    _material->setRoughness(0.3f);
+    _material->setAlbedo(glm::vec3(1.0f, 1.0f, 0.28f));
+
+    // Initialize debug values with the shader ball's material properties.
+    // From here on out, the debug ui will modify these values for the material.
+    _albedo       = _material->getAlbedo();
+    _metallic     = _material->getMetallic();
+    _roughness    = _material->getRoughness();
+    _ao           = _material->getAO();
+    _sunColor     = _sun.getColor();
+    _sunDirection = _sun.getDirection();
+    _sunIntensity = _sun.getIntensity();
 
     const auto groundPlanePath = getDataPath() / "GroundPlane.glb";
     _groundPlane->loadFromFile(groundPlanePath.toString());
@@ -113,8 +134,43 @@ void SpaceGame::configurePipeline() {
 }
 
 void SpaceGame::drawDebugUI() {
-    // Draw our debug ui
-    ImGui::Begin("Scene");
+    if (!_material) return;
+
+    {
+        ImGui::Begin("Material",
+                     nullptr,
+                     ImGuiWindowFlags_NoResize | ImGuiWindowFlags_AlwaysAutoResize);
+
+        ImGui::DragFloat3("Albedo", &_albedo[0], 0.01f, 0.0f, 1.0f);
+        _material->setAlbedo(_albedo);
+
+        ImGui::DragFloat("Metallic", &_metallic, 0.01f, 0.0f, 1.0f);
+        _material->setMetallic(_metallic);
+
+        ImGui::DragFloat("Roughness", &_roughness, 0.05f, 0.0f, 1.0f);
+        _material->setRoughness(_roughness);
+
+        ImGui::DragFloat("AO", &_ao, 0.01f, 0.0f, 1.0f);
+        _material->setAO(_ao);
+    }
+
+    {
+        ImGui::Begin("Lights",
+                     nullptr,
+                     ImGuiWindowFlags_NoResize | ImGuiWindowFlags_AlwaysAutoResize);
+
+        ImGui::Text("Sun");
+        ImGui::Separator();
+        ImGui::DragFloat3("Direction", &_sunDirection[0], 0.01f, -1.0f, 1.0f);
+        ImGui::DragFloat("Intensity", &_sunIntensity, 0.01f, 0.0f, 1.0f);
+        ImGui::DragFloat3("Color", &_sunColor[0], 0.01f, 0.0f, 1.0f);
+
+        _sun.setDirection(_sunDirection);
+        _sun.setIntensity(_sunIntensity);
+        _sun.setColor(_sunColor);
+
+        ImGui::End();
+    }
 
     ImGui::End();
 }
