@@ -38,7 +38,7 @@ public:
         _tonemapper      = std::make_unique<Graphics::TonemapperEffect>();
         _tonemapper->setTextureSize(width, height);
         _tonemapper->setInputTexture(_renderTarget->getColorTexture());
-        _tonemapper->setTonemapOperator(0);  // Reinhard
+        _tonemapper->setTonemapOperator(0);
         _shaderBall  = std::make_unique<Model>();
         _groundPlane = std::make_unique<Model>();
     }

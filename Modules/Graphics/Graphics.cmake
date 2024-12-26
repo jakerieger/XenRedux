@@ -20,8 +20,6 @@ set(GRAPHICS_SRCS
         ${MODULES}/Graphics/VertexArray.hpp
         ${MODULES}/Graphics/VertexAttribute.hpp
         # Post processing effects
-        ${MODULES}/Graphics/Effects/GaussianBlur.hpp
-        ${MODULES}/Graphics/Effects/GaussianBlur.cpp
         ${MODULES}/Graphics/Effects/Tonemapper.hpp
         ${MODULES}/Graphics/Effects/Tonemapper.cpp
 )
