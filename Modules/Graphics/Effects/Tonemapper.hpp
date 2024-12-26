@@ -25,6 +25,7 @@ namespace x::Graphics {
         void apply() const override;
         void setTextureSize(i32 width, i32 height) const;
         u32 getOutputTexture() const;
+        void onResize(int newWidth, int newHeight) override;
 
         void setGamma(f32 gamma);
         void setExposure(f32 exposure);

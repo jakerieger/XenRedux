@@ -75,6 +75,7 @@ void SpaceGame::loadContent() {
     // Register objects that need to be resized when our framebuffer size changes.
     _context->registerVolatile(_camera.get());
     _context->registerVolatile(_renderTarget.get());
+    _context->registerVolatile(_tonemapper.get());
 }
 
 void SpaceGame::update() {

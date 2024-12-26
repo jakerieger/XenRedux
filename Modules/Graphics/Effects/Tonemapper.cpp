@@ -65,6 +65,10 @@ namespace x::Graphics {
         return _outputTexture->getId();
     }
 
+    void TonemapperEffect::onResize(int newWidth, int newHeight) {
+        _outputTexture->resize(newWidth, newHeight);
+    }
+
     void TonemapperEffect::setGamma(f32 gamma) {
         _params.gamma = gamma;
         glBindBuffer(GL_UNIFORM_BUFFER, _paramsUbo);

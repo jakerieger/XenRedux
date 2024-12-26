@@ -5,11 +5,11 @@
 #pragma once
 
 #include "Types.hpp"
+#include "Volatile.hpp"
 
 namespace x::Graphics {
-    class IPostProcessEffect {
+    class IPostProcessEffect : public Volatile {
     public:
-        virtual ~IPostProcessEffect()                       = default;
         virtual void setInputTexture(const u32 texture)     = 0;
         virtual void setRenderTarget(const u32 frameBuffer) = 0;
         virtual void apply() const                          = 0;

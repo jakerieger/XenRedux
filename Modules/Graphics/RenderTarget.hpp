@@ -21,6 +21,7 @@ namespace x::Graphics {
         u32 _fbo {};
         u32 _colorTexture {};
         u32 _depthRenderBuffer {};
+        bool _hasDepth;
         void createRenderTargetCommands(int width, int height, bool depth);
         void cleanup();
     };

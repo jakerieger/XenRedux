@@ -10,7 +10,7 @@
 #include <glad.h>
 
 namespace x::Graphics {
-    RenderTarget::RenderTarget(int width, int height, const bool depth) {
+    RenderTarget::RenderTarget(int width, int height, const bool depth) : _hasDepth(depth) {
         createRenderTargetCommands(width, height, depth);
     }
 
@@ -32,7 +32,7 @@ namespace x::Graphics {
 
     void RenderTarget::onResize(int width, int height) {
         cleanup();
-        createRenderTargetCommands(width, height, _depthRenderBuffer != 0);
+        createRenderTargetCommands(width, height, _hasDepth);
     }
 
     void RenderTarget::createRenderTargetCommands(int width, int height, bool depth) {
