@@ -12,41 +12,23 @@
 #include "Graphics/RenderTarget.hpp"
 #include "Graphics/Effects/Tonemapper.hpp"
 
+#include <imgui/imgui.h>
+
 using namespace x;
 
 /// @briefs Returns the directory of this source file + "/Data".
-static Filesystem::Path getDataPath() {
-    const Filesystem::Path currentFile(__FILE__);
-    const auto dataPath = currentFile.parent() / "Data";
-    return dataPath;
-}
+static Filesystem::Path getDataPath();
 
 class SpaceGame final : public IGame {
 public:
-    SpaceGame() : IGame("SpaceGame", 1600, 900, true) {
-        _sun.setIntensity(1.f);
-        _sun.setColor(glm::vec3(0.9f));
-        _camera          = std::make_shared<PerspectiveCamera>(45.f,
-                                                      (f32)width / (f32)height,
-                                                      0.1f,
-                                                      100.0f,
-                                                      glm::vec3(0.0f, 0.0f, 5.0f),
-                                                      glm::vec3(0.0f, 0.0f, 0.0f),
-                                                      glm::vec3(0.0f, 1.0f, 0.0f));
-        _renderTarget    = std::make_unique<Graphics::RenderTarget>(width, height, true);
-        _postProcessQuad = std::make_unique<Graphics::PostProcessQuad>();
-        _tonemapper      = std::make_unique<Graphics::TonemapperEffect>();
-        _tonemapper->setTextureSize(width, height);
-        _tonemapper->setInputTexture(_renderTarget->getColorTexture());
-        _tonemapper->setTonemapOperator(0);
-        _shaderBall  = std::make_unique<Model>();
-        _groundPlane = std::make_unique<Model>();
-    }
+    SpaceGame();
 
     void loadContent() override;
+    void unloadContent() override;
     void update() override;
     void draw() override;
     void configurePipeline() override;
+    void drawDebugUI() override;
 
 private:
     DirectionalLight _sun;
@@ -57,6 +39,26 @@ private:
     std::unique_ptr<Graphics::PostProcessQuad> _postProcessQuad;
     std::unique_ptr<Graphics::TonemapperEffect> _tonemapper;
 };
+
+SpaceGame::SpaceGame() : IGame("SpaceGame", 1600, 900, true) {
+    _sun.setIntensity(1.f);
+    _sun.setColor(glm::vec3(0.9f));
+    _camera          = std::make_shared<PerspectiveCamera>(45.f,
+                                                  (f32)width / (f32)height,
+                                                  0.1f,
+                                                  100.0f,
+                                                  glm::vec3(0.0f, 0.0f, 5.0f),
+                                                  glm::vec3(0.0f, 0.0f, 0.0f),
+                                                  glm::vec3(0.0f, 1.0f, 0.0f));
+    _renderTarget    = std::make_unique<Graphics::RenderTarget>(width, height, true);
+    _postProcessQuad = std::make_unique<Graphics::PostProcessQuad>();
+    _tonemapper      = std::make_unique<Graphics::TonemapperEffect>();
+    _tonemapper->setTextureSize(width, height);
+    _tonemapper->setInputTexture(_renderTarget->getColorTexture());
+    _tonemapper->setTonemapOperator(0);
+    _shaderBall  = std::make_unique<Model>();
+    _groundPlane = std::make_unique<Model>();
+}
 
 void SpaceGame::loadContent() {
     const auto shaderBallPath = getDataPath() / "ShaderBall.fbx";
@@ -76,6 +78,13 @@ void SpaceGame::loadContent() {
     _context->registerVolatile(_camera.get());
     _context->registerVolatile(_renderTarget.get());
     _context->registerVolatile(_tonemapper.get());
+}
+
+void SpaceGame::unloadContent() {
+    _shaderBall.reset();
+    _groundPlane.reset();
+    _renderTarget.reset();
+    _tonemapper.reset();
 }
 
 void SpaceGame::update() {
@@ -103,8 +112,21 @@ void SpaceGame::configurePipeline() {
     Graphics::Pipeline::setEnableHDR(true);
 }
 
+void SpaceGame::drawDebugUI() {
+    // Draw our debug ui
+    ImGui::Begin("Scene");
+
+    ImGui::End();
+}
+
 int main() {
     SpaceGame game;
     game.run();
     return 0;
+}
+
+static Filesystem::Path getDataPath() {
+    const Filesystem::Path currentFile(__FILE__);
+    const auto dataPath = currentFile.parent() / "Data";
+    return dataPath;
 }

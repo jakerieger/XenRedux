@@ -45,11 +45,16 @@ find_package(assimp CONFIG REQUIRED)
 find_package(xxHash CONFIG REQUIRED)
 find_package(glfw3 CONFIG REQUIRED)
 
+include_directories(
+        ${VENDOR}/imgui
+        ${VENDOR}/imgui/backends
+)
 
 add_library(Xen STATIC
         # Vendor sources
         ${GLAD_SRCS}
         ${STB_SRCS}
+        ${IMGUI_SRCS}
         # Modules
         ${DATA_SRCS}
         ${FILESYSTEM_SRCS}

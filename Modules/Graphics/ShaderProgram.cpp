@@ -116,7 +116,7 @@ namespace x::Graphics {
     }
 
     void ShaderProgram::setFloatArray(const u32 location, const f32* values, size_t count) const {
-        glUniform1fv(location, count, values);
+        glUniform1fv(location, (GLsizei)count, values);
     }
 
     void ShaderProgram::setInt(const str& name, int value) const {

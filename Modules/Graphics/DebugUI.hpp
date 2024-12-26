@@ -4,12 +4,17 @@
 
 #pragma once
 
-namespace x {
-namespace Graphics {
+#include <GLFW/glfw3.h>
 
-class DebugUI {
+namespace x::Graphics {
+    class DebugUI {
+    public:
+        static void init(GLFWwindow** window);
+        static void beginFrame();
+        static void endFrame();
+        static void shutdown();
 
-};
-
-} // Graphics
-} // x
+    private:
+        DebugUI() = default;
+    };
+}  // namespace x::Graphics

@@ -1,5 +1,7 @@
 set(GRAPHICS_SRCS
         ${MODULES}/Graphics/DebugOpenGL.hpp
+        ${MODULES}/Graphics/DebugUI.cpp
+        ${MODULES}/Graphics/DebugUI.hpp
         ${MODULES}/Graphics/Pipeline.cpp
         ${MODULES}/Graphics/Pipeline.hpp
         ${MODULES}/Graphics/PostProcessEffect.hpp

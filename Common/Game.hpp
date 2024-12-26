@@ -21,9 +21,11 @@ namespace x {
         virtual ~IGame();
 
         virtual void loadContent()       = 0;
+        virtual void unloadContent()     = 0;
         virtual void update()            = 0;
         virtual void draw()              = 0;
         virtual void configurePipeline() = 0;
+        virtual void drawDebugUI() {}
 
         void run();
 
@@ -38,6 +40,11 @@ namespace x {
         int width;
         int height;
         bool escToQuit;
+#ifndef NDEBUG
+        const bool debug = true;
+#else
+        const bool debug = false;
+#endif
 
     private:
         GLFWwindow* _window;

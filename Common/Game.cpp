@@ -5,6 +5,7 @@
 #include "Game.hpp"
 #include "Panic.hpp"
 #include "Graphics/DebugOpenGL.hpp"
+#include "Graphics/DebugUI.hpp"
 
 namespace x {
     static void onResize(GLFWwindow* window, const int width, const int height) {
@@ -39,9 +40,10 @@ namespace x {
             Panic("Failed to initialize GLAD");
         }
 
-#ifndef NDEBUG
-        Graphics::enableDebugOutput();
-#endif
+        if (debug) {
+            Graphics::enableDebugOutput();
+            Graphics::DebugUI::init(&_window);
+        }
 
         glViewport(0, 0, initWidth, initHeight);
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
@@ -56,6 +58,7 @@ namespace x {
     IGame::~IGame() {
         _clock.reset();
         _context.reset();
+        if (debug) { Graphics::DebugUI::shutdown(); }
         glfwDestroyWindow(_window);
         glfwTerminate();
     }
@@ -72,11 +75,19 @@ namespace x {
                 glfwPollEvents();
                 update();
                 draw();
+
+                if (debug) {
+                    Graphics::DebugUI::beginFrame();
+                    drawDebugUI();
+                    Graphics::DebugUI::endFrame();
+                }
+
                 glfwSwapBuffers(_window);
             }
             _clock->update();
         }
         _clock->stop();
+        unloadContent();
     }
 
     Context* IGame::getContext() const {
