@@ -63,8 +63,8 @@ void SpaceGame::loadContent() {
     _shaderBall->getMaterial<PBRMaterial>()->setAlbedo(glm::vec3(1.f, 0.f, 1.f));
 
     // Register objects that need to be resized when our framebuffer size changes.
-    _renderSystem->registerVolatile(_camera.get());
-    _renderSystem->registerVolatile(_renderTarget.get());
+    _context->registerVolatile(_camera.get());
+    _context->registerVolatile(_renderTarget.get());
 }
 
 void SpaceGame::update() {
@@ -75,7 +75,7 @@ void SpaceGame::update() {
 
 void SpaceGame::draw() {
     _renderTarget->bind();
-    _renderSystem->clear();  // Clear the render target before drawing
+    _context->clear();  // Clear the render target before drawing
 
     _shaderBall->draw(_camera, _sun);
 

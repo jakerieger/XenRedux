@@ -8,7 +8,7 @@
 #include <GLFW/glfw3.h>
 
 #include "Clock.hpp"
-#include "RenderSystem.hpp"
+#include "Context.hpp"
 #include "Types.hpp"
 
 #include <memory>
@@ -27,11 +27,11 @@ namespace x {
 
         void run();
 
-        RenderSystem* getRenderSystem() const;
+        Context* getContext() const;
 
     protected:
         std::shared_ptr<Clock> _clock;
-        std::unique_ptr<RenderSystem> _renderSystem;
+        std::unique_ptr<Context> _context;
         str title;
         int initWidth;
         int initHeight;

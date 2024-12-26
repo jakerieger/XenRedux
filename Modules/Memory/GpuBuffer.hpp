@@ -5,7 +5,7 @@
 #pragma once
 
 #include "Types.hpp"
-#include "RenderSystem.hpp"
+#include "Context.hpp"
 #include "Graphics/DebugOpenGL.hpp"
 
 namespace x::Memory {
@@ -68,9 +68,4 @@ namespace x::Memory {
             return GL_NONE;
         }
     };
-
-    using VertexBuffer  = GpuBuffer<f32, Vertex>;
-    using IndexBuffer   = GpuBuffer<u32, Index>;
-    using UniformBuffer = GpuBuffer<f32, Uniform>;
-    using TextureBuffer = GpuBuffer<u32, Texture>;
 }  // namespace x::Memory

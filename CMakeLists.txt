@@ -61,6 +61,8 @@ add_library(Xen STATIC
         ${COMMON}/Camera.hpp
         ${COMMON}/Clock.cpp
         ${COMMON}/Clock.hpp
+        ${COMMON}/Context.cpp
+        ${COMMON}/Context.hpp
         ${COMMON}/DirectionalLight.cpp
         ${COMMON}/DirectionalLight.hpp
         ${COMMON}/EventSystem.hpp
@@ -79,8 +81,6 @@ add_library(Xen STATIC
         ${COMMON}/Panic.hpp
         ${COMMON}/PerspectiveCamera.cpp
         ${COMMON}/PerspectiveCamera.hpp
-        ${COMMON}/RenderSystem.cpp
-        ${COMMON}/RenderSystem.hpp
         ${COMMON}/ShaderManager.cpp
         ${COMMON}/ShaderManager.hpp
         ${COMMON}/Transform.cpp

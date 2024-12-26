@@ -3,7 +3,6 @@
 //
 
 #include "Game.hpp"
-
 #include "Panic.hpp"
 #include "Graphics/DebugOpenGL.hpp"
 
@@ -12,9 +11,9 @@ namespace x {
         // Resize our volatile objects
         const auto* game = CAST<IGame*>(glfwGetWindowUserPointer(window));
         if (game) {
-            auto* renderSystem = game->getRenderSystem();
-            if (renderSystem) {
-                for (const auto& vol : renderSystem->getVolatiles()) {
+            auto* context = game->getContext();
+            if (context) {
+                for (const auto& vol : context->getVolatiles()) {
                     vol->onResize(width, height);
                 }
             }
@@ -50,13 +49,13 @@ namespace x {
         glfwSetWindowUserPointer(_window, this);  // Give callbacks access to this IGame instance.
         glfwSetFramebufferSizeCallback(_window, onResize);
 
-        _renderSystem = RenderSystem::create();
-        _clock        = Clock::create();
+        _context = Context::create();
+        _clock   = Clock::create();
     }
 
     IGame::~IGame() {
         _clock.reset();
-        _renderSystem.reset();
+        _context.reset();
         glfwDestroyWindow(_window);
         glfwTerminate();
     }
@@ -80,7 +79,7 @@ namespace x {
         _clock->stop();
     }
 
-    RenderSystem* IGame::getRenderSystem() const {
-        return _renderSystem.get();
+    Context* IGame::getContext() const {
+        return _context.get();
     }
 }  // namespace x

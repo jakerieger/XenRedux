@@ -2,12 +2,12 @@
 // Created: 12/19/2024.
 //
 
-#include "RenderSystem.hpp"
+#include "Context.hpp"
 
 #include <glad.h>
 
 namespace x {
-    void RenderSystem::clear(bool depth) {
+    void Context::clear(bool depth) {
         const auto bitmask =
           depth ? (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT) : GL_COLOR_BUFFER_BIT;
         glClear(bitmask);

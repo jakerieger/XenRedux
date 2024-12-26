@@ -10,13 +10,13 @@
 #include <vector>
 
 namespace x {
-    class RenderSystem {
+    class Context {
     public:
-        RenderSystem()  = default;
-        ~RenderSystem() = default;
+        Context()  = default;
+        ~Context() = default;
 
-        static std::unique_ptr<RenderSystem> create() {
-            return std::make_unique<RenderSystem>();
+        static std::unique_ptr<Context> create() {
+            return std::make_unique<Context>();
         }
 
         static void clear(bool depth = true);
