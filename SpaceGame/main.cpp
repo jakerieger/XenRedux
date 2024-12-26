@@ -63,20 +63,22 @@ void SpaceGame::loadContent() {
     _shaderBall->getMaterial<PBRMaterial>()->setAlbedo(glm::vec3(1.f, 0.f, 1.f));
 
     // Register objects that need to be resized when our framebuffer size changes.
-    renderSystem->registerVolatile(_camera.get());
-    renderSystem->registerVolatile(_renderTarget.get());
+    _renderSystem->registerVolatile(_camera.get());
+    _renderSystem->registerVolatile(_renderTarget.get());
 }
 
 void SpaceGame::update() {
-    const auto dT = clock->getDeltaTime();
-    _camera->update(clock);
+    const auto dT = _clock->getDeltaTime();
+    _camera->update(_clock);
     _shaderBall->getTransform().rotate(glm::vec3(0.0f, 10.0f * dT, 0.0f));
 }
 
 void SpaceGame::draw() {
     _renderTarget->bind();
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    _renderSystem->clear();  // Clear the render target before drawing
+
     _shaderBall->draw(_camera, _sun);
+
     _renderTarget->unbind();
     _tonemapper->apply();
     _postProcessQuad->draw(_tonemapper->getOutputTexture());

@@ -50,13 +50,13 @@ namespace x {
         glfwSetWindowUserPointer(_window, this);  // Give callbacks access to this IGame instance.
         glfwSetFramebufferSizeCallback(_window, onResize);
 
-        renderSystem = std::make_unique<RenderSystem>();
-        clock        = std::make_shared<Clock>();
+        _renderSystem = RenderSystem::create();
+        _clock        = Clock::create();
     }
 
     IGame::~IGame() {
-        clock.reset();
-        renderSystem.reset();
+        _clock.reset();
+        _renderSystem.reset();
         glfwDestroyWindow(_window);
         glfwTerminate();
     }
@@ -64,9 +64,9 @@ namespace x {
     void IGame::run() {
         loadContent();
         configurePipeline();
-        clock->start();
+        _clock->start();
         while (!glfwWindowShouldClose(_window)) {
-            clock->tick();
+            _clock->tick();
             glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
             {
@@ -75,12 +75,12 @@ namespace x {
                 draw();
                 glfwSwapBuffers(_window);
             }
-            clock->update();
+            _clock->update();
         }
-        clock->stop();
+        _clock->stop();
     }
 
     RenderSystem* IGame::getRenderSystem() const {
-        return renderSystem.get();
+        return _renderSystem.get();
     }
 }  // namespace x

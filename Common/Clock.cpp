@@ -9,6 +9,10 @@
 #endif
 
 namespace x {
+    std::shared_ptr<Clock> Clock::create() {
+        return std::make_shared<Clock>();
+    }
+
     f32 Clock::getDeltaTime() const {
         return _deltaTime;
     }

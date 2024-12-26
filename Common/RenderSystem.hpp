@@ -15,9 +15,11 @@ namespace x {
         RenderSystem()  = default;
         ~RenderSystem() = default;
 
-        static std::shared_ptr<RenderSystem> create() {
-            return std::make_shared<RenderSystem>();
+        static std::unique_ptr<RenderSystem> create() {
+            return std::make_unique<RenderSystem>();
         }
+
+        static void clear(bool depth = true);
 
         void registerVolatile(Volatile* vol) {
             _volatiles.push_back(vol);

@@ -30,8 +30,8 @@ namespace x {
         RenderSystem* getRenderSystem() const;
 
     protected:
-        std::shared_ptr<Clock> clock;
-        std::unique_ptr<RenderSystem> renderSystem;
+        std::shared_ptr<Clock> _clock;
+        std::unique_ptr<RenderSystem> _renderSystem;
         str title;
         int initWidth;
         int initHeight;

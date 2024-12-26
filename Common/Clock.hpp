@@ -6,11 +6,14 @@
 
 #include "Types.hpp"
 #include <chrono>
+#include <memory>
 
 namespace x {
     class Clock {
     public:
         Clock() = default;
+
+        static std::shared_ptr<Clock> create();
 
         /// @brief Returns frame delta time in seconds.
         [[nodiscard]] f32 getDeltaTime() const;
