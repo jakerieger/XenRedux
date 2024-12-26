@@ -38,7 +38,8 @@ public:
         _tonemapper      = std::make_unique<Graphics::TonemapperEffect>();
         _tonemapper->setTextureSize(width, height);
         _tonemapper->setInputTexture(_renderTarget->getColorTexture());
-        _shaderBall = std::make_unique<Model>();
+        _shaderBall  = std::make_unique<Model>();
+        _groundPlane = std::make_unique<Model>();
     }
 
     void loadContent() override;
@@ -50,6 +51,7 @@ private:
     DirectionalLight _sun;
     std::shared_ptr<PerspectiveCamera> _camera;
     std::unique_ptr<Model> _shaderBall;
+    std::unique_ptr<Model> _groundPlane;
     std::unique_ptr<Graphics::RenderTarget> _renderTarget;
     std::unique_ptr<Graphics::PostProcessQuad> _postProcessQuad;
     std::unique_ptr<Graphics::TonemapperEffect> _tonemapper;
@@ -62,9 +64,20 @@ void SpaceGame::loadContent() {
     _shaderBall->getMaterial<PBRMaterial>()->setRoughness(0.1f);
     _shaderBall->getMaterial<PBRMaterial>()->setAlbedo(glm::vec3(1.f, 0.f, 1.f));
 
+    const auto groundPlanePath = getDataPath() / "GroundPlane.glb";
+    _groundPlane->loadFromFile(groundPlanePath.toString());
+    _groundPlane->getMaterial<PBRMaterial>()->setMetallic(0.0f);
+    _groundPlane->getMaterial<PBRMaterial>()->setRoughness(0.5f);
+    _groundPlane->getMaterial<PBRMaterial>()->setAlbedo(glm::vec3(0.6f, 0.6f, 0.6f));
+    _groundPlane->getTransform().setScale(glm::vec3(100.0f));
+
     // Register objects that need to be resized when our framebuffer size changes.
     _context->registerVolatile(_camera.get());
     _context->registerVolatile(_renderTarget.get());
+
+    // test code
+    Graphics::Texture texture;
+    if (!texture.create2d(1600, 900, GL_RGBA32F, nullptr)) { Panic("Failed to create texture"); }
 }
 
 void SpaceGame::update() {
@@ -77,6 +90,7 @@ void SpaceGame::draw() {
     _renderTarget->bind();
     _context->clear();  // Clear the render target before drawing
 
+    _groundPlane->draw(_camera, _sun);
     _shaderBall->draw(_camera, _sun);
 
     _renderTarget->unbind();
