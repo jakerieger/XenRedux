@@ -47,7 +47,7 @@ namespace x::Graphics {
         _shaderProgram->use();
         glBindBufferBase(GL_UNIFORM_BUFFER, 0, _paramsUbo);
 
-        glBindImageTexture(1, _outputTexture->getId(), 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA8);
+        _outputTexture->bindImage(1, GL_WRITE_ONLY, GL_RGBA8);
         glBindImageTexture(0, getInputTexture(), 0, GL_FALSE, 0, GL_READ_ONLY, GL_RGBA16F);
 
         constexpr u32 kWorkGroups = 8;
