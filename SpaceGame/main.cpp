@@ -21,6 +21,23 @@ using namespace x;
 /// @briefs Returns the directory of this source file + "/Data".
 static Filesystem::Path getDataPath();
 
+struct params {
+    glm::vec3 albedo                             = glm::vec3(1.0f, 1.0f, 1.0f);
+    float metallic                               = 1.0f;
+    float roughness                              = 1.0f;
+    float ao                                     = 1.0f;
+    glm::vec3 sunColor                           = glm::vec3(1.0f, 1.0f, 1.0f);
+    glm::vec3 sunDirection                       = glm::vec3(0.0f, 0.0f, 1.0f);
+    float sunIntensity                           = 1.0f;
+    PBRMaterial* material                        = nullptr;
+    u32 tonemapOp                                = 0;  // 0 - ACES, 1 - Reinhard, 2 - Linear
+    const char* tonemapNames[3]                  = {"ACES", "Reinhard", "Linear"};
+    f32 drawTime                                 = 0.0f;  // ms
+    f32 postProcessTime                          = 0.0f;  // ms
+    glm::vec3 localLightColors[kMaxPointLights]  = {};
+    float localLightIntensities[kMaxPointLights] = {0.0f};
+} DebugParams;
+
 class SpaceGame final : public IGame {
 public:
     SpaceGame();
@@ -41,20 +58,6 @@ private:
     std::unique_ptr<Graphics::RenderTarget> _renderTarget;
     std::unique_ptr<Graphics::PostProcessQuad> _postProcessQuad;
     std::unique_ptr<Graphics::TonemapperEffect> _tonemapper;
-
-    // Debug UI vars
-    glm::vec3 _albedo            = glm::vec3(1.0f, 1.0f, 1.0f);
-    float _metallic              = 1.0f;
-    float _roughness             = 1.0f;
-    float _ao                    = 1.0f;
-    glm::vec3 _sunColor          = glm::vec3(1.0f, 1.0f, 1.0f);
-    glm::vec3 _sunDirection      = glm::vec3(0.0f, 0.0f, 1.0f);
-    float _sunIntensity          = 1.0f;
-    PBRMaterial* _material       = nullptr;
-    u32 _tonemapOp               = 0;  // 0 - ACES, 1 - Reinhard, 2 - Linear
-    const char* _tonemapNames[3] = {"ACES", "Reinhard", "Linear"};
-    f32 _drawTime                = 0.0f;  // ms
-    f32 _postProcessTime         = 0.0f;  // ms
 };
 
 SpaceGame::SpaceGame() : IGame("SpaceGame", 1600, 900, true) {
@@ -98,20 +101,20 @@ SpaceGame::SpaceGame() : IGame("SpaceGame", 1600, 900, true) {
 void SpaceGame::loadContent() {
     const auto shaderBallPath = getDataPath() / "ShaderBall.fbx";
     _shaderBall->loadFromFile(shaderBallPath.toString());
-    _material = _shaderBall->getMaterial<PBRMaterial>();
-    _material->setMetallic(1.0f);
-    _material->setRoughness(0.3f);
-    _material->setAlbedo(glm::vec3(1.0f, 1.0f, 0.28f));
+    DebugParams.material = _shaderBall->getMaterial<PBRMaterial>();
+    DebugParams.material->setMetallic(1.0f);
+    DebugParams.material->setRoughness(0.3f);
+    DebugParams.material->setAlbedo(glm::vec3(1.0f, 1.0f, 0.28f));
 
     // Initialize debug values with the shader ball's material properties.
     // From here on out, the debug ui will modify these values for the material.
-    _albedo       = _material->getAlbedo();
-    _metallic     = _material->getMetallic();
-    _roughness    = _material->getRoughness();
-    _ao           = _material->getAO();
-    _sunColor     = _sun.getColor();
-    _sunDirection = _sun.getDirection();
-    _sunIntensity = _sun.getIntensity();
+    DebugParams.albedo       = DebugParams.material->getAlbedo();
+    DebugParams.metallic     = DebugParams.material->getMetallic();
+    DebugParams.roughness    = DebugParams.material->getRoughness();
+    DebugParams.ao           = DebugParams.material->getAO();
+    DebugParams.sunColor     = _sun.getColor();
+    DebugParams.sunDirection = _sun.getDirection();
+    DebugParams.sunIntensity = _sun.getIntensity();
 
     const auto groundPlanePath = getDataPath() / "GroundPlane.glb";
     _groundPlane->loadFromFile(groundPlanePath.toString());
@@ -145,16 +148,16 @@ void SpaceGame::draw() {
     _context->clear();  // Clear the render target before drawing
     _groundPlane->draw(_camera, _sun, _localLights);
     _shaderBall->draw(_camera, _sun, _localLights);
-    const auto drawEnd = std::chrono::high_resolution_clock::now();
-    _drawTime          = std::chrono::duration<f32, std::milli>(drawEnd - drawStart).count();
+    const auto drawEnd   = std::chrono::high_resolution_clock::now();
+    DebugParams.drawTime = std::chrono::duration<f32, std::milli>(drawEnd - drawStart).count();
 
     _renderTarget->unbind();
 
     const auto ppStart = std::chrono::high_resolution_clock::now();
     _tonemapper->apply();
     _postProcessQuad->draw(_tonemapper->getOutputTexture());
-    const auto ppEnd = std::chrono::high_resolution_clock::now();
-    _postProcessTime = std::chrono::duration<f32, std::milli>(ppEnd - ppStart).count();
+    const auto ppEnd            = std::chrono::high_resolution_clock::now();
+    DebugParams.postProcessTime = std::chrono::duration<f32, std::milli>(ppEnd - ppStart).count();
 }
 
 void SpaceGame::configurePipeline() {
@@ -165,70 +168,72 @@ void SpaceGame::configurePipeline() {
 }
 
 void SpaceGame::drawDebugUI() {
-    if (!_material) return;
+    ImGui::Begin("DevTools",
+                 nullptr,
+                 ImGuiWindowFlags_NoResize | ImGuiWindowFlags_AlwaysAutoResize);
 
+    // Profiler
     {
-        ImGui::Begin("Profiler",
-                     nullptr,
-                     ImGuiWindowFlags_NoResize | ImGuiWindowFlags_AlwaysAutoResize);
-
         ImGui::Text("%.0f fps", _clock->getFrameRate());
         ImGui::Text("%.4f ms", _clock->getFrameTime());
         ImGui::Text("");
         ImGui::Text("Draw Time:");
-        ImGui::Text("%.6f ms", _drawTime);
+        ImGui::Text("%.6f ms", DebugParams.drawTime);
         ImGui::Text("");
         ImGui::Text("Post Process Time:");
-        ImGui::Text("%.6f ms", _postProcessTime);
-
-        ImGui::End();
+        ImGui::Text("%.6f ms", DebugParams.postProcessTime);
+        ImGui::Text("");
     }
 
-    {
-        ImGui::Begin("Material",
-                     nullptr,
-                     ImGuiWindowFlags_NoResize | ImGuiWindowFlags_AlwaysAutoResize);
+    if (ImGui::CollapsingHeader("Material")) {
+        ImGui::DragFloat3("Albedo", &DebugParams.albedo[0], 0.01f, 0.0f, 1.0f);
+        DebugParams.material->setAlbedo(DebugParams.albedo);
 
-        ImGui::DragFloat3("Albedo", &_albedo[0], 0.01f, 0.0f, 1.0f);
-        _material->setAlbedo(_albedo);
+        ImGui::DragFloat("Metallic", &DebugParams.metallic, 0.01f, 0.0f, 1.0f);
+        DebugParams.material->setMetallic(DebugParams.metallic);
 
-        ImGui::DragFloat("Metallic", &_metallic, 0.01f, 0.0f, 1.0f);
-        _material->setMetallic(_metallic);
+        ImGui::DragFloat("Roughness", &DebugParams.roughness, 0.05f, 0.0f, 1.0f);
+        DebugParams.material->setRoughness(DebugParams.roughness);
 
-        ImGui::DragFloat("Roughness", &_roughness, 0.05f, 0.0f, 1.0f);
-        _material->setRoughness(_roughness);
-
-        ImGui::DragFloat("AO", &_ao, 0.01f, 0.0f, 1.0f);
-        _material->setAO(_ao);
+        ImGui::DragFloat("AO", &DebugParams.ao, 0.01f, 0.0f, 1.0f);
+        DebugParams.material->setAO(DebugParams.ao);
     }
 
-    {
-        ImGui::Begin("Lights",
-                     nullptr,
-                     ImGuiWindowFlags_NoResize | ImGuiWindowFlags_AlwaysAutoResize);
+    if (ImGui::CollapsingHeader("Transform")) {}
 
-        ImGui::Text("Sun");
-        ImGui::Separator();
-        ImGui::DragFloat3("Direction", &_sunDirection[0], 0.01f, -1.0f, 1.0f);
-        ImGui::DragFloat("Intensity", &_sunIntensity, 0.01f, 0.0f, 1.0f);
-        ImGui::DragFloat3("Color", &_sunColor[0], 0.01f, 0.0f, 1.0f);
+    if (ImGui::CollapsingHeader("Camera")) {}
 
-        _sun.setDirection(_sunDirection);
-        _sun.setIntensity(_sunIntensity);
-        _sun.setColor(_sunColor);
+    if (ImGui::CollapsingHeader("Lights")) {
+        // Sun
+        {
+            ImGui::Text("Sun");
+            ImGui::Separator();
+            ImGui::DragFloat3("Direction", &DebugParams.sunDirection[0], 0.01f, -1.0f, 1.0f);
+            ImGui::DragFloat("Intensity", &DebugParams.sunIntensity, 0.01f, 0.0f, 1.0f);
+            ImGui::DragFloat3("Color", &DebugParams.sunColor[0], 0.01f, 0.0f, 1.0f);
+            _sun.setDirection(DebugParams.sunDirection);
+            _sun.setIntensity(DebugParams.sunIntensity);
+            _sun.setColor(DebugParams.sunColor);
 
-        ImGui::End();
+            ImGui::Separator();
+            ImGui::Text("Local Lights");
+            for (int i = 0; i < _localLights.size(); i++) {
+                //
+                auto light        = _localLights.at(i);
+                const auto header = "Light[" + std::to_string(i) + "]";
+                if (ImGui::CollapsingHeader(header.c_str())) {}
+            }
+        }
     }
 
-    {
-        ImGui::Begin("Post Processing",
-                     nullptr,
-                     ImGuiWindowFlags_NoResize | ImGuiWindowFlags_AlwaysAutoResize);
-
-        if (ImGui::BeginCombo("Tonemap Operator", _tonemapNames[_tonemapOp])) {
-            for (int i = 0; i < IM_ARRAYSIZE(_tonemapNames); i++) {
-                const bool isSelected = (_tonemapOp == i);
-                if (ImGui::Selectable(_tonemapNames[i], isSelected)) { _tonemapOp = i; }
+    if (ImGui::CollapsingHeader("Post Process")) {
+        if (ImGui::BeginCombo("Tonemap Operator",
+                              DebugParams.tonemapNames[DebugParams.tonemapOp])) {
+            for (int i = 0; i < IM_ARRAYSIZE(DebugParams.tonemapNames); i++) {
+                const bool isSelected = (DebugParams.tonemapOp == i);
+                if (ImGui::Selectable(DebugParams.tonemapNames[i], isSelected)) {
+                    DebugParams.tonemapOp = i;
+                }
                 if (isSelected) { ImGui::SetItemDefaultFocus(); }
             }
 
@@ -236,9 +241,7 @@ void SpaceGame::drawDebugUI() {
         }
 
         // Update tonemap op
-        _tonemapper->setTonemapOperator(_tonemapOp);
-
-        ImGui::End();
+        _tonemapper->setTonemapOperator(DebugParams.tonemapOp);
     }
 
     ImGui::End();
