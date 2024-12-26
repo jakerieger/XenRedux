@@ -31,20 +31,19 @@ include(Modules/Filesystem/Filesystem.cmake)
 include(Modules/Font/Font.cmake)
 include(Modules/Graphics/Graphics.cmake)
 include(Modules/Image/Image.cmake)
-include(Modules/Keyboard/Keyboard.cmake)
+include(Modules/Input/Input.cmake)
 include(Modules/Math/Math.cmake)
 include(Modules/Memory/Memory.cmake)
-include(Modules/Mouse/Mouse.cmake)
 include(Modules/Physics/Physics.cmake)
 include(Modules/System/System.cmake)
 include(Modules/Thread/Thread.cmake)
-include(Modules/Window/Window.cmake)
 
 find_package(liblzma CONFIG REQUIRED)
 find_package(ZLIB REQUIRED)
 find_package(glm CONFIG REQUIRED)
 find_package(assimp CONFIG REQUIRED)
 find_package(xxHash CONFIG REQUIRED)
+find_package(glfw3 CONFIG REQUIRED)
 
 
 add_library(Xen STATIC
@@ -56,37 +55,38 @@ add_library(Xen STATIC
         ${FILESYSTEM_SRCS}
         ${GRAPHICS_SRCS}
         ${MEMORY_SRCS}
-        ${WINDOW_SRCS}
         # Engine core
-        ${COMMON}/Types.hpp
-        ${COMMON}/Panic.hpp
-        ${COMMON}/Volatile.hpp
-        ${COMMON}/Camera.hpp
-        ${COMMON}/EventSystem.hpp
-        ${COMMON}/RenderSystem.hpp
-        ${COMMON}/RenderSystem.cpp
-        ${COMMON}/ShaderManager.hpp
-        ${COMMON}/ShaderManager.cpp
-        ${COMMON}/PerspectiveCamera.hpp
-        ${COMMON}/PerspectiveCamera.cpp
-        ${COMMON}/Material.hpp
-        ${COMMON}/Material.cpp
-        ${COMMON}/Mesh.hpp
-        ${COMMON}/Mesh.cpp
-        ${COMMON}/Model.hpp
-        ${COMMON}/Model.cpp
-        ${COMMON}/Transform.hpp
-        ${COMMON}/Transform.cpp
-        ${COMMON}/Clock.hpp
-        ${COMMON}/Clock.cpp
-        ${COMMON}/Light.hpp
-        ${COMMON}/Light.cpp
-        ${COMMON}/DirectionalLight.hpp
-        ${COMMON}/DirectionalLight.cpp
-        ${COMMON}/BlinnPhongMaterial.hpp
         ${COMMON}/BlinnPhongMaterial.cpp
-        ${COMMON}/PBRMaterial.hpp
+        ${COMMON}/BlinnPhongMaterial.hpp
+        ${COMMON}/Camera.hpp
+        ${COMMON}/Clock.cpp
+        ${COMMON}/Clock.hpp
+        ${COMMON}/DirectionalLight.cpp
+        ${COMMON}/DirectionalLight.hpp
+        ${COMMON}/EventSystem.hpp
+        ${COMMON}/Game.cpp
+        ${COMMON}/Game.hpp
+        ${COMMON}/Light.cpp
+        ${COMMON}/Light.hpp
+        ${COMMON}/Material.cpp
+        ${COMMON}/Material.hpp
+        ${COMMON}/Mesh.cpp
+        ${COMMON}/Mesh.hpp
+        ${COMMON}/Model.cpp
+        ${COMMON}/Model.hpp
         ${COMMON}/PBRMaterial.cpp
+        ${COMMON}/PBRMaterial.hpp
+        ${COMMON}/Panic.hpp
+        ${COMMON}/PerspectiveCamera.cpp
+        ${COMMON}/PerspectiveCamera.hpp
+        ${COMMON}/RenderSystem.cpp
+        ${COMMON}/RenderSystem.hpp
+        ${COMMON}/ShaderManager.cpp
+        ${COMMON}/ShaderManager.hpp
+        ${COMMON}/Transform.cpp
+        ${COMMON}/Transform.hpp
+        ${COMMON}/Types.hpp
+        ${COMMON}/Volatile.hpp
 )
 
 if (WIN32)
@@ -96,6 +96,7 @@ if (WIN32)
             glm::glm-header-only
             assimp::assimp
             xxHash::xxhash
+            glfw
     )
 elseif (UNIX)
     target_link_libraries(Xen PRIVATE
@@ -104,13 +105,9 @@ elseif (UNIX)
             glm::glm-header-only
             assimp::assimp
             xxHash::xxhash
+            glfw
     )
 endif ()
 
-# Tests
-add_subdirectory(Tests)
-
-# Copy test data to bin directory for unit tests
-add_custom_command(TARGET Xen PRE_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_directory
-        ${CMAKE_SOURCE_DIR}/Resources/TestData ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/TestData)
+# Game project
+add_subdirectory(SpaceGame)
