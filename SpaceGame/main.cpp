@@ -35,7 +35,7 @@ struct params {
     f32 drawTime                                 = 0.0f;  // ms
     f32 postProcessTime                          = 0.0f;  // ms
     glm::vec3 localLightColors[kMaxPointLights]  = {};
-    float localLightIntensities[kMaxPointLights] = {0.0f};
+    float localLightIntensities[kMaxPointLights] = {};
 } DebugParams;
 
 class SpaceGame final : public IGame {
@@ -115,6 +115,11 @@ void SpaceGame::loadContent() {
     DebugParams.sunColor     = _sun.getColor();
     DebugParams.sunDirection = _sun.getDirection();
     DebugParams.sunIntensity = _sun.getIntensity();
+    for (int i = 0; i < _localLights.size(); ++i) {
+        const auto light                     = _localLights[i];
+        DebugParams.localLightColors[i]      = light->getColor();
+        DebugParams.localLightIntensities[i] = light->getIntensity();
+    }
 
     const auto groundPlanePath = getDataPath() / "GroundPlane.glb";
     _groundPlane->loadFromFile(groundPlanePath.toString());
@@ -219,9 +224,25 @@ void SpaceGame::drawDebugUI() {
             ImGui::Text("Local Lights");
             for (int i = 0; i < _localLights.size(); i++) {
                 //
-                auto light        = _localLights.at(i);
-                const auto header = "Light[" + std::to_string(i) + "]";
-                if (ImGui::CollapsingHeader(header.c_str())) {}
+                const auto light  = _localLights.at(i);
+                const auto header = "Point Light [" + std::to_string(i) + "]";
+                if (ImGui::CollapsingHeader(header.c_str())) {
+                    const auto colorLabel = "Color##PL" + std::to_string(i);
+                    ImGui::DragFloat3(colorLabel.c_str(),
+                                      (float*)&DebugParams.localLightColors[i],
+                                      0.01f,
+                                      0.0f,
+                                      1.0f);
+                    light->setColor(DebugParams.localLightColors[i]);
+
+                    const auto intensityLabel = "Intensity##PL" + std::to_string(i);
+                    ImGui::DragFloat(intensityLabel.c_str(),
+                                     &DebugParams.localLightIntensities[i],
+                                     0.01f,
+                                     0.0f,
+                                     1.0f);
+                    light->setIntensity(DebugParams.localLightIntensities[i]);
+                }
             }
         }
     }
