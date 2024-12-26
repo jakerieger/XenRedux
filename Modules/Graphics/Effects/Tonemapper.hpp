@@ -6,6 +6,7 @@
 
 #include "Graphics/PostProcessEffect.hpp"
 #include "Graphics/ShaderProgram.hpp"
+#include "Graphics/Texture2D.hpp"
 
 #include <memory>
 
@@ -22,7 +23,7 @@ namespace x::Graphics {
         ~TonemapperEffect() override;
 
         void apply() const override;
-        void setTextureSize(i32 width, i32 height);
+        void setTextureSize(i32 width, i32 height) const;
         u32 getOutputTexture() const;
 
         void setGamma(f32 gamma);
@@ -32,10 +33,8 @@ namespace x::Graphics {
 
     private:
         std::unique_ptr<ShaderProgram> _shaderProgram;
-        u32 _textureWidth  = 0;
-        u32 _textureHeight = 0;
-        u32 _outputTexture = 0;
-        u32 _paramsUbo     = 0;
+        std::unique_ptr<Texture2D> _outputTexture;
+        u32 _paramsUbo = 0;
         struct TonemapperParams {
             f32 exposure        = 1.0f;
             f32 gamma           = 2.2f;

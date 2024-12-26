@@ -38,6 +38,7 @@ public:
         _tonemapper      = std::make_unique<Graphics::TonemapperEffect>();
         _tonemapper->setTextureSize(width, height);
         _tonemapper->setInputTexture(_renderTarget->getColorTexture());
+        _tonemapper->setTonemapOperator(0);  // Reinhard
         _shaderBall  = std::make_unique<Model>();
         _groundPlane = std::make_unique<Model>();
     }
@@ -74,10 +75,6 @@ void SpaceGame::loadContent() {
     // Register objects that need to be resized when our framebuffer size changes.
     _context->registerVolatile(_camera.get());
     _context->registerVolatile(_renderTarget.get());
-
-    // test code
-    Graphics::Texture texture;
-    if (!texture.create2d(1600, 900, GL_RGBA32F, nullptr)) { Panic("Failed to create texture"); }
 }
 
 void SpaceGame::update() {

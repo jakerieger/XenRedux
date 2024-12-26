@@ -4,11 +4,11 @@
 
 #include <stb_image.h>
 #include "Panic.hpp"
-#include "Texture.hpp"
+#include "Texture2D.hpp"
 #include "DebugOpenGL.hpp"
 
 namespace x::Graphics {
-    bool Texture::loadFromFile(const str& filename, bool flipVertically) {
+    bool Texture2D::loadFromFile(const str& filename, bool flipVertically) {
         stbi_set_flip_vertically_on_load(flipVertically);
         unsigned char* data = stbi_load(filename.c_str(), &_width, &_height, &_channels, 0);
         if (!data) { return false; }
@@ -53,7 +53,7 @@ namespace x::Graphics {
         return true;
     }
 
-    bool Texture::loadFromMemory(const void* data, size_t size, bool flipVertically) {
+    bool Texture2D::loadFromMemory(const void* data, size_t size, bool flipVertically) {
         stbi_set_flip_vertically_on_load(flipVertically);
         _data = std::make_unique<BinaryData>(data, size);
         if (!_data) { return false; }
@@ -88,7 +88,7 @@ namespace x::Graphics {
         return true;
     }
 
-    bool Texture::create2d(u32 width, u32 height, GLenum internalFormat) {
+    bool Texture2D::create(u32 width, u32 height, GLenum internalFormat) {
         release();
 
         const GLenum format = getFormatFromInternal(internalFormat);
@@ -128,76 +128,91 @@ namespace x::Graphics {
         return true;
     }
 
-    Texture::~Texture() {
+    Texture2D::~Texture2D() {
         release();
     }
 
-    const void* Texture::getData() const {
+    const void* Texture2D::getData() const {
         return _data->getData();
     }
 
-    size_t Texture::getSize() const {
+    size_t Texture2D::getSize() const {
         return _data->getSize();
     }
 
-    u32 Texture::getWidth() const {
+    u32 Texture2D::getWidth() const {
         return _width;
     }
 
-    u32 Texture::getHeight() const {
+    u32 Texture2D::getHeight() const {
         return _height;
     }
 
-    u32 Texture::getChannels() const {
+    u32 Texture2D::getChannels() const {
         return _channels;
     }
 
-    GLenum Texture::getFormat() const {
+    GLenum Texture2D::getFormat() const {
         return _format;
     }
 
-    GLenum Texture::getInternalFormat() const {
+    GLenum Texture2D::getInternalFormat() const {
         return _internalFormat;
     }
 
-    u32 Texture::getId() const {
+    u32 Texture2D::getId() const {
         return _textureId;
     }
 
-    GLenum Texture::getType() const {
+    GLenum Texture2D::getType() const {
         return _type;
     }
 
-    void Texture::bind(u32 slot) const {
+    void Texture2D::bind(u32 slot) const {
         glActiveTexture(GL_TEXTURE0 + slot);
         glBindTexture(GL_TEXTURE_2D, _textureId);
         CHECK_GL_ERROR();
     }
 
-    void Texture::unbind() const {
+    void Texture2D::unbind() const {
         glBindTexture(GL_TEXTURE_2D, 0);
         CHECK_GL_ERROR();
     }
 
-    void Texture::bindImage(u32 unit, GLenum access, GLenum format) const {
+    void Texture2D::bindImage(u32 unit, GLenum access, GLenum format) const {
         glBindImageTexture(unit, _textureId, 0, GL_FALSE, 0, access, format);
     }
 
-    void Texture::setWrapMode(GLenum mode) const {
+    void Texture2D::setWrapMode(GLenum mode) const {
         glBindTexture(GL_TEXTURE_2D, _textureId);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, mode);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, mode);
         CHECK_GL_ERROR();
     }
 
-    void Texture::setFilterMode(GLenum min, GLenum mag) const {
+    void Texture2D::setFilterMode(GLenum min, GLenum mag) const {
         glBindTexture(GL_TEXTURE_2D, _textureId);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, min);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, mag);
         CHECK_GL_ERROR();
     }
 
-    GLenum Texture::getFormatFromInternal(GLenum internal) {
+    void Texture2D::resize(u32 width, u32 height) {
+        _width  = width;
+        _height = height;
+        glBindTexture(GL_TEXTURE_2D, _textureId);
+        glTexImage2D(GL_TEXTURE_2D,
+                     0,
+                     _internalFormat,
+                     _width,
+                     _height,
+                     0,
+                     _format,
+                     _type,
+                     nullptr);
+    }
+
+    GLenum Texture2D::getFormatFromInternal(GLenum internal) {
         switch (internal) {
             // Red channel
             case GL_R8:
@@ -238,7 +253,7 @@ namespace x::Graphics {
         }
     }
 
-    GLenum Texture::getTypeFromInternal(GLenum internal) {
+    GLenum Texture2D::getTypeFromInternal(GLenum internal) {
         switch (internal) {
             case GL_R8:
             case GL_RG8:
@@ -306,7 +321,7 @@ namespace x::Graphics {
         }
     }
 
-    u32 Texture::getChannelCount(GLenum format) {
+    u32 Texture2D::getChannelCount(GLenum format) {
         switch (format) {
             case GL_RED:
                 return 1;
@@ -321,7 +336,7 @@ namespace x::Graphics {
         }
     }
 
-    void Texture::release() {
+    void Texture2D::release() {
         if (_textureId) {
             glDeleteTextures(1, &_textureId);
             CHECK_GL_ERROR();

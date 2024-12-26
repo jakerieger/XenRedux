@@ -10,7 +10,7 @@ namespace x {
 
     void IMaterial::setTexture(const str& name,
                                u32 slot,
-                               const std::weak_ptr<Graphics::Texture>& texture) {
+                               const std::weak_ptr<Graphics::Texture2D>& texture) {
         _textures.insert_or_assign(slot, texture);
         _shaderProgram->use();
         _shaderProgram->setInt(name, slot);

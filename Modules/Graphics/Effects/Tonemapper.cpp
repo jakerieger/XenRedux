@@ -14,13 +14,10 @@ namespace x::Graphics {
         _shaderProgram->link();
 
         // Create output texture
-        glGenTextures(1, &_outputTexture);
-        glBindTexture(GL_TEXTURE_2D, _outputTexture);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, 1, 1, 0, GL_RGBA, GL_UNSIGNED_INT, nullptr);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        _outputTexture = std::make_unique<Texture2D>();
+        if (!_outputTexture->create(0, 0, GL_RGBA8)) { Panic("Failed to create output texture"); }
+        _outputTexture->setFilterMode(GL_LINEAR, GL_LINEAR);
+        _outputTexture->setWrapMode(GL_CLAMP_TO_EDGE);
 
         // Create params UBO
         // TODO: Go back and implement this in GpuBuffer
@@ -32,7 +29,7 @@ namespace x::Graphics {
     }
 
     TonemapperEffect::~TonemapperEffect() {
-        glDeleteTextures(1, &_outputTexture);
+        _outputTexture.reset();
     }
 
     void TonemapperEffect::updateParams() const {
@@ -50,34 +47,22 @@ namespace x::Graphics {
         _shaderProgram->use();
         glBindBufferBase(GL_UNIFORM_BUFFER, 0, _paramsUbo);
 
-        glBindImageTexture(1, _outputTexture, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA8);
+        glBindImageTexture(1, _outputTexture->getId(), 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA8);
         glBindImageTexture(0, getInputTexture(), 0, GL_FALSE, 0, GL_READ_ONLY, GL_RGBA16F);
 
         constexpr u32 kWorkGroups = 8;
-        const auto x              = (_textureWidth + (kWorkGroups - 1)) / kWorkGroups;
-        const auto y              = (_textureHeight + (kWorkGroups - 1)) / kWorkGroups;
+        const auto x              = (_outputTexture->getWidth() + (kWorkGroups - 1)) / kWorkGroups;
+        const auto y              = (_outputTexture->getHeight() + (kWorkGroups - 1)) / kWorkGroups;
         _shaderProgram->dispatchCompute(x, y, 1);
         glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);  // Ensure compute writes complete
     }
 
-    void TonemapperEffect::setTextureSize(i32 width, i32 height) {
-        _textureWidth  = width;
-        _textureHeight = height;
-
-        glBindTexture(GL_TEXTURE_2D, _outputTexture);
-        glTexImage2D(GL_TEXTURE_2D,
-                     0,
-                     GL_RGBA8,
-                     _textureWidth,
-                     _textureHeight,
-                     0,
-                     GL_RGBA,
-                     GL_UNSIGNED_INT,
-                     nullptr);
+    void TonemapperEffect::setTextureSize(i32 width, i32 height) const {
+        _outputTexture->resize(width, height);
     }
 
     u32 TonemapperEffect::getOutputTexture() const {
-        return _outputTexture;
+        return _outputTexture->getId();
     }
 
     void TonemapperEffect::setGamma(f32 gamma) {

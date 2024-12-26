@@ -13,8 +13,8 @@ set(GRAPHICS_SRCS
         ${MODULES}/Graphics/Shader.hpp
         ${MODULES}/Graphics/ShaderProgram.cpp
         ${MODULES}/Graphics/ShaderProgram.hpp
-        ${MODULES}/Graphics/Texture.cpp
-        ${MODULES}/Graphics/Texture.hpp
+        ${MODULES}/Graphics/Texture2D.cpp
+        ${MODULES}/Graphics/Texture2D.hpp
         ${MODULES}/Graphics/Vertex.hpp
         ${MODULES}/Graphics/VertexArray.cpp
         ${MODULES}/Graphics/VertexArray.hpp

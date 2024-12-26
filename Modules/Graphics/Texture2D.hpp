@@ -11,38 +11,24 @@
 #include "Data/BinaryData.hpp"
 
 namespace x::Graphics {
-    class Texture {
+    class Texture2D {
     public:
-        Texture() = default;
-        ~Texture();
+        Texture2D() = default;
+        ~Texture2D();
 
-        Texture(const Texture&)            = delete;
-        Texture& operator=(const Texture&) = delete;
-        Texture(Texture&&)                 = delete;
-        Texture& operator=(Texture&&)      = delete;
+        Texture2D(const Texture2D&)            = delete;
+        Texture2D& operator=(const Texture2D&) = delete;
+        Texture2D(Texture2D&&)                 = delete;
+        Texture2D& operator=(Texture2D&&)      = delete;
 
         bool loadFromFile(const str& filename, bool flipVertically = false);
         bool loadFromMemory(const void* data, size_t size, bool flipVertically = false);
-
-        bool create1d() {
-            Panic("Unimplemented");
-        }
-
-        bool create2d(u32 width, u32 height, GLenum internalFormat);
-
-        bool create3d() {
-            Panic("Unimplemented");
-        }
-
-        bool createCubemap() {
-            Panic("Unimplemented");
-        }
+        bool create(u32 width, u32 height, GLenum internalFormat);
 
         void bind(u32 slot = 0) const;
         void unbind() const;
-
         void bindImage(u32 unit, GLenum access, GLenum format) const;
-
+        void resize(u32 width, u32 height);
         void setWrapMode(GLenum mode) const;
         void setFilterMode(GLenum min, GLenum mag) const;
 
