@@ -14,7 +14,7 @@ I firmly believe if I start over again, XEN will never get finished.
 
 ## Showcase
 
-![](Resources/screenshot_02.png)
+![](Resources/simple_brdf.gif)
 
 > Simple BRDF implementation; tone-mapping is being applied via a compute shader in XEN's post
 > processing pipeline.

@@ -91,9 +91,9 @@ SpaceGame::SpaceGame() : IGame("SpaceGame", 1600, 900, true) {
                                getRandomRange(0.0f, 1.f)));
         pl->setIntensity(getRandomRange(0.3f, 1.f));
         pl->setRadius(getRandomRange(45.0f, 90.0f));
-        pl->setPosition(glm::vec3(getRandomRange(-4.0f, 4.0f),
-                                  getRandomRange(-4.0f, 4.0f),
-                                  getRandomRange(-4.0f, 4.0f)));
+        pl->setPosition(glm::vec3(getRandomRange(-4.0f, 1.0f),
+                                  getRandomRange(-4.0f, 1.0f),
+                                  getRandomRange(-4.0f, 1.0f)));
         _localLights.push_back(pl);
     }
 }
@@ -124,7 +124,7 @@ void SpaceGame::loadContent() {
     const auto groundPlanePath = getDataPath() / "GroundPlane.glb";
     _groundPlane->loadFromFile(groundPlanePath.toString());
     _groundPlane->getMaterial<PBRMaterial>()->setMetallic(0.0f);
-    _groundPlane->getMaterial<PBRMaterial>()->setRoughness(0.5f);
+    _groundPlane->getMaterial<PBRMaterial>()->setRoughness(0.3f);
     _groundPlane->getMaterial<PBRMaterial>()->setAlbedo(glm::vec3(0.6f, 0.6f, 0.6f));
     _groundPlane->getTransform().setScale(glm::vec3(100.0f));
 
