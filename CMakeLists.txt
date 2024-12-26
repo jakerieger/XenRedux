@@ -5,7 +5,7 @@ set(CMAKE_TOOLCHAIN_FILE vcpkg/scripts/buildsystems/vcpkg.cmake)
 
 project(XEN)
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
@@ -60,6 +60,7 @@ add_library(Xen STATIC
         ${FILESYSTEM_SRCS}
         ${GRAPHICS_SRCS}
         ${MEMORY_SRCS}
+        ${MATH_SRCS}
         # Engine core
         ${COMMON}/BlinnPhongMaterial.cpp
         ${COMMON}/BlinnPhongMaterial.hpp
@@ -86,6 +87,8 @@ add_library(Xen STATIC
         ${COMMON}/Panic.hpp
         ${COMMON}/PerspectiveCamera.cpp
         ${COMMON}/PerspectiveCamera.hpp
+        ${COMMON}/PointLight.cpp
+        ${COMMON}/PointLight.hpp
         ${COMMON}/ShaderManager.cpp
         ${COMMON}/ShaderManager.hpp
         ${COMMON}/Transform.cpp

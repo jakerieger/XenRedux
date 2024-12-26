@@ -23,7 +23,7 @@ namespace x {
         bool loadFromFile(const str& filename);
         void draw(const std::shared_ptr<ICamera>& camera,
                   DirectionalLight& sun,
-                  const std::vector<std::weak_ptr<ILight>>& lights = {});
+                  const std::vector<std::shared_ptr<ILight>>& lights = {});
 
         Transform& getTransform();
         std::shared_ptr<IMaterial>& getMaterial();

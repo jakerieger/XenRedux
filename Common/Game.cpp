@@ -50,6 +50,7 @@ namespace x {
 
         glfwSetWindowUserPointer(_window, this);  // Give callbacks access to this IGame instance.
         glfwSetFramebufferSizeCallback(_window, onResize);
+        glfwSwapInterval(0);  // Disabled vertical sync
 
         _context = Context::create();
         _clock   = Clock::create();
@@ -67,6 +68,7 @@ namespace x {
         loadContent();
         configurePipeline();
         _clock->start();
+        glfwMaximizeWindow(_window);
         while (!glfwWindowShouldClose(_window)) {
             _clock->tick();
             glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
@@ -76,6 +78,8 @@ namespace x {
                 update();
                 draw();
 
+                _clock->update();
+
                 if (debug) {
                     Graphics::DebugUI::beginFrame();
                     drawDebugUI();
@@ -84,7 +88,6 @@ namespace x {
 
                 glfwSwapBuffers(_window);
             }
-            _clock->update();
         }
         _clock->stop();
         unloadContent();

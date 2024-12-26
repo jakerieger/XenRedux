@@ -39,7 +39,7 @@ namespace x {
 
     void Model::draw(const std::shared_ptr<ICamera>& camera,
                      DirectionalLight& sun,
-                     const std::vector<std::weak_ptr<ILight>>& lights) {
+                     const std::vector<std::shared_ptr<ILight>>& lights) {
         const auto vp    = camera->getViewProjection();
         const auto model = _transform.getMatrix();
 
@@ -50,8 +50,7 @@ namespace x {
 
         // Other scene lights
         for (auto& light : lights) {
-            const auto ptr = light.lock();
-            if (ptr) { ptr->updateUniforms(_material); }
+            if (light) { light->updateUniforms(_material); }
         }
 
         for (const auto& mesh : _meshes) {

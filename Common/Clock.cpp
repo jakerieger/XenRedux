@@ -54,9 +54,9 @@ namespace x {
     }
 
     void Clock::update() {
-        const auto frameEnd                            = std::chrono::high_resolution_clock::now();
-        const std::chrono::duration<f32> frameDuration = frameEnd - _lastTime;
-        _frameTime                                     = frameDuration.count();
+        const auto frameEnd      = std::chrono::high_resolution_clock::now();
+        const auto frameDuration = std::chrono::duration<f32, std::milli>(frameEnd - _lastTime);
+        _frameTime               = frameDuration.count();
     }
 
     u64 Clock::cpuTimestamp() {

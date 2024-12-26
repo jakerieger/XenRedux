@@ -13,6 +13,19 @@ struct Sun {
     float intensity;
 };
 
+struct PointLight {
+    vec3 color;
+    float intensity;
+    vec3 position;
+    float constant;
+    float linear;
+    float quadratic;
+    float radius;
+};
+
+#define MAX_POINT_LIGHTS 100
+
+uniform PointLight uPointLights[MAX_POINT_LIGHTS];
 uniform Sun uSun;
 uniform vec3 uViewPosition;
 uniform Material uMaterial;
@@ -64,29 +77,13 @@ vec3 FresnelSchlick(float cosTheta, vec3 F0) {
     return F0 + (vec3(1.0) - F0) * pow(1.0 - cosTheta, 5.0);
 }
 
-void main() {
-    vec3 N = normalize(FragNormal);
-    vec3 V = normalize(uViewPosition - FragPos);
-    float roughness = max(0.05, uMaterial.roughness);
-
-    // Calculate base reflectivity (F0)
-    // Dialectrics (non-metals) have F0 of 0.04
-    // Metals use their albedo as F0
-    vec3 F0 = vec3(0.04);
-    F0 = mix(F0, uMaterial.albedo, uMaterial.metallic);
-
-    // Initialize reflectance
+vec3 CalculateSun(vec3 V, vec3 N, float roughness, vec3 F0) {
     vec3 Lo = vec3(0.0);
-
-    // TODO: Loop over each light in the scene, hard-coded as one for now
-    // since we only have a single directional light.
 
     // Normalize sun direction to position vector
     vec3 L = normalize(-uSun.direction);
     vec3 H = normalize(V + L);
-    //    float distance = length(uSun.direction - FragPos);
-    //    float attenuation = 1.0 / (distance * distance);
-    // vec3 radiance = uSun.color * attenuation; // No attenuation for directional lights
+    // No attenuation for directional lights
     vec3 radiance = uSun.color * uSun.intensity;
 
     // Cook-Torrance BRDF
@@ -106,7 +103,66 @@ void main() {
 
     // Add to outgoing radiance Lo
     float NdotL = max(dot(N, L), 0.0);
+    Lo += (kD * uMaterial.albedo / PI + specular) * radiance * NdotL;// Normalize sun direction to position vector
+
+    return Lo;
+}
+
+vec3 CalculatePointLight(vec3 V, vec3 N, float roughness, vec3 F0, PointLight light) {
+    vec3 Lo = vec3(0.0);
+
+    vec3 L = normalize(light.position - FragPos);
+    vec3 H = normalize(V + L);
+
+    float distance = length(light.position - FragPos);
+    // Only process this light if its fragment is within the light's radius
+    if (distance > light.radius) {
+        return Lo;
+    }
+
+    float attenuation = 1.0 / (light.constant + light.linear * distance + light.quadratic * (distance * distance));
+    vec3 radiance = light.color * light.intensity * attenuation;
+
+    // Cook-Torrance BRDF
+    float NDF = DistributionGGX(N, H, roughness);
+    float G = GeometrySmith(N, V, L, roughness);
+    float cosTheta = clamp(dot(H, V), 0.0, 1.0);
+    vec3 F = FresnelSchlick(cosTheta, F0);
+
+    vec3 numerator = NDF * G * F;
+    float denominator = 4.0 * max(dot(N, V), 0.0) * max(dot(N, L), 0.0) + 0.0001;
+    vec3 specular = numerator / denominator;
+
+    // Calculate energy conservation
+    vec3 kS = F;
+    vec3 kD = vec3(1.0) - kS;
+    kD *= 1.0 - uMaterial.metallic;
+
+    // Add to outgoing radiance Lo
+    float NdotL = max(dot(N, L), 0.0);
     Lo += (kD * uMaterial.albedo / PI + specular) * radiance * NdotL;
+
+    return Lo;
+}
+
+void main() {
+    vec3 N = normalize(FragNormal);
+    vec3 V = normalize(uViewPosition - FragPos);
+    float roughness = max(0.05, uMaterial.roughness);
+
+    // Calculate base reflectivity (F0)
+    // Dialectrics (non-metals) have F0 of 0.04
+    // Metals use their albedo as F0
+    vec3 F0 = vec3(0.04);
+    F0 = mix(F0, uMaterial.albedo, uMaterial.metallic);
+
+    // Initialize reflectance
+    vec3 Lo = vec3(0.0);
+    Lo += CalculateSun(V, N, roughness, F0);
+    for (int i = 0; i < MAX_POINT_LIGHTS; ++i) {
+        PointLight light = uPointLights[i];
+        Lo += CalculatePointLight(V, N, roughness, F0, light);
+    }
 
     vec3 ambient = uSun.color * 0.01 * uMaterial.albedo * uMaterial.ao;
     vec3 color = ambient + Lo;

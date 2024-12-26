@@ -18,7 +18,7 @@ namespace x {
         /// @brief Returns frame delta time in seconds.
         [[nodiscard]] f32 getDeltaTime() const;
 
-        /// @brief Returns frame time in seconds.
+        /// @brief Returns frame time in millis.
         [[nodiscard]] f32 getFrameTime() const;
 
         /// @brief Returns the elapsed time between now and the clock starting.
