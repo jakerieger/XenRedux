@@ -14,8 +14,10 @@ namespace x::Graphics {
         _shaderProgram->link();
 
         // Create output texture
-        _outputTexture = std::make_unique<Texture2D>();
-        if (!_outputTexture->create(0, 0, GL_RGBA8)) { Panic("Failed to create output texture"); }
+        _outputTexture = std::make_unique<Texture>();
+        if (!_outputTexture->create(0, 0, GL_RGBA8, GL_RGBA)) {
+            Panic("Failed to create output texture");
+        }
         _outputTexture->setFilterMode(GL_LINEAR, GL_LINEAR);
         _outputTexture->setWrapMode(GL_CLAMP_TO_EDGE);
 

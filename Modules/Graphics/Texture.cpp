@@ -4,16 +4,14 @@
 
 #include <stb_image.h>
 #include "Panic.hpp"
-#include "Texture2D.hpp"
+#include "Texture.hpp"
 #include "DebugOpenGL.hpp"
 
 namespace x::Graphics {
-    bool Texture2D::loadFromFile(const str& filename, bool flipVertically) {
+    bool Texture::loadFromFile(const str& filename, bool flipVertically) {
         stbi_set_flip_vertically_on_load(flipVertically);
         unsigned char* data = stbi_load(filename.c_str(), &_width, &_height, &_channels, 0);
         if (!data) { return false; }
-        _data = std::make_unique<BinaryData>(data, _width * _height * _channels);
-        if (!_data) { return false; }
 
         // determine internal format
         if (_channels == 1) {
@@ -28,13 +26,49 @@ namespace x::Graphics {
         }
 
         glGenTextures(1, &_textureId);
-        glBindTexture(GL_TEXTURE_2D, _textureId);
+        glBindTexture(_target, _textureId);
         if (CHECK_GL_ERROR()) {
             stbi_image_free(data);
             return false;
         }
 
-        glTexImage2D(GL_TEXTURE_2D,
+        if (_target == GL_TEXTURE_CUBE_MAP) {
+            int faceSize = _width / 4;
+            if (faceSize != _height / 3) {
+                stbi_image_free(data);
+                return false;
+            }
+            const size_t dataSize = _width * _height * _channels;
+            std::vector<u8> temp(dataSize);
+            std::copy(data, data + dataSize, temp.begin());
+            stbi_image_free(data);
+            auto faces = extractCubemapFaces(faceSize, temp);
+
+            glGenTextures(1, &_textureId);
+            glBindTexture(GL_TEXTURE_CUBE_MAP, _textureId);
+            for (int i = 0; i < faces.size(); i++) {
+                const auto& face = faces[i];
+                glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i,
+                             0,
+                             GL_RGB32F,
+                             face.width,
+                             face.height,
+                             0,
+                             GL_RGB,
+                             GL_UNSIGNED_BYTE,
+                             face.data.data());
+                if (CHECK_GL_ERROR()) {
+                    release();
+                    return false;
+                }
+            }
+            setWrapMode(GL_CLAMP_TO_EDGE);
+            setFilterMode(GL_LINEAR, GL_LINEAR);
+            glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
+            return true;
+        }
+
+        glTexImage2D(_target,
                      0,
                      _internalFormat,
                      _width,
@@ -43,7 +77,7 @@ namespace x::Graphics {
                      _format,
                      GL_UNSIGNED_BYTE,
                      data);
-        glGenerateMipmap(GL_TEXTURE_2D);
+        glGenerateMipmap(_target);
         if (CHECK_GL_ERROR()) {
             stbi_image_free(data);
             return false;
@@ -53,10 +87,8 @@ namespace x::Graphics {
         return true;
     }
 
-    bool Texture2D::loadFromMemory(const void* data, size_t size, bool flipVertically) {
+    bool Texture::loadFromMemory(const void* data, size_t size, bool flipVertically) {
         stbi_set_flip_vertically_on_load(flipVertically);
-        _data = std::make_unique<BinaryData>(data, size);
-        if (!_data) { return false; }
 
         if (_channels == 1) {
             _internalFormat = GL_R8;
@@ -69,11 +101,13 @@ namespace x::Graphics {
             _format         = GL_RGBA;
         }
 
+        // TODO: IMPLEMENT CUBE MAPS
+
         glGenTextures(1, &_textureId);
-        glBindTexture(GL_TEXTURE_2D, _textureId);
+        glBindTexture(_target, _textureId);
         if (CHECK_GL_ERROR()) { return false; }
 
-        glTexImage2D(GL_TEXTURE_2D,
+        glTexImage2D(_target,
                      0,
                      _internalFormat,
                      _width,
@@ -82,39 +116,37 @@ namespace x::Graphics {
                      _format,
                      GL_UNSIGNED_BYTE,
                      data);
-        glGenerateMipmap(GL_TEXTURE_2D);
+        glGenerateMipmap(_target);
         if (CHECK_GL_ERROR()) { return false; }
 
         return true;
     }
 
-    bool Texture2D::create(u32 width, u32 height, GLenum internalFormat) {
+    bool Texture::create(u32 width, u32 height, GLenum internalFormat, GLenum format) {
         release();
-
-        const GLenum format = getFormatFromInternal(internalFormat);
-        const GLenum type   = getTypeFromInternal(internalFormat);
 
         _width          = width;
         _height         = height;
         _internalFormat = internalFormat;
         _format         = format;
-        _type           = type;
+
+        // TODO: IMPLEMENT CUBE MAPS
 
         glGenTextures(1, &_textureId);
-        glBindTexture(GL_TEXTURE_2D, _textureId);
+        glBindTexture(_target, _textureId);
         if (CHECK_GL_ERROR()) {
             glDeleteTextures(1, &_textureId);
             return false;
         }
 
-        glTexImage2D(GL_TEXTURE_2D,
+        glTexImage2D(_target,
                      0,
                      _internalFormat,
                      _width,
                      _height,
                      0,
                      _format,
-                     _type,
+                     getTypeFromInternal(internalFormat),
                      nullptr);
         if (CHECK_GL_ERROR()) {
             glDeleteTextures(1, &_textureId);
@@ -123,96 +155,88 @@ namespace x::Graphics {
 
         setWrapMode(GL_REPEAT);
         setFilterMode(GL_LINEAR, GL_LINEAR);
-        glBindTexture(GL_TEXTURE_2D, 0);
+        glBindTexture(_target, 0);
 
         return true;
     }
 
-    Texture2D::~Texture2D() {
+    Texture::~Texture() {
         release();
     }
 
-    const void* Texture2D::getData() const {
-        return _data->getData();
-    }
-
-    size_t Texture2D::getSize() const {
-        return _data->getSize();
-    }
-
-    u32 Texture2D::getWidth() const {
+    u32 Texture::getWidth() const {
         return _width;
     }
 
-    u32 Texture2D::getHeight() const {
+    u32 Texture::getHeight() const {
         return _height;
     }
 
-    u32 Texture2D::getChannels() const {
+    u32 Texture::getChannels() const {
         return _channels;
     }
 
-    GLenum Texture2D::getFormat() const {
+    GLenum Texture::getFormat() const {
         return _format;
     }
 
-    GLenum Texture2D::getInternalFormat() const {
+    GLenum Texture::getInternalFormat() const {
         return _internalFormat;
     }
 
-    u32 Texture2D::getId() const {
+    u32 Texture::getId() const {
         return _textureId;
     }
 
-    GLenum Texture2D::getType() const {
-        return _type;
+    GLenum Texture::getTarget() const {
+        return _target;
     }
 
-    void Texture2D::bind(u32 slot) const {
+    void Texture::bind(u32 slot) const {
         glActiveTexture(GL_TEXTURE0 + slot);
-        glBindTexture(GL_TEXTURE_2D, _textureId);
+        glBindTexture(_target, _textureId);
         CHECK_GL_ERROR();
     }
 
-    void Texture2D::unbind() const {
-        glBindTexture(GL_TEXTURE_2D, 0);
+    void Texture::unbind() const {
+        glBindTexture(_target, 0);
         CHECK_GL_ERROR();
     }
 
-    void Texture2D::bindImage(u32 unit, GLenum access, GLenum format) const {
+    void Texture::bindImage(u32 unit, GLenum access, GLenum format) const {
         glBindImageTexture(unit, _textureId, 0, GL_FALSE, 0, access, format);
     }
 
-    void Texture2D::setWrapMode(GLenum mode) const {
-        glBindTexture(GL_TEXTURE_2D, _textureId);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, mode);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, mode);
+    void Texture::setWrapMode(GLenum mode) const {
+        glBindTexture(_target, _textureId);
+        glTexParameteri(_target, GL_TEXTURE_WRAP_S, mode);
+        glTexParameteri(_target, GL_TEXTURE_WRAP_T, mode);
         CHECK_GL_ERROR();
     }
 
-    void Texture2D::setFilterMode(GLenum min, GLenum mag) const {
-        glBindTexture(GL_TEXTURE_2D, _textureId);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, min);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, mag);
+    void Texture::setFilterMode(GLenum min, GLenum mag) const {
+        glBindTexture(_target, _textureId);
+        glTexParameteri(_target, GL_TEXTURE_MIN_FILTER, min);
+        glTexParameteri(_target, GL_TEXTURE_MAG_FILTER, mag);
         CHECK_GL_ERROR();
     }
 
-    void Texture2D::resize(u32 width, u32 height) {
+    void Texture::resize(u32 width, u32 height) {
         _width  = width;
         _height = height;
-        glBindTexture(GL_TEXTURE_2D, _textureId);
-        glTexImage2D(GL_TEXTURE_2D,
+        glBindTexture(_target, _textureId);
+        glTexImage2D(_target,
                      0,
                      _internalFormat,
                      _width,
                      _height,
                      0,
                      _format,
-                     _type,
+                     getTypeFromInternal(_internalFormat),
                      nullptr);
     }
 
-    GLenum Texture2D::getFormatFromInternal(GLenum internal) {
+    GLenum Texture::getFormatFromInternal(GLenum internal) {
         switch (internal) {
             // Red channel
             case GL_R8:
@@ -257,7 +281,7 @@ namespace x::Graphics {
         }
     }
 
-    GLenum Texture2D::getTypeFromInternal(GLenum internal) {
+    GLenum Texture::getTypeFromInternal(GLenum internal) {
         switch (internal) {
             case GL_R8:
             case GL_RG8:
@@ -325,7 +349,7 @@ namespace x::Graphics {
         }
     }
 
-    u32 Texture2D::getChannelCount(GLenum format) {
+    u32 Texture::getChannelCount(GLenum format) {
         switch (format) {
             case GL_RED:
                 return 1;
@@ -340,12 +364,51 @@ namespace x::Graphics {
         }
     }
 
-    void Texture2D::release() {
+    void Texture::release() {
         if (_textureId) {
             glDeleteTextures(1, &_textureId);
             CHECK_GL_ERROR();
             _textureId = 0;
-            _data.reset();
         }
+    }
+
+    std::vector<Texture::FaceData> Texture::extractCubemapFaces(int faceSize,
+                                                                const std::vector<u8>& data) const {
+        std::vector<std::pair<int, int>> facePositions = {
+          {2, 1},  // POSITIVE_X
+          {0, 1},  // NEGATIVE_X
+          {1, 0},  // POSITIVE_Y
+          {1, 2},  // NEGATIVE_Y
+          {1, 1},  // POSITIVE_Z
+          {3, 1}   // NEGATIVE_Z
+        };
+
+        std::vector<FaceData> faces(6);
+        for (size_t i = 0; i < facePositions.size(); ++i) {
+            const auto& [xOffset, yOffset] = facePositions[i];
+            FaceData face;
+            face.width  = faceSize;
+            face.height = faceSize;
+            face.data.resize(faceSize * faceSize * getChannels());
+
+            for (int y = 0; y < faceSize; ++y) {
+                int srcY  = y + yOffset * faceSize;
+                int destY = y * faceSize * getChannels();
+
+                for (int x = 0; x < faceSize; ++x) {
+                    int srcX      = x + xOffset * faceSize;
+                    int srcIndex  = (srcY * _width + srcX) * getChannels();
+                    int destIndex = destY + x * getChannels();
+
+                    std::copy(data.data() + srcIndex,
+                              data.data() + srcIndex + getChannels(),
+                              face.data.begin() + destIndex);
+                }
+            }
+
+            faces[i] = std::move(face);
+        }
+
+        return faces;
     }
 }  // namespace x::Graphics

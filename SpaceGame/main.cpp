@@ -14,6 +14,7 @@
 #include "Graphics/Effects/AntiAliasing.hpp"
 #include "Graphics/Effects/Tonemapper.hpp"
 #include "Math/Random.inl"
+#include "Skybox.hpp"
 
 #include <imgui/imgui.h>
 
@@ -58,6 +59,7 @@ private:
     std::shared_ptr<PerspectiveCamera> _camera;
     std::unique_ptr<Model> _shaderBall;
     std::unique_ptr<Model> _groundPlane;
+    std::unique_ptr<Skybox> _skybox;
     std::unique_ptr<Graphics::RenderTarget> _renderTarget;
     std::unique_ptr<Graphics::PostProcessQuad> _postProcessQuad;
     std::unique_ptr<Graphics::Tonemapper> _tonemapper;
@@ -88,6 +90,9 @@ SpaceGame::SpaceGame() : IGame("SpaceGame", 1600, 900, true) {
 
     _shaderBall  = std::make_unique<Model>();
     _groundPlane = std::make_unique<Model>();
+
+    const auto skyboxTexture = getDataPath() / "Sky.png";
+    _skybox                  = std::make_unique<Skybox>(skyboxTexture.toString());
 
     // Create one hundred point lights
     for (int i = 0; i < 4; ++i) {
@@ -154,13 +159,15 @@ void SpaceGame::unloadContent() {
 void SpaceGame::update() {
     const auto dT = _clock->getDeltaTime();
     _camera->update(_clock);
+    _skybox->update(_clock);
     _shaderBall->getTransform().rotate(glm::vec3(0.0f, 10.0f * dT, 0.0f));
 }
 
 void SpaceGame::draw() {
     const auto drawStart = std::chrono::high_resolution_clock::now();
     _renderTarget->bind();
-    _context->clear();  // Clear the render target before drawing
+    Context::clear();  // Clear the render target before drawing
+    _skybox->draw(_camera.get());
     _groundPlane->draw(_camera, _sun, _localLights);
     _shaderBall->draw(_camera, _sun, _localLights);
     const auto drawEnd   = std::chrono::high_resolution_clock::now();
@@ -274,7 +281,7 @@ void SpaceGame::drawDebugUI() {
         }
 
         // Update tonemap op
-        _tonemapper->setTonemapOperator(DebugParams.tonemapOp);
+        _tonemapper->setTonemapOperator((i32)DebugParams.tonemapOp);
     }
 
     ImGui::End();

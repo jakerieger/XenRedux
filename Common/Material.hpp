@@ -7,7 +7,7 @@
 #include "Camera.hpp"
 #include "Types.hpp"
 #include "Graphics/ShaderProgram.hpp"
-#include "Graphics/Texture2D.hpp"
+#include "Graphics/Texture.hpp"
 
 #include <memory>
 #include <unordered_map>
@@ -19,7 +19,7 @@ namespace x {
         virtual ~IMaterial() = default;
 
         virtual void
-        setTexture(const str& name, u32 slot, const std::weak_ptr<Graphics::Texture2D>& texture);
+        setTexture(const str& name, u32 slot, const std::weak_ptr<Graphics::Texture>& texture);
         virtual void setUniform(const str& name, bool value);
         virtual void setUniform(const str& name, i32 value);
         virtual void setUniform(const str& name, f32 value);
@@ -41,7 +41,7 @@ namespace x {
 
     protected:
         std::shared_ptr<Graphics::ShaderProgram> _shaderProgram;
-        std::unordered_map<i32, std::weak_ptr<Graphics::Texture2D>> _textures;
+        std::unordered_map<i32, std::weak_ptr<Graphics::Texture>> _textures;
         std::unordered_map<str, u32> _uniforms;
 
         u32 getUniformLocation(const str& name);

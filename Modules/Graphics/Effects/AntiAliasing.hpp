@@ -6,7 +6,7 @@
 
 #include "Graphics/PostProcessEffect.hpp"
 #include "Graphics/ShaderProgram.hpp"
-#include "Graphics/Texture2D.hpp"
+#include "Graphics/Texture.hpp"
 
 namespace x::Graphics {
     enum class AATechnique { FXAA, SMAA };
@@ -26,6 +26,6 @@ namespace x::Graphics {
     private:
         AATechnique _technique;
         std::unique_ptr<ShaderProgram> _shader;
-        std::unique_ptr<Texture2D> _outputTexture;
+        std::unique_ptr<Texture> _outputTexture;
     };
 }  // namespace x::Graphics

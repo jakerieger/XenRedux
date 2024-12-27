@@ -6,7 +6,7 @@
 
 #include "Graphics/PostProcessEffect.hpp"
 #include "Graphics/ShaderProgram.hpp"
-#include "Graphics/Texture2D.hpp"
+#include "Graphics/Texture.hpp"
 
 #include <memory>
 
@@ -34,7 +34,7 @@ namespace x::Graphics {
 
     private:
         std::unique_ptr<ShaderProgram> _shaderProgram;
-        std::unique_ptr<Texture2D> _outputTexture;
+        std::unique_ptr<Texture> _outputTexture;
         u32 _paramsUbo = 0;
         struct TonemapperParams {
             f32 exposure        = 1.0f;
