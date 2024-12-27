@@ -19,10 +19,13 @@ namespace x {
       -1.0f, 1.0f,  1.0f,  -1.0f, 1.0f,  -1.0f, -1.0f, -1.0f, -1.0f, -1.0f, -1.0f, 1.0f,
       1.0f,  -1.0f, -1.0f, 1.0f,  -1.0f, -1.0f, -1.0f, -1.0f, 1.0f,  1.0f,  -1.0f, 1.0f};
 
-    Skybox::Skybox(const str& filename) {
+    Skybox::Skybox(const str& filename) : _vao(0), _vbo(0) {
         _cubemap = std::make_unique<Graphics::Texture>(GL_TEXTURE_CUBE_MAP);
         if (!_cubemap->loadFromFile(filename, true)) { Panic("Failed to load cubemap from file"); }
         _shader = ShaderManager::get().getShaderProgram(Skybox_VS_Source, Skybox_FS_Source);
+
+        _shader->use();
+        _shader->setInt("uSkybox", 0);
 
         glGenVertexArrays(1, &_vao);
         glBindVertexArray(_vao);
@@ -45,21 +48,23 @@ namespace x {
         CHECK_GL_ERROR();
     }
 
-    void Skybox::update(const std::weak_ptr<Clock>& clock, PerspectiveCamera* camera) {}
-
-    void Skybox::draw(PerspectiveCamera* camera) {
-        // glDepthMask(GL_FALSE);
+    void Skybox::update(const std::weak_ptr<Clock>& clock, const std::shared_ptr<ICamera>& camera) {
+        const auto vp = camera->getViewProjection();
         _shader->use();
-        _shader->setMat4("uVP", camera->getViewProjection());
-        _cubemap->bind(0);
-        _shader->setInt("uSkybox", 0);
+        _shader->setMat4("uVP", vp);
+    }
 
+    void Skybox::draw() {
+        glDepthMask(GL_FALSE);
+        _shader->use();
+        _cubemap->bind(0);
         // draw cube vertices
         glBindVertexArray(_vao);
+        glBindBuffer(GL_ARRAY_BUFFER, _vbo);
         glDrawArrays(GL_TRIANGLES, 0, 36);
         CHECK_GL_ERROR();
 
         _cubemap->unbind();
-        // glDepthMask(GL_TRUE);
+        glDepthMask(GL_TRUE);
     }
 }  // namespace x

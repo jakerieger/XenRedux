@@ -18,8 +18,8 @@ namespace x {
         explicit Skybox(const str& filename);
         ~Skybox();
 
-        void update(const std::weak_ptr<Clock>& clock, PerspectiveCamera* camera);
-        void draw(PerspectiveCamera* camera);
+        void update(const std::weak_ptr<Clock>& clock, const std::shared_ptr<ICamera>& camera);
+        void draw();
 
     private:
         std::unique_ptr<Graphics::Texture> _cubemap;

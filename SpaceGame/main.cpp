@@ -73,7 +73,7 @@ SpaceGame::SpaceGame() : IGame("SpaceGame", 1600, 900, true) {
     _camera          = std::make_shared<PerspectiveCamera>(45.f,
                                                   (f32)width / (f32)height,
                                                   0.1f,
-                                                  100.0f,
+                                                  1000.0f,
                                                   glm::vec3(0.0f, 0.0f, 5.0f),
                                                   glm::vec3(0.0f, 0.0f, 0.0f),
                                                   glm::vec3(0.0f, 1.0f, 0.0f));
@@ -159,7 +159,7 @@ void SpaceGame::unloadContent() {
 void SpaceGame::update() {
     const auto dT = _clock->getDeltaTime();
     _camera->update(_clock);
-    _skybox->update(_clock, _camera.get());
+    _skybox->update(_clock, _camera);
     _shaderBall->getTransform().rotate(glm::vec3(0.0f, 10.0f * dT, 0.0f));
 }
 
@@ -167,9 +167,9 @@ void SpaceGame::draw() {
     const auto drawStart = std::chrono::high_resolution_clock::now();
     _renderTarget->bind();
     Context::clear();  // Clear the render target before drawing
-    _skybox->draw(_camera.get());
-    // _groundPlane->draw(_camera, _sun, _localLights);
-    // _shaderBall->draw(_camera, _sun, _localLights);
+    _skybox->draw();
+    _groundPlane->draw(_camera, _sun, _localLights);
+    _shaderBall->draw(_camera, _sun, _localLights);
     const auto drawEnd   = std::chrono::high_resolution_clock::now();
     DebugParams.drawTime = std::chrono::duration<f32, std::milli>(drawEnd - drawStart).count();
 
