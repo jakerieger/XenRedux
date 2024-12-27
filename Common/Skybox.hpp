@@ -10,34 +10,20 @@
 #include "Types.hpp"
 #include "Graphics/ShaderProgram.hpp"
 #include "Graphics/Texture.hpp"
-
-#include "Graphics/Shaders/Include/Skybox_VS.h"
-#include "Graphics/Shaders/Include/Skybox_FS.h"
+#include "Graphics/VertexArray.hpp"
 
 namespace x {
     class Skybox {
     public:
-        explicit Skybox(const str& filename) {
-            _cubemap = std::make_unique<Graphics::Texture>(GL_TEXTURE_CUBE_MAP);
-            if (!_cubemap->loadFromFile(filename, true)) {
-                Panic("Failed to load cubemap from file");
-            }
-            _shader = ShaderManager::get().getShaderProgram(Skybox_VS_Source, Skybox_FS_Source);
-        }
+        explicit Skybox(const str& filename);
+        ~Skybox();
 
-        ~Skybox() {
-            _cubemap.reset();
-        }
-
-        void update(const std::weak_ptr<Clock>& clock) {}
-
-        void draw(PerspectiveCamera* camera) {
-            _cubemap->bind(0);
-            _cubemap->unbind();
-        }
+        void update(const std::weak_ptr<Clock>& clock, PerspectiveCamera* camera);
+        void draw(PerspectiveCamera* camera);
 
     private:
         std::unique_ptr<Graphics::Texture> _cubemap;
         std::shared_ptr<Graphics::ShaderProgram> _shader;
+        // std::unique_ptr<Graphics::VertexArray<V, u32>> _vertexArray;
     };
 }  // namespace x

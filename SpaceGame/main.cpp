@@ -91,7 +91,7 @@ SpaceGame::SpaceGame() : IGame("SpaceGame", 1600, 900, true) {
     _shaderBall  = std::make_unique<Model>();
     _groundPlane = std::make_unique<Model>();
 
-    const auto skyboxTexture = getDataPath() / "Sky.png";
+    const auto skyboxTexture = getDataPath() / "Sky.hdr";
     _skybox                  = std::make_unique<Skybox>(skyboxTexture.toString());
 
     // Create one hundred point lights
@@ -159,7 +159,7 @@ void SpaceGame::unloadContent() {
 void SpaceGame::update() {
     const auto dT = _clock->getDeltaTime();
     _camera->update(_clock);
-    _skybox->update(_clock);
+    _skybox->update(_clock, _camera.get());
     _shaderBall->getTransform().rotate(glm::vec3(0.0f, 10.0f * dT, 0.0f));
 }
 
