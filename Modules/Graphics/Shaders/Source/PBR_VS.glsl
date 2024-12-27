@@ -8,17 +8,16 @@ layout (location = 4) in vec2 aTexCoord;
 uniform mat4 uVP;
 uniform mat4 uModel;
 
-out vec2 TexCoord;
-out vec3 FragPos;
-out vec3 FragNormal;
+out struct VSOut {
+    vec2 texCoord;
+    vec3 fragPos;
+    vec3 normal;
+} vsOut;
 
 void main() {
-    FragPos = vec3(uModel * vec4(aPos, 1.0));
-
+    vsOut.fragPos = vec3(uModel * vec4(aPos, 1.0));
     mat3 normalMatrix = mat3(transpose(inverse(uModel)));
-    FragNormal = normalize(normalMatrix * aNormal);
-
-    TexCoord = aTexCoord;
-
-    gl_Position = uVP * vec4(FragPos, 1.0);
+    vsOut.normal = normalize(normalMatrix * aNormal);
+    vsOut.texCoord = aTexCoord;
+    gl_Position = uVP * vec4(vsOut.fragPos, 1.0);
 }

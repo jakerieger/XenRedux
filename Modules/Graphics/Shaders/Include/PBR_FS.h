@@ -25,16 +25,18 @@ struct PointLight {
     float radius;
 };
 
+in vsOut {
+    vec2 texCoord;
+    vec3 fragPos;
+    vec3 normal;
+} fsIn;
+
 #define MAX_POINT_LIGHTS 100
 
 uniform PointLight uPointLights[MAX_POINT_LIGHTS];
 uniform Sun uSun;
 uniform vec3 uViewPosition;
 uniform Material uMaterial;
-
-in vec2 TexCoord;
-in vec3 FragPos;
-in vec3 FragNormal;
 
 out vec4 FragColor;
 
@@ -113,10 +115,10 @@ vec3 CalculateSun(vec3 V, vec3 N, float roughness, vec3 F0) {
 vec3 CalculatePointLight(vec3 V, vec3 N, float roughness, vec3 F0, PointLight light) {
     vec3 Lo = vec3(0.0);
 
-    vec3 L = normalize(light.position - FragPos);
+    vec3 L = normalize(light.position - fsIn.fragPos);
     vec3 H = normalize(V + L);
 
-    float distance = length(light.position - FragPos);
+    float distance = length(light.position - fsIn.fragPos);
     // Only process this light if its fragment is within the light's radius
     if (distance > light.radius) {
         return Lo;
@@ -148,8 +150,8 @@ vec3 CalculatePointLight(vec3 V, vec3 N, float roughness, vec3 F0, PointLight li
 }
 
 void main() {
-    vec3 N = normalize(FragNormal);
-    vec3 V = normalize(uViewPosition - FragPos);
+    vec3 N = normalize(fsIn.normal);
+    vec3 V = normalize(uViewPosition - fsIn.fragPos);
     float roughness = max(0.05, uMaterial.roughness);
 
     // Calculate base reflectivity (F0)
