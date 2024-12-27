@@ -168,7 +168,7 @@ void SpaceGame::draw() {
     _renderTarget->bind();
     Context::clear();  // Clear the render target before drawing
     _skybox->draw();
-    _groundPlane->draw(_camera, _sun, _localLights);
+    // _groundPlane->draw(_camera, _sun, _localLights);
     _shaderBall->draw(_camera, _sun, _localLights);
     const auto drawEnd   = std::chrono::high_resolution_clock::now();
     DebugParams.drawTime = std::chrono::duration<f32, std::milli>(drawEnd - drawStart).count();

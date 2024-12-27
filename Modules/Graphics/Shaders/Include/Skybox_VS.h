@@ -10,6 +10,6 @@ uniform mat4 uVP;
 void main() {
     TexCoords = aPos;
     vec4 pos = uVP * vec4(aPos, 1.0);
-    gl_Position = pos.xyww;// set z to w for depth
+    gl_Position = vec4(pos.xy, 0.0, 1.0);// set z to w for depth
 }
 )"";

@@ -11,7 +11,7 @@ namespace x {
     static constexpr float kSkyboxVertices[] = {
       -1.0f, 1.0f,  -1.0f, -1.0f, -1.0f, -1.0f, 1.0f,  -1.0f, -1.0f, 1.0f,  -1.0f, -1.0f,
       1.0f,  1.0f,  -1.0f, -1.0f, 1.0f,  -1.0f, -1.0f, -1.0f, 1.0f,  -1.0f, -1.0f, -1.0f,
-      -1.0f, 1.0f,  -1.0f, -1.0f, 1.0f,  -1.0f, -1.0f, 1.0f,  1.0f,  -1.0f, 1.0f,  1.0f,
+      -1.0f, 1.0f,  -1.0f, -1.0f, 1.0f,  -1.0f, -1.0f, 1.0f,  1.0f,  -1.0f, -1.0f, 1.0f,
       1.0f,  -1.0f, -1.0f, 1.0f,  -1.0f, 1.0f,  1.0f,  1.0f,  1.0f,  1.0f,  1.0f,  1.0f,
       1.0f,  1.0f,  -1.0f, 1.0f,  -1.0f, -1.0f, -1.0f, -1.0f, 1.0f,  -1.0f, 1.0f,  1.0f,
       1.0f,  1.0f,  1.0f,  1.0f,  1.0f,  1.0f,  1.0f,  -1.0f, 1.0f,  -1.0f, -1.0f, 1.0f,
@@ -52,10 +52,12 @@ namespace x {
         const auto vp = camera->getViewProjection();
         _shader->use();
         _shader->setMat4("uVP", vp);
+        CHECK_GL_ERROR();
     }
 
     void Skybox::draw() {
         glDepthMask(GL_FALSE);
+        glDepthFunc(GL_LEQUAL);
         _shader->use();
         _cubemap->bind(0);
         // draw cube vertices
@@ -65,6 +67,7 @@ namespace x {
         CHECK_GL_ERROR();
 
         _cubemap->unbind();
+        glDepthFunc(GL_LESS);
         glDepthMask(GL_TRUE);
     }
 }  // namespace x
