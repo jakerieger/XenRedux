@@ -6,7 +6,7 @@
 #include "Graphics/Shaders/Include/Tonemapper_CS.h"
 
 namespace x::Graphics {
-    TonemapperEffect::TonemapperEffect() {
+    Tonemapper::Tonemapper() {
         const auto computeShader =
           std::make_unique<Shader>(ShaderType::Compute, Tonemapper_CS_Source);
         _shaderProgram = std::make_unique<ShaderProgram>();
@@ -28,16 +28,16 @@ namespace x::Graphics {
         glBindBufferBase(GL_UNIFORM_BUFFER, 0, _paramsUbo);
     }
 
-    TonemapperEffect::~TonemapperEffect() {
+    Tonemapper::~Tonemapper() {
         _outputTexture.reset();
     }
 
-    void TonemapperEffect::updateParams() const {
+    void Tonemapper::updateParams() const {
         glBindBuffer(GL_UNIFORM_BUFFER, _paramsUbo);
         glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(TonemapperParams), &_params);
     }
 
-    void TonemapperEffect::apply() const {
+    void Tonemapper::apply() const {
         if (getRenderTarget() != 0) {
             glBindFramebuffer(GL_FRAMEBUFFER, getRenderTarget());
         } else {
@@ -57,19 +57,19 @@ namespace x::Graphics {
         glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);  // Ensure compute writes complete
     }
 
-    void TonemapperEffect::setTextureSize(i32 width, i32 height) const {
+    void Tonemapper::setTextureSize(i32 width, i32 height) const {
         _outputTexture->resize(width, height);
     }
 
-    u32 TonemapperEffect::getOutputTexture() const {
+    u32 Tonemapper::getOutputTexture() const {
         return _outputTexture->getId();
     }
 
-    void TonemapperEffect::onResize(int newWidth, int newHeight) {
+    void Tonemapper::onResize(int newWidth, int newHeight) {
         _outputTexture->resize(newWidth, newHeight);
     }
 
-    void TonemapperEffect::setGamma(f32 gamma) {
+    void Tonemapper::setGamma(f32 gamma) {
         _params.gamma = gamma;
         glBindBuffer(GL_UNIFORM_BUFFER, _paramsUbo);
         glBufferSubData(GL_UNIFORM_BUFFER,
@@ -78,7 +78,7 @@ namespace x::Graphics {
                         &_params.gamma);
     }
 
-    void TonemapperEffect::setExposure(f32 exposure) {
+    void Tonemapper::setExposure(f32 exposure) {
         _params.exposure = exposure;
         glBindBuffer(GL_UNIFORM_BUFFER, _paramsUbo);
         glBufferSubData(GL_UNIFORM_BUFFER,
@@ -87,7 +87,7 @@ namespace x::Graphics {
                         &_params.exposure);
     }
 
-    void TonemapperEffect::setTonemapOperator(i32 op) {
+    void Tonemapper::setTonemapOperator(i32 op) {
         _params.tonemapOperator = op;
         glBindBuffer(GL_UNIFORM_BUFFER, _paramsUbo);
         glBufferSubData(GL_UNIFORM_BUFFER,

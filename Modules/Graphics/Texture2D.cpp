@@ -217,24 +217,28 @@ namespace x::Graphics {
             // Red channel
             case GL_R8:
             case GL_R16:
+            case GL_R16F:
             case GL_R32F:
                 return GL_RED;
 
             // Red-Green channels
             case GL_RG8:
             case GL_RG16:
+            case GL_RG16F:
             case GL_RG32F:
                 return GL_RG;
 
             // Red-Green-Blue channels
             case GL_RGB8:
             case GL_RGB16:
+            case GL_RGB16F:
             case GL_RGB32F:
                 return GL_RGB;
 
             // Red-Green-Blue-Alpha channels
             case GL_RGBA8:
             case GL_RGBA16:
+            case GL_RGBA16F:
             case GL_RGBA32F:
                 return GL_RGBA;
 

@@ -17,10 +17,10 @@ namespace x::Graphics {
     //     Exposure = 2,
     // };
 
-    class TonemapperEffect final : public PostProcessEffect {
+    class Tonemapper final : public PostProcessEffect {
     public:
-        TonemapperEffect();
-        ~TonemapperEffect() override;
+        Tonemapper();
+        ~Tonemapper() override;
 
         void apply() const override;
         void setTextureSize(i32 width, i32 height) const;

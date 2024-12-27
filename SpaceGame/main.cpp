@@ -11,6 +11,7 @@
 #include "Graphics/Pipeline.hpp"
 #include "Graphics/PostProcessQuad.hpp"
 #include "Graphics/RenderTarget.hpp"
+#include "Graphics/Effects/AntiAliasing.hpp"
 #include "Graphics/Effects/Tonemapper.hpp"
 #include "Math/Random.inl"
 
@@ -57,7 +58,8 @@ private:
     std::unique_ptr<Model> _groundPlane;
     std::unique_ptr<Graphics::RenderTarget> _renderTarget;
     std::unique_ptr<Graphics::PostProcessQuad> _postProcessQuad;
-    std::unique_ptr<Graphics::TonemapperEffect> _tonemapper;
+    std::unique_ptr<Graphics::Tonemapper> _tonemapper;
+    std::unique_ptr<Graphics::AntiAliasing> _antiAliasing;
 };
 
 SpaceGame::SpaceGame() : IGame("SpaceGame", 1600, 900, true) {
@@ -73,10 +75,15 @@ SpaceGame::SpaceGame() : IGame("SpaceGame", 1600, 900, true) {
                                                   glm::vec3(0.0f, 1.0f, 0.0f));
     _renderTarget    = std::make_unique<Graphics::RenderTarget>(width, height, true);
     _postProcessQuad = std::make_unique<Graphics::PostProcessQuad>();
-    _tonemapper      = std::make_unique<Graphics::TonemapperEffect>();
+
+    _antiAliasing = std::make_unique<Graphics::AntiAliasing>(Graphics::AATechnique::FXAA);
+    _antiAliasing->setTextureSize(width, height);
+    _antiAliasing->setInputTexture(_renderTarget->getColorTexture());
+
+    _tonemapper = std::make_unique<Graphics::Tonemapper>();
     _tonemapper->setTextureSize(width, height);
-    _tonemapper->setInputTexture(_renderTarget->getColorTexture());
     _tonemapper->setTonemapOperator(0);
+
     _shaderBall  = std::make_unique<Model>();
     _groundPlane = std::make_unique<Model>();
 
@@ -132,6 +139,7 @@ void SpaceGame::loadContent() {
     _context->registerVolatile(_camera.get());
     _context->registerVolatile(_renderTarget.get());
     _context->registerVolatile(_tonemapper.get());
+    _context->registerVolatile(_antiAliasing.get());
 }
 
 void SpaceGame::unloadContent() {
@@ -159,6 +167,8 @@ void SpaceGame::draw() {
     _renderTarget->unbind();
 
     const auto ppStart = std::chrono::high_resolution_clock::now();
+    _antiAliasing->apply();
+    _tonemapper->setInputTexture(_antiAliasing->getOutputTexture());
     _tonemapper->apply();
     _postProcessQuad->draw(_tonemapper->getOutputTexture());
     const auto ppEnd            = std::chrono::high_resolution_clock::now();

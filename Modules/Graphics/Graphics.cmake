@@ -24,4 +24,6 @@ set(GRAPHICS_SRCS
         # Post processing effects
         ${MODULES}/Graphics/Effects/Tonemapper.hpp
         ${MODULES}/Graphics/Effects/Tonemapper.cpp
+        ${MODULES}/Graphics/Effects/AntiAliasing.hpp
+        ${MODULES}/Graphics/Effects/AntiAliasing.cpp
 )
