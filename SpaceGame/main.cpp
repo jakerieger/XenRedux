@@ -91,9 +91,6 @@ SpaceGame::SpaceGame() : IGame("SpaceGame", 1600, 900, true) {
     _shaderBall  = std::make_unique<Model>();
     _groundPlane = std::make_unique<Model>();
 
-    const auto skyboxTexture = getDataPath() / "Sky.hdr";
-    _skybox                  = std::make_unique<Skybox>(skyboxTexture.toString());
-
     // Create one hundred point lights
     for (int i = 0; i < 4; ++i) {
         using namespace x::Math::Random;
@@ -113,6 +110,9 @@ SpaceGame::SpaceGame() : IGame("SpaceGame", 1600, 900, true) {
 }
 
 void SpaceGame::loadContent() {
+    const auto skyboxTexture = getDataPath() / "Sky.hdr";
+    _skybox                  = std::make_unique<Skybox>(skyboxTexture.toString());
+
     const auto shaderBallPath = getDataPath() / "ShaderBall.fbx";
     _shaderBall->loadFromFile(shaderBallPath.toString());
     DebugParams.material = _shaderBall->getMaterial<PBRMaterial>();
@@ -168,8 +168,8 @@ void SpaceGame::draw() {
     _renderTarget->bind();
     Context::clear();  // Clear the render target before drawing
     _skybox->draw(_camera.get());
-    _groundPlane->draw(_camera, _sun, _localLights);
-    _shaderBall->draw(_camera, _sun, _localLights);
+    // _groundPlane->draw(_camera, _sun, _localLights);
+    // _shaderBall->draw(_camera, _sun, _localLights);
     const auto drawEnd   = std::chrono::high_resolution_clock::now();
     DebugParams.drawTime = std::chrono::duration<f32, std::milli>(drawEnd - drawStart).count();
 

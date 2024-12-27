@@ -24,6 +24,7 @@ namespace x {
     private:
         std::unique_ptr<Graphics::Texture> _cubemap;
         std::shared_ptr<Graphics::ShaderProgram> _shader;
-        // std::unique_ptr<Graphics::VertexArray<V, u32>> _vertexArray;
+        GLuint _vbo;
+        GLuint _vao;
     };
 }  // namespace x
