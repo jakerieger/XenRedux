@@ -20,6 +20,8 @@
 using namespace x;
 
 /// @briefs Returns the directory of this source file + "/Data".
+/// Used for accessing data in the source directories without having
+/// to copy it to the build dir.
 static Filesystem::Path getDataPath();
 
 struct params {
