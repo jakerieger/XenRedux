@@ -49,10 +49,8 @@ namespace x {
     }
 
     void Skybox::update(const std::weak_ptr<Clock>& clock, const std::shared_ptr<ICamera>& camera) {
-        // const auto vp = camera->getViewProjection();
-        const auto p = glm::perspective(glm::radians(45.f), 1600.f / 900.f, 0.1f, 1000.f);
-        const auto v =
-          glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0, 0, 1), glm::vec3(0, 1, 0));
+        const auto p = camera->getProjection();
+        const auto v = glm::mat4(glm::mat3(camera->getView()));  //; remove translation
         glm::mat4 vp = p * v;
         _shader->use();
         _shader->setMat4("uVP", vp);

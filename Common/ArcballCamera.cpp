@@ -36,14 +36,22 @@ namespace x {
                                  const glm::vec3& lookAt,
                                  const glm::vec3& up)
         : _fov(fov), _aspect(aspect), _near(nearPlane), _far(farPlane), _position(position),
-          _lookAt(lookAt), _up(up), _viewProjection(glm::mat4(1.0f)), _viewportWidth(viewportWidth),
-          _viewportHeight(viewportHeight) {
+          _lookAt(lookAt), _up(up), _view(glm::mat4(1.0f)), _projection(glm::mat4(1.0f)),
+          _viewportWidth(viewportWidth), _viewportHeight(viewportHeight) {
         _radius = glm::length(_position - lookAt);
         updateViewProjection();
     }
 
     glm::mat4 ArcballCamera::getViewProjection() const {
-        return _viewProjection;
+        return _projection * _view;
+    }
+
+    glm::mat4 ArcballCamera::getView() const {
+        return _view;
+    }
+
+    glm::mat4 ArcballCamera::getProjection() const {
+        return _projection;
     }
 
     void ArcballCamera::update(const std::weak_ptr<Clock>& clock) {
@@ -132,9 +140,8 @@ namespace x {
     }
 
     void ArcballCamera::updateViewProjection() {
-        const glm::mat4 projection = glm::perspective(glm::radians(_fov), _aspect, _near, _far);
-        const glm::mat4 view       = glm::lookAt(_position, _lookAt, _up);
-        _viewProjection            = projection * view;
+        _projection = glm::perspective(glm::radians(_fov), _aspect, _near, _far);
+        _view       = glm::lookAt(_position, _lookAt, _up);
     }
 
     void ArcballCamera::updateMousePos(i32 x, i32 y) {

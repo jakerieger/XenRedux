@@ -20,7 +20,11 @@ namespace x {
                       const glm::vec3& position,
                       const glm::vec3& lookAt,
                       const glm::vec3& up);
+
         [[nodiscard]] glm::mat4 getViewProjection() const override;
+        [[nodiscard]] glm::mat4 getView() const override;
+        [[nodiscard]] glm::mat4 getProjection() const override;
+
         void update(const std::weak_ptr<Clock>& clock) override;
         void onResize(int newWidth, int newHeight) override;  // From Volatile
 
@@ -44,7 +48,8 @@ namespace x {
         glm::vec3 _position;
         glm::vec3 _lookAt;
         glm::vec3 _up;
-        glm::mat4 _viewProjection;
+        glm::mat4 _view;
+        glm::mat4 _projection;
         glm::vec2 _lastMousePos = {0.f, 0.f};
         glm::vec2 _curMousePos  = {0.f, 0.f};
         bool _dragging          = false;

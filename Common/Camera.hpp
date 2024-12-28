@@ -15,6 +15,8 @@ namespace x {
     class ICamera : public Volatile {
     public:
         [[nodiscard]] virtual glm::mat4 getViewProjection() const = 0;
+        [[nodiscard]] virtual glm::mat4 getView() const           = 0;
+        [[nodiscard]] virtual glm::mat4 getProjection() const     = 0;
         virtual void update(const std::weak_ptr<Clock>& clock)    = 0;
 
         template<class Camera>
