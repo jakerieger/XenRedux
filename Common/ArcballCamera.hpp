@@ -8,16 +8,16 @@
 #include "Clock.hpp"
 
 namespace x {
-    class PerspectiveCamera final : public ICamera {
+    class ArcballCamera final : public ICamera {
     public:
-        PerspectiveCamera(f32 fov,
-                          f32 aspect,
-                          f32 nearPlane,
-                          f32 farPlane,
-                          const glm::vec3& position,
-                          const glm::vec3& lookAt,
-                          const glm::vec3& up);
-        glm::mat4 getViewProjection() const override;
+        ArcballCamera(f32 fov,
+                      f32 aspect,
+                      f32 nearPlane,
+                      f32 farPlane,
+                      const glm::vec3& position,
+                      const glm::vec3& lookAt,
+                      const glm::vec3& up);
+        [[nodiscard]] glm::mat4 getViewProjection() const override;
         void update(const std::weak_ptr<Clock>& clock) override;
         void onResize(int newWidth, int newHeight) override;  // From Volatile
 
@@ -26,7 +26,7 @@ namespace x {
         void setUp(const glm::vec3& up);
         void setPerspective(f32 fov, f32 aspect, f32 nearZ, f32 farZ);
 
-        glm::vec3 getPosition() const;
+        [[nodiscard]] glm::vec3 getPosition() const;
 
     private:
         f32 _fov;

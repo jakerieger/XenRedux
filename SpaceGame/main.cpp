@@ -5,7 +5,7 @@
 #include "Game.hpp"
 #include "Model.hpp"
 #include "PBRMaterial.hpp"
-#include "PerspectiveCamera.hpp"
+#include "ArcballCamera.hpp"
 #include "PointLight.hpp"
 #include "Filesystem/Filesystem.hpp"
 #include "Graphics/Pipeline.hpp"
@@ -19,6 +19,7 @@
 #include <imgui/imgui.h>
 
 using namespace x;
+using namespace x::Input;
 
 /// @briefs Returns the directory of this source file + "/Data".
 /// Used for accessing data in the source directories without having
@@ -56,7 +57,7 @@ public:
 private:
     DirectionalLight _sun;
     std::vector<std::shared_ptr<ILight>> _localLights;
-    std::shared_ptr<PerspectiveCamera> _camera;
+    std::shared_ptr<ArcballCamera> _camera;
     std::unique_ptr<Model> _shaderBall;
     std::unique_ptr<Model> _groundPlane;
     std::unique_ptr<Skybox> _skybox;
@@ -67,16 +68,16 @@ private:
 };
 
 SpaceGame::SpaceGame() : IGame("SpaceGame", 1600, 900, true) {
-    _sun.setIntensity(0.15f);
+    _sun.setIntensity(1.0f);
     _sun.setColor(glm::vec3(0.9f));
     _sun.setDirection(glm::vec3(-0.577f, -0.04f, -0.577f));
-    _camera          = std::make_shared<PerspectiveCamera>(45.f,
-                                                  (f32)width / (f32)height,
-                                                  0.1f,
-                                                  1000.0f,
-                                                  glm::vec3(0.0f, 0.0f, 5.0f),
-                                                  glm::vec3(0.0f, 0.0f, 0.0f),
-                                                  glm::vec3(0.0f, 1.0f, 0.0f));
+    _camera          = std::make_shared<ArcballCamera>(45.f,
+                                              (f32)width / (f32)height,
+                                              0.1f,
+                                              1000.0f,
+                                              glm::vec3(0.0f, 0.0f, 5.0f),
+                                              glm::vec3(0.0f, 0.0f, 0.0f),
+                                              glm::vec3(0.0f, 1.0f, 0.0f));
     _renderTarget    = std::make_unique<Graphics::RenderTarget>(width, height, true);
     _postProcessQuad = std::make_unique<Graphics::PostProcessQuad>();
 
@@ -92,21 +93,21 @@ SpaceGame::SpaceGame() : IGame("SpaceGame", 1600, 900, true) {
     _groundPlane = std::make_unique<Model>();
 
     // Create one hundred point lights
-    for (int i = 0; i < 4; ++i) {
-        using namespace x::Math::Random;
-
-        const auto pl = std::make_shared<PointLight>();
-        pl->setIndex(i);
-        pl->setColor(glm::vec3(getRandomRange(0.0f, 1.f),
-                               getRandomRange(0.0f, 1.f),
-                               getRandomRange(0.0f, 1.f)));
-        pl->setIntensity(getRandomRange(0.3f, 1.f));
-        pl->setRadius(getRandomRange(45.0f, 90.0f));
-        pl->setPosition(glm::vec3(getRandomRange(-4.0f, 1.0f),
-                                  getRandomRange(-4.0f, 1.0f),
-                                  getRandomRange(-4.0f, 1.0f)));
-        _localLights.push_back(pl);
-    }
+    // for (int i = 0; i < 4; ++i) {
+    //     using namespace x::Math::Random;
+    //
+    //     const auto pl = std::make_shared<PointLight>();
+    //     pl->setIndex(i);
+    //     pl->setColor(glm::vec3(getRandomRange(0.0f, 1.f),
+    //                            getRandomRange(0.0f, 1.f),
+    //                            getRandomRange(0.0f, 1.f)));
+    //     pl->setIntensity(getRandomRange(0.3f, 1.f));
+    //     pl->setRadius(getRandomRange(45.0f, 90.0f));
+    //     pl->setPosition(glm::vec3(getRandomRange(-4.0f, 1.0f),
+    //                               getRandomRange(-4.0f, 1.0f),
+    //                               getRandomRange(-4.0f, 1.0f)));
+    //     _localLights.push_back(pl);
+    // }
 }
 
 void SpaceGame::loadContent() {
@@ -157,10 +158,15 @@ void SpaceGame::unloadContent() {
 }
 
 void SpaceGame::update() {
+    if (_inputManager.getKeyDown(KeyCodes::Escape)) {
+        //
+        glfwSetWindowShouldClose(_window, true);
+    }
+
     const auto dT = _clock->getDeltaTime();
     _camera->update(_clock);
     _skybox->update(_clock, _camera);
-    _shaderBall->getTransform().rotate(glm::vec3(0.0f, 10.0f * dT, 0.0f));
+    // _shaderBall->getTransform().rotate(glm::vec3(0.0f, 10.0f * dT, 0.0f));
 }
 
 void SpaceGame::draw() {
@@ -207,6 +213,7 @@ void SpaceGame::drawDebugUI() {
         ImGui::Text("Post Process Time:");
         ImGui::Text("%.6f ms", DebugParams.postProcessTime);
         ImGui::Text("");
+        ImGui::Text("Mouse Position: %d, %d", _inputManager.getMouseX(), _inputManager.getMouseY());
     }
 
     if (ImGui::CollapsingHeader("Material")) {

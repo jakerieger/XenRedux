@@ -10,6 +10,7 @@
 #include "Clock.hpp"
 #include "Context.hpp"
 #include "Types.hpp"
+#include "Input/InputManager.hpp"
 
 #include <memory>
 
@@ -29,11 +30,14 @@ namespace x {
 
         void run();
 
-        Context* getContext() const;
+        [[nodiscard]] Context* getContext() const;
+        Input::InputManager& getInputManager();
 
     protected:
+        GLFWwindow* _window;
         std::shared_ptr<Clock> _clock;
         std::unique_ptr<Context> _context;
+        Input::InputManager _inputManager;
         str title;
         int initWidth;
         int initHeight;
@@ -45,8 +49,5 @@ namespace x {
 #else
         const bool debug = false;
 #endif
-
-    private:
-        GLFWwindow* _window;
     };
 }  // namespace x

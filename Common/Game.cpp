@@ -23,6 +23,38 @@ namespace x {
         glViewport(0, 0, width, height);  // Call this last
     }
 
+    static void onKey(GLFWwindow* window, const int key, const int, const int action, const int) {
+        auto* game = CAST<IGame*>(glfwGetWindowUserPointer(window));
+        if (game) {
+            if (action == GLFW_PRESS) {
+                game->getInputManager().updateKeyState(key, true);
+            } else if (action == GLFW_RELEASE) {
+                game->getInputManager().updateKeyState(key, false);
+            }
+        }
+    }
+
+    static void onMouse(GLFWwindow* window, const int button, const int action, const int mods) {
+        auto* game = CAST<IGame*>(glfwGetWindowUserPointer(window));
+        if (game) {
+            if (action == GLFW_PRESS) {
+                game->getInputManager().updateMouseButtonState(button, true);
+            } else if (action == GLFW_RELEASE) {
+                game->getInputManager().updateMouseButtonState(button, false);
+            }
+        }
+    }
+
+    static void onMouseMove(GLFWwindow* window, const double x, const double y) {
+        auto* game = CAST<IGame*>(glfwGetWindowUserPointer(window));
+        if (game) { game->getInputManager().updateMousePosition(CAST<i32>(x), CAST<i32>(y)); }
+    }
+
+    static void onMouseScroll(GLFWwindow* window, const double offsetX, const double offsetY) {
+        auto* game = CAST<IGame*>(glfwGetWindowUserPointer(window));
+        if (game) {}
+    }
+
     IGame::IGame(const str& title, int initWidth, int initHeight, bool escToQuit)
         : title(title), initWidth(initWidth), initHeight(initHeight), width(initWidth),
           height(initHeight), escToQuit(escToQuit), _window(nullptr) {
@@ -50,6 +82,13 @@ namespace x {
 
         glfwSetWindowUserPointer(_window, this);  // Give callbacks access to this IGame instance.
         glfwSetFramebufferSizeCallback(_window, onResize);
+        glfwSetKeyCallback(_window, onKey);
+        glfwSetMouseButtonCallback(_window, onMouse);
+        glfwSetCursorPosCallback(_window, onMouseMove);
+        glfwSetScrollCallback(_window, onMouseScroll);
+
+        // glfwSetInputMode(_window, GLFW_CURSOR, GLFW_CURSOR_DISABLED); // Hides cursor
+
         glfwSwapInterval(0);  // Disabled vertical sync
 
         _context = Context::create();
@@ -95,5 +134,9 @@ namespace x {
 
     Context* IGame::getContext() const {
         return _context.get();
+    }
+
+    Input::InputManager& IGame::getInputManager() {
+        return _inputManager;
     }
 }  // namespace x

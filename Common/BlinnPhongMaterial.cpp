@@ -4,7 +4,7 @@
 
 #include "BlinnPhongMaterial.hpp"
 
-#include "PerspectiveCamera.hpp"
+#include "ArcballCamera.hpp"
 
 namespace x {
     void BlinnPhongMaterial::apply(const std::weak_ptr<ICamera>& camera) {
@@ -16,7 +16,7 @@ namespace x {
 
         const auto cameraPtr = camera.lock();
         if (cameraPtr) {
-            const auto perspective = DCAST<PerspectiveCamera*>(cameraPtr.get());
+            const auto perspective = DCAST<ArcballCamera*>(cameraPtr.get());
             if (perspective) {
                 const auto viewPos = perspective->getPosition();
                 setUniform("uViewPosition", viewPos);

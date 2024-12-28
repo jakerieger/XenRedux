@@ -59,9 +59,10 @@ add_library(Xen STATIC
         ${DATA_SRCS}
         ${FILESYSTEM_SRCS}
         ${GRAPHICS_SRCS}
+        ${INPUT_SRCS}
         ${MEMORY_SRCS}
         ${MATH_SRCS}
-        # Engine core
+        # Runtime
         ${COMMON}/BlinnPhongMaterial.cpp
         ${COMMON}/BlinnPhongMaterial.hpp
         ${COMMON}/Camera.hpp
@@ -85,8 +86,8 @@ add_library(Xen STATIC
         ${COMMON}/PBRMaterial.cpp
         ${COMMON}/PBRMaterial.hpp
         ${COMMON}/Panic.hpp
-        ${COMMON}/PerspectiveCamera.cpp
-        ${COMMON}/PerspectiveCamera.hpp
+        ${COMMON}/ArcballCamera.cpp
+        ${COMMON}/ArcballCamera.hpp
         ${COMMON}/PointLight.cpp
         ${COMMON}/PointLight.hpp
         ${COMMON}/ShaderManager.cpp
