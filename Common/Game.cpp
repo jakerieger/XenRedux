@@ -114,7 +114,7 @@ namespace x {
         loadContent();
         configurePipeline();
         _clock->start();
-        glfwMaximizeWindow(_window);
+        // glfwMaximizeWindow(_window);
         while (!glfwWindowShouldClose(_window)) {
             _clock->tick();
             glClearColor(0.0f, 0.0f, 0.0f, 1.0f);

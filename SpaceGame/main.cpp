@@ -168,6 +168,7 @@ void SpaceGame::unloadContent() {
 void SpaceGame::update() {
     const auto dT = _clock->getDeltaTime();
     _camera->update(_clock);
+    _skybox->update(_clock, _camera);
     // _shaderBall->getTransform().rotate(glm::vec3(0.0f, 10.0f * dT, 0.0f));
 }
 
