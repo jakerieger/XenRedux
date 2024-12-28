@@ -8,7 +8,7 @@
 #include "Graphics/DebugUI.hpp"
 
 namespace x {
-    static void onResize(GLFWwindow* window, const int width, const int height) {
+    static void resizeCallback(GLFWwindow* window, const int width, const int height) {
         // Resize our volatile objects
         const auto* game = CAST<IGame*>(glfwGetWindowUserPointer(window));
         if (game) {
@@ -23,34 +23,41 @@ namespace x {
         glViewport(0, 0, width, height);  // Call this last
     }
 
-    static void onKey(GLFWwindow* window, const int key, const int, const int action, const int) {
+    static void
+    keyCallback(GLFWwindow* window, const int key, const int, const int action, const int) {
         auto* game = CAST<IGame*>(glfwGetWindowUserPointer(window));
         if (game) {
             if (action == GLFW_PRESS) {
-                game->getInputManager().updateKeyState(key, true);
+                game->onKeyDown(key);
             } else if (action == GLFW_RELEASE) {
-                game->getInputManager().updateKeyState(key, false);
+                game->onKeyUp(key);
             }
         }
     }
 
-    static void onMouse(GLFWwindow* window, const int button, const int action, const int mods) {
+    static void
+    mouseButtonCallback(GLFWwindow* window, const int button, const int action, const int mods) {
+        double curX, curY;
+        glfwGetCursorPos(window, &curX, &curY);
+        i32 x      = CAST<i32>(curX);
+        i32 y      = CAST<i32>(curY);
         auto* game = CAST<IGame*>(glfwGetWindowUserPointer(window));
         if (game) {
             if (action == GLFW_PRESS) {
-                game->getInputManager().updateMouseButtonState(button, true);
+                game->onMouseDown(button, x, y);
             } else if (action == GLFW_RELEASE) {
-                game->getInputManager().updateMouseButtonState(button, false);
+                game->onMouseUp(button, x, y);
             }
         }
     }
 
-    static void onMouseMove(GLFWwindow* window, const double x, const double y) {
+    static void cursorPosCallback(GLFWwindow* window, const double x, const double y) {
         auto* game = CAST<IGame*>(glfwGetWindowUserPointer(window));
-        if (game) { game->getInputManager().updateMousePosition(CAST<i32>(x), CAST<i32>(y)); }
+        if (game) { game->onMouseMove(CAST<i32>(x), CAST<i32>(y)); }
     }
 
-    static void onMouseScroll(GLFWwindow* window, const double offsetX, const double offsetY) {
+    static void
+    mouseScrollCallback(GLFWwindow* window, const double offsetX, const double offsetY) {
         auto* game = CAST<IGame*>(glfwGetWindowUserPointer(window));
         if (game) {}
     }
@@ -81,11 +88,11 @@ namespace x {
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 
         glfwSetWindowUserPointer(_window, this);  // Give callbacks access to this IGame instance.
-        glfwSetFramebufferSizeCallback(_window, onResize);
-        glfwSetKeyCallback(_window, onKey);
-        glfwSetMouseButtonCallback(_window, onMouse);
-        glfwSetCursorPosCallback(_window, onMouseMove);
-        glfwSetScrollCallback(_window, onMouseScroll);
+        glfwSetFramebufferSizeCallback(_window, resizeCallback);
+        glfwSetKeyCallback(_window, keyCallback);
+        glfwSetMouseButtonCallback(_window, mouseButtonCallback);
+        glfwSetCursorPosCallback(_window, cursorPosCallback);
+        glfwSetScrollCallback(_window, mouseScrollCallback);
 
         // glfwSetInputMode(_window, GLFW_CURSOR, GLFW_CURSOR_DISABLED); // Hides cursor
 

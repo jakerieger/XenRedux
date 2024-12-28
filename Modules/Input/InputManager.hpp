@@ -21,18 +21,22 @@ namespace x::Input {
 
         i32 getMouseX();
         i32 getMouseY();
-        glm::vec<2, i32> getMousePosition();
+        glm::vec2 getMousePosition();
 
-        // Internal use only!
-        void updateKeyState(u16 key, bool pressed);
-        // Internal use only!
-        void updateMouseButtonState(u16 button, bool pressed);
-        // Internal use only!
+        void setKeyPressed(u16 key);
+        void setKeyReleased(u16 key);
+        void setMouseButtonPressed(u16 button);
+        void setMouseButtonReleased(u16 button);
         void updateMousePosition(i32 x, i32 y);
 
     private:
-        std::unordered_map<u16, bool> _keyStates;
-        std::unordered_map<u16, bool> _mouseStates;
+        struct State {
+            bool pressed  = false;
+            bool released = false;
+        };
+
+        std::unordered_map<u16, State> _keyStates;
+        std::unordered_map<u16, State> _mouseStates;
         i32 _mouseX = 0;
         i32 _mouseY = 0;
     };

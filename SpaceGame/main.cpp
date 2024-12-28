@@ -53,6 +53,11 @@ public:
     void draw() override;
     void configurePipeline() override;
     void drawDebugUI() override;
+    void onKeyDown(u16 key) override;
+    void onKeyUp(u16 key) override;
+    void onMouseMove(i32 x, i32 y) override;
+    void onMouseDown(u16 button, i32 x, i32 y) override;
+    void onMouseUp(u16 button, i32 x, i32 y) override;
 
 private:
     DirectionalLight _sun;
@@ -75,6 +80,8 @@ SpaceGame::SpaceGame() : IGame("SpaceGame", 1600, 900, true) {
                                               (f32)width / (f32)height,
                                               0.1f,
                                               1000.0f,
+                                              1600,
+                                              900,
                                               glm::vec3(0.0f, 0.0f, 5.0f),
                                               glm::vec3(0.0f, 0.0f, 0.0f),
                                               glm::vec3(0.0f, 1.0f, 0.0f));
@@ -148,6 +155,7 @@ void SpaceGame::loadContent() {
     _context->registerVolatile(_renderTarget.get());
     _context->registerVolatile(_tonemapper.get());
     _context->registerVolatile(_antiAliasing.get());
+    _context->registerVolatile(_skybox.get());
 }
 
 void SpaceGame::unloadContent() {
@@ -158,14 +166,8 @@ void SpaceGame::unloadContent() {
 }
 
 void SpaceGame::update() {
-    if (_inputManager.getKeyDown(KeyCodes::Escape)) {
-        //
-        glfwSetWindowShouldClose(_window, true);
-    }
-
     const auto dT = _clock->getDeltaTime();
     _camera->update(_clock);
-    _skybox->update(_clock, _camera);
     // _shaderBall->getTransform().rotate(glm::vec3(0.0f, 10.0f * dT, 0.0f));
 }
 
@@ -197,6 +199,22 @@ void SpaceGame::configurePipeline() {
     Graphics::Pipeline::setEnableHDR(true);
 }
 
+void SpaceGame::onKeyDown(u16 key) {}
+
+void SpaceGame::onKeyUp(u16 key) {}
+
+void SpaceGame::onMouseMove(i32 x, i32 y) {
+    if (_camera->isDragging()) _camera->updateMousePos(x, y);
+}
+
+void SpaceGame::onMouseDown(u16 button, i32 x, i32 y) {
+    if (button == MouseCodes::Left) { _camera->beginDrag(x, y); }
+}
+
+void SpaceGame::onMouseUp(u16 button, i32 x, i32 y) {
+    if (button == MouseCodes::Left) { _camera->endDrag(); }
+}
+
 void SpaceGame::drawDebugUI() {
     ImGui::Begin("DevTools",
                  nullptr,
@@ -214,6 +232,10 @@ void SpaceGame::drawDebugUI() {
         ImGui::Text("%.6f ms", DebugParams.postProcessTime);
         ImGui::Text("");
         ImGui::Text("Mouse Position: %d, %d", _inputManager.getMouseX(), _inputManager.getMouseY());
+
+        ImGui::Text("Left Click: %s",
+                    _inputManager.getMouseButtonDown(MouseCodes::Left) ? "Pressed" : "Released");
+        ImGui::Text("Dragging: %s", _camera->isDragging() ? "Yes" : "No");
     }
 
     if (ImGui::CollapsingHeader("Material")) {

@@ -28,6 +28,13 @@ namespace x {
         virtual void configurePipeline() = 0;
         virtual void drawDebugUI() {}
 
+        // input events
+        virtual void onKeyDown(u16 key)                    = 0;
+        virtual void onKeyUp(u16 key)                      = 0;
+        virtual void onMouseMove(i32 x, i32 y)             = 0;
+        virtual void onMouseDown(u16 button, i32 x, i32 y) = 0;
+        virtual void onMouseUp(u16 button, i32 x, i32 y)   = 0;
+
         void run();
 
         [[nodiscard]] Context* getContext() const;

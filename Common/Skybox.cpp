@@ -70,4 +70,8 @@ namespace x {
         glDepthFunc(GL_LESS);
         glDepthMask(GL_TRUE);
     }
+
+    void Skybox::onResize(int newWidth, int newHeight) {
+        _cubemap->resize(newWidth, newHeight);
+    }
 }  // namespace x
