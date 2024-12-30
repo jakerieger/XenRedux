@@ -209,11 +209,11 @@ void SpaceGame::onMouseMove(i32 x, i32 y) {
 }
 
 void SpaceGame::onMouseDown(u16 button, i32 x, i32 y) {
-    if (button == MouseCodes::Left) { _camera->beginDrag(x, y); }
+    // if (button == MouseCodes::Left) { _camera->beginDrag(x, y); }
 }
 
 void SpaceGame::onMouseUp(u16 button, i32 x, i32 y) {
-    if (button == MouseCodes::Left) { _camera->endDrag(); }
+    // if (button == MouseCodes::Left) { _camera->endDrag(); }
 }
 
 void SpaceGame::drawDebugUI() {
