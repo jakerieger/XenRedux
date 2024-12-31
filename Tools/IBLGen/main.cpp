@@ -23,6 +23,8 @@
 #include <Graphics/Shaders/Include/Skybox_FS.h>
 #include <Graphics/Shaders/Include/Unlit_VS.h>
 #include <Graphics/Shaders/Include/Unlit_FS.h>
+#include <Graphics/Shaders/Include/BRDF_LUT_CS.h>
+#include <Graphics/Shaders/Include/IrradianceMap_CS.h>
 #pragma endregion
 
 static constexpr i32 kWidth             = 1600;
@@ -98,6 +100,11 @@ public:
         _quadShader->use();
         _quadShader->setInt("uTexture", 0);
 
+        _brdfLutShader = x::ShaderManager::get().getShaderProgram(BRDF_LUT_CS_Source);
+        if (!_brdfLutShader.get()) { Panic("Failed to load BRDF LUT shader"); }
+        _irradianceShader = x::ShaderManager::get().getShaderProgram(IrradianceMap_CS_Source);
+        if (!_irradianceShader.get()) { Panic("Failed to load Irradiance shader"); }
+
         // Load the test skybox for now
     }
 
@@ -158,7 +165,27 @@ public:
     void configurePipeline() override {}
 
     void drawDebugUI() override {
-        ImGui::Begin("Settings");
+        ImGui::Begin("Settings",
+                     nullptr,
+                     ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_AlwaysAutoResize);
+
+        if (ImGui::Button("Generate BRDF LUT")) {
+            if (_brdfLUT) { glDeleteTextures(1, &_brdfLUT); }
+            glGenTextures(1, &_brdfLUT);
+            glBindTexture(GL_TEXTURE_2D, _brdfLUT);
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RG16F, 512, 512, 0, GL_RG, GL_FLOAT, nullptr);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+            _brdfLutShader->use();
+            glBindImageTexture(0, _brdfLUT, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RG16F);
+            const auto workgroupSize =
+              x::Graphics::ShaderProgram::getComputeWorkGroupSize(16, 512, 512);
+            _brdfLutShader->dispatchCompute(workgroupSize.first, workgroupSize.second, 1);
+        }
+
+        if (ImGui::Button("Generate Irradiance Map")) {}
 
         ImGui::End();
     }
@@ -180,6 +207,9 @@ private:
     u32 _prefilterMap  = 0;
     std::shared_ptr<x::Graphics::ShaderProgram> _skyboxShader;
     std::shared_ptr<x::Graphics::ShaderProgram> _quadShader;
+    std::shared_ptr<x::Graphics::ShaderProgram> _brdfLutShader;
+    std::shared_ptr<x::Graphics::ShaderProgram> _irradianceShader;
+    std::shared_ptr<x::Graphics::ShaderProgram> _prefilterShader;
 
     void loadCubemap(const str& filename) {}
 };
