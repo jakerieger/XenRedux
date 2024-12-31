@@ -12,6 +12,7 @@
 #include <imgui.h>
 #include <memory>
 #include <array>
+#include <tinyfiledialogs.h>
 
 // XEN includes
 #include <Panic.hpp>
@@ -38,7 +39,7 @@ static constexpr i32 kHeight               = 900;
 static constexpr i32 kCubeFaces            = 6;
 static constexpr i32 kSkyboxResolution     = 512;  // Each face
 static constexpr i32 kBrdfResolution       = 512;  // 512x512
-static constexpr i32 kIrradianceResolution = 64;   // 32x32
+static constexpr i32 kIrradianceResolution = 32;   // 32x32
 static constexpr i32 kPrefilterResolution  = 128;  // 128x128
 
 static constexpr f32 kViewportFaceSize  = 48.0f;
@@ -150,6 +151,12 @@ public:
         ImGui::Begin("Settings",
                      nullptr,
                      ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_AlwaysAutoResize);
+        if (ImGui::Button("Load HDR Cubemap")) {
+            const char* title      = "Load HDR Cubemap";
+            const char* patterns[] = {"*.hdr"};
+            const char* filename   = tinyfd_openFileDialog(title, "", 1, patterns, nullptr, 0);
+            if (filename) { loadCubemap(filename, _skyboxMap); }
+        }
 
         if (ImGui::Button("Generate BRDF LUT")) { generateBRDF(); }
 
@@ -459,9 +466,9 @@ private:
         glDeleteTextures(1, &tempTexture);
         glDeleteBuffers(1, &ubo);
 
-        // Generate mips if needed
-        glBindTexture(GL_TEXTURE_CUBE_MAP, _irradianceMap);
-        glGenerateMipmap(GL_TEXTURE_CUBE_MAP);
+        // // Generate mips if needed
+        // glBindTexture(GL_TEXTURE_CUBE_MAP, _irradianceMap);
+        // glGenerateMipmap(GL_TEXTURE_CUBE_MAP);
     }
 
     void generatePrefilter() {}

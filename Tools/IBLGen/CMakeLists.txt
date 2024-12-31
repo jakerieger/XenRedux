@@ -9,8 +9,11 @@ add_executable(IBLGen
         main.cpp
 )
 
+find_package(tinyfiledialogs CONFIG REQUIRED)
+
 target_link_libraries(IBLGen PRIVATE
         Xen
         glfw
         glm::glm-header-only
+        tinyfiledialogs::tinyfiledialogs
 )

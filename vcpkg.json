@@ -12,7 +12,8 @@
     "liblzma",
     "zlib",
     "assimp",
-    "xxhash"
+    "xxhash",
+    "tinyfiledialogs"
   ],
   "builtin-baseline": "19847ac3d8cad7599e96bd531f9bc1f0ebae6131"
 }
