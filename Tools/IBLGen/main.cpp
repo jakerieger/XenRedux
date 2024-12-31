@@ -19,6 +19,10 @@
 #include <Game.hpp>
 #include <ShaderManager.hpp>
 #include <Graphics/ShaderProgram.hpp>
+#include <Filesystem/Filesystem.hpp>
+
+using namespace x::Filesystem;
+using namespace x::Graphics;
 
 #pragma region Shaders
 #include <Graphics/Shaders/Include/Skybox_VS.h>
@@ -29,8 +33,13 @@
 #include <Graphics/Shaders/Include/IrradianceMap_CS.h>
 #pragma endregion
 
-static constexpr i32 kWidth             = 1600;
-static constexpr i32 kHeight            = 900;
+static constexpr i32 kWidth                = 1600;
+static constexpr i32 kHeight               = 900;
+static constexpr i32 kCubeFaces            = 6;
+static constexpr i32 kBrdfResolution       = 512;  // 512x512
+static constexpr i32 kIrradianceResolution = 64;   // 32x32
+static constexpr i32 kPrefilterResolution  = 128;  // 128x128
+
 static constexpr f32 kCubeVertices[108] = {
   -1.0f, 1.0f,  -1.0f, -1.0f, -1.0f, -1.0f, 1.0f,  -1.0f, -1.0f, 1.0f,  -1.0f, -1.0f, 1.0f,  1.0f,
   -1.0f, -1.0f, 1.0f,  -1.0f, -1.0f, -1.0f, 1.0f,  -1.0f, -1.0f, -1.0f, -1.0f, 1.0f,  -1.0f, -1.0f,
@@ -40,27 +49,12 @@ static constexpr f32 kCubeVertices[108] = {
   -1.0f, 1.0f,  -1.0f, 1.0f,  -1.0f, 1.0f,  1.0f,  -1.0f, 1.0f,  1.0f,  1.0f,  1.0f,  1.0f,  1.0f,
   -1.0f, 1.0f,  1.0f,  -1.0f, 1.0f,  -1.0f, -1.0f, -1.0f, -1.0f, -1.0f, -1.0f, 1.0f,  1.0f,  -1.0f,
   -1.0f, 1.0f,  -1.0f, -1.0f, -1.0f, -1.0f, 1.0f,  1.0f,  -1.0f, 1.0f};
-static constexpr f32 kQuadVertices[16]     = {-0.5f,
-                                              -0.5f,
-                                              0.0f,
-                                              0.0f,
-                                              0.5f,
-                                              -0.5f,
-                                              1.0f,
-                                              0.0f,
-                                              0.5f,
-                                              0.5f,
-                                              1.0f,
-                                              1.0f,
-                                              -0.5f,
-                                              0.5f,
-                                              0.0f,
-                                              1.0f};
-static constexpr u32 kQuadIndices[6]       = {0, 1, 2, 2, 3, 0};
-static constexpr i32 kCubeFaces            = 6;
-static constexpr i32 kBrdfResolution       = 512;
-static constexpr i32 kIrradianceResolution = 32;
-static constexpr i32 kPrefilterResolution  = 128;
+
+enum Cubemaps {
+    Skybox,
+    Irradiance,
+    Prefilter,
+};
 
 class IBLGen final : public x::IGame {
 public:
@@ -78,43 +72,22 @@ public:
         glBindBuffer(GL_ARRAY_BUFFER, 0);
         glBindVertexArray(0);
 
-        // Create the quad for drawing the BRDF LUT
-        glGenVertexArrays(1, &_quadVAO);
-        glBindVertexArray(_quadVAO);
-        glGenBuffers(1, &_quadVBO);
-        glBindBuffer(GL_ARRAY_BUFFER, _quadVBO);
-        glBufferData(GL_ARRAY_BUFFER, sizeof(kQuadVertices), kQuadVertices, GL_STATIC_DRAW);
-        glGenBuffers(1, &_quadIBO);
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _quadIBO);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(kQuadIndices), kQuadIndices, GL_STATIC_DRAW);
-        glEnableVertexAttribArray(0);
-        glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(f32), (void*)0);
-        glEnableVertexAttribArray(1);
-        glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(f32), (void*)(2 * sizeof(f32)));
-        glBindBuffer(GL_ARRAY_BUFFER, 0);
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-        glBindVertexArray(0);
-
         _skyboxShader =
           x::ShaderManager::get().getShaderProgram(Skybox_VS_Source, Skybox_FS_Source);
         if (!_skyboxShader) { Panic("Failed to load Skybox shader"); }
         _skyboxShader->use();
         _skyboxShader->setInt("uSkybox", 0);
 
-        _quadShader = x::ShaderManager::get().getShaderProgram(Unlit_VS_Source, Unlit_FS_Source);
-        if (!_quadShader) { Panic("Failed to load Quad shader"); }
-        _quadShader->use();
-        _quadShader->setInt("uTexture", 0);
-
         _brdfLutShader = x::ShaderManager::get().getShaderProgram(BRDF_LUT_CS_Source);
         if (!_brdfLutShader.get()) { Panic("Failed to load BRDF LUT shader"); }
         _irradianceShader = x::ShaderManager::get().getShaderProgram(IrradianceMap_CS_Source);
         if (!_irradianceShader.get()) { Panic("Failed to load Irradiance shader"); }
 
-        createCubemapTexture(_irradianceMap, 512, false);
+        createCubemapTexture(_irradianceMap, kIrradianceResolution, false);
         createCubemapTexture(_prefilterMap, kPrefilterResolution, true);
 
-        loadCubemap(R"(C:\Users\conta\Code\XenRedux\Tools\IBLGen\Data\test_sky.hdr)");
+        createCubemapTexture(_skyboxMap, 512, false);
+        loadCubemap(R"(C:\Users\conta\Code\XenRedux\Tools\IBLGen\Data\test_sky.hdr)", _skyboxMap);
     }
 
     void unloadContent() override {
@@ -125,9 +98,18 @@ public:
         glDeleteBuffers(1, &_quadVBO);
         glDeleteBuffers(1, &_quadIBO);
 
-        glDeleteTextures(1, &_brdfLUT);
+        glDeleteTextures(1, &_skyboxMap);
+        glDeleteTextures(1, &_brdfLut);
         glDeleteTextures(1, &_irradianceMap);
         glDeleteTextures(1, &_prefilterMap);
+
+        if (_debugFBO) { glDeleteFramebuffers(1, &_debugFBO); }
+        if (_debugSkyboxFaces[0]) {
+            glDeleteFramebuffers(kCubeFaces, _debugSkyboxFaces);
+            for (i32 i = 0; i < kCubeFaces; ++i) {
+                _debugSkyboxFaces[i] = 0;
+            }
+        }
 
         _skyboxShader.reset();
     }
@@ -140,10 +122,6 @@ public:
 
         _skyboxShader->use();
         _skyboxShader->setMat4("uVP", p * glm::mat4(glm::mat3(v)));
-
-        _quadShader->use();
-        _quadShader->setMat4("uVP", p * v);
-        _quadShader->setMat4("uModel", glm::mat4(1.0f));
     }
 
     void draw() override {
@@ -155,10 +133,9 @@ public:
         _skyboxShader->use();
         glBindVertexArray(_cubeVAO);
 
-        auto cubemap = _usePrefilter ? _prefilterMap : _irradianceMap;
-        if (cubemap) {
+        if (_skyboxMap) {
             glActiveTexture(GL_TEXTURE0);
-            glBindTexture(GL_TEXTURE_CUBE_MAP, cubemap);
+            glBindTexture(GL_TEXTURE_CUBE_MAP, _skyboxMap);
         }
 
         glDrawArrays(GL_TRIANGLES, 0, 36);
@@ -166,16 +143,6 @@ public:
 
         glDepthFunc(GL_LESS);
         glDepthMask(GL_TRUE);
-
-        _quadShader->use();
-        if (_brdfLUT) {
-            glActiveTexture(GL_TEXTURE0);
-            glBindTexture(GL_TEXTURE_2D, _brdfLUT);
-        }
-        glBindVertexArray(_quadVAO);
-        glBindBuffer(GL_ARRAY_BUFFER, _cubeVBO);
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _quadIBO);
-        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
     }
 
     void configurePipeline() override {}
@@ -191,7 +158,49 @@ public:
 
         if (ImGui::Button("Generate Prefilter")) { generatePrefilter(); }
 
-        if (ImGui::Button("Switch Irradiance/Prefilter")) { _usePrefilter = !_usePrefilter; }
+        ImGui::Separator();
+
+        if (_skyboxMap) { ImGui::Text("Skybox"); }
+
+        if (_brdfLut) {
+            ImGui::Text("BRDF LUT");
+            ImVec2 size(200.f, 200.f);
+            ImGui::Image((ImTextureID)(int*)_brdfLut, size, ImVec2(0, 1), ImVec2(1, 0));
+        }
+
+        if (_irradianceMap) {
+            ImGui::Text("Irradiance Map");
+            if (!_debugIrradianceFaces[0]) setupDebugCubemapFaces(Cubemaps::Irradiance);
+            updateDebugCubemapFaces(_irradianceMap, kIrradianceResolution);
+            f32 faceSize   = 64.0f;
+            ImVec2 basePos = ImGui::GetCursorPos();
+
+            // Draw the faces in a cross pattern
+            //     [+Y]
+            // [-X][+Z][+X][-Z]
+            //     [-Y]
+
+            // Top face (+Y)
+            ImGui::SetCursorPos(ImVec2(basePos.x + faceSize, basePos.y));
+            ImGui::Image((ImTextureID)(intptr_t)_debugIrradianceFaces[2],
+                         ImVec2(faceSize, faceSize));
+
+            // Middle row
+            ImGui::SetCursorPos(ImVec2(basePos.x, basePos.y + faceSize));
+            for (int i = 0; i < 4; i++) {
+                int faceIdx = (i == 0) ? 1 : (i == 1) ? 4 : (i == 2) ? 0 : 5;  // -X, +Z, +X, -Z
+                ImGui::Image((ImTextureID)(intptr_t)_debugIrradianceFaces[faceIdx],
+                             ImVec2(faceSize, faceSize));
+                ImGui::SameLine();
+            }
+
+            // Bottom face (-Y)
+            ImGui::SetCursorPos(ImVec2(basePos.x + faceSize, basePos.y + 2 * faceSize));
+            ImGui::Image((ImTextureID)(intptr_t)_debugIrradianceFaces[3],
+                         ImVec2(faceSize, faceSize));
+        }
+
+        if (_prefilterMap) { ImGui::Text("Prefilter Map"); }
 
         ImGui::End();
     }
@@ -208,15 +217,18 @@ private:
     u32 _quadVAO       = 0;
     u32 _quadVBO       = 0;
     u32 _quadIBO       = 0;
-    u32 _brdfLUT       = 0;
+    u32 _brdfLut       = 0;
     u32 _irradianceMap = 0;
     u32 _prefilterMap  = 0;
-    std::shared_ptr<x::Graphics::ShaderProgram> _skyboxShader;
-    std::shared_ptr<x::Graphics::ShaderProgram> _quadShader;
-    std::shared_ptr<x::Graphics::ShaderProgram> _brdfLutShader;
-    std::shared_ptr<x::Graphics::ShaderProgram> _irradianceShader;
-    std::shared_ptr<x::Graphics::ShaderProgram> _prefilterShader;
-    bool _usePrefilter = false;
+    u32 _skyboxMap     = 0;
+    std::shared_ptr<ShaderProgram> _skyboxShader;
+    std::shared_ptr<ShaderProgram> _brdfLutShader;
+    std::shared_ptr<ShaderProgram> _irradianceShader;
+    std::shared_ptr<ShaderProgram> _prefilterShader;
+    u32 _debugFBO;
+    u32 _debugSkyboxFaces[6]     = {0};
+    u32 _debugIrradianceFaces[6] = {0};
+    u32 _debugPrefilterFaces[6]  = {0};
 
     struct FaceData {
         int width, height;
@@ -240,7 +252,7 @@ private:
         NEGATIVE_Z,
     };
 
-    void loadCubemap(const str& filename) {
+    void loadCubemap(const str& filename, const u32 cubemap) {
         i32 width, height, channels;
         stbi_set_flip_vertically_on_load(true);
         f32* data = stbi_loadf(filename.c_str(), &width, &height, &channels, 3);
@@ -248,15 +260,15 @@ private:
         auto faceSize = width / 4;
         auto faces    = extractCubemapFaces(faceSize, data);
         for (int i = 0; i < faces.size(); i++) {
-            updateCubemapFace(_irradianceMap, i, 0, faceSize, faceSize, faces[i].data.data());
+            updateCubemapFace(cubemap, i, 0, faceSize, faceSize, faces[i].data.data());
         }
         stbi_image_free(data);
     }
 
     void generateBRDF() {
-        if (_brdfLUT) { glDeleteTextures(1, &_brdfLUT); }
-        glGenTextures(1, &_brdfLUT);
-        glBindTexture(GL_TEXTURE_2D, _brdfLUT);
+        if (_brdfLut) { glDeleteTextures(1, &_brdfLut); }
+        glGenTextures(1, &_brdfLut);
+        glBindTexture(GL_TEXTURE_2D, _brdfLut);
         glTexImage2D(GL_TEXTURE_2D,
                      0,
                      GL_RG16F,
@@ -271,9 +283,9 @@ private:
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
         _brdfLutShader->use();
-        glBindImageTexture(0, _brdfLUT, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RG16F);
+        glBindImageTexture(0, _brdfLut, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RG16F);
         const auto workgroupSize =
-          x::Graphics::ShaderProgram::getComputeWorkGroupSize(16, kBrdfResolution, kBrdfResolution);
+          ShaderProgram::getComputeWorkGroupSize(16, kBrdfResolution, kBrdfResolution);
         _brdfLutShader->dispatchCompute(workgroupSize.first, workgroupSize.second, 1);
     }
 
@@ -360,6 +372,54 @@ private:
         }
 
         return faces;
+    }
+
+    void setupDebugCubemapFaces(Cubemaps type) {
+        switch (type) {
+            case Skybox:
+                break;
+            case Irradiance: {
+                glGenFramebuffers(1, &_debugFBO);
+                glGenTextures(6, _debugIrradianceFaces);
+                for (u32 faceIdx = 0; faceIdx < kCubeFaces; ++faceIdx) {
+                    glBindTexture(GL_TEXTURE_2D, _debugIrradianceFaces[faceIdx]);
+                    glTexImage2D(GL_TEXTURE_2D,
+                                 0,
+                                 GL_RGB16F,
+                                 kIrradianceResolution,
+                                 kIrradianceResolution,
+                                 0,
+                                 GL_RGB,
+                                 GL_FLOAT,
+                                 nullptr);
+                    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+                    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+                    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+                    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+                }
+            } break;
+            case Prefilter:
+                break;
+        }
+    }
+
+    void updateDebugCubemapFaces(const u32 cubemap, const i32 resolution) {
+        glBindFramebuffer(GL_FRAMEBUFFER, _debugFBO);
+        i32 viewport[4];
+        glGetIntegerv(GL_VIEWPORT, viewport);
+        glViewport(0, 0, resolution, resolution);
+        for (u32 faceIdx = 0; faceIdx < kCubeFaces; ++faceIdx) {
+            glFramebufferTexture2D(GL_FRAMEBUFFER,
+                                   GL_COLOR_ATTACHMENT0,
+                                   GL_TEXTURE_2D,
+                                   _debugIrradianceFaces[faceIdx],
+                                   0);
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+            glBindTexture(GL_TEXTURE_CUBE_MAP, cubemap);
+            glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, resolution, resolution);
+        }
+        glViewport(viewport[0], viewport[1], viewport[2], viewport[3]);
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
     }
 };
 
