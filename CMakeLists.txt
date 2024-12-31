@@ -44,6 +44,7 @@ find_package(glm CONFIG REQUIRED)
 find_package(assimp CONFIG REQUIRED)
 find_package(xxHash CONFIG REQUIRED)
 find_package(glfw3 CONFIG REQUIRED)
+find_package(OpenEXR CONFIG REQUIRED)
 
 include_directories(
         ${VENDOR}/imgui
@@ -108,6 +109,7 @@ if (WIN32)
             assimp::assimp
             xxHash::xxhash
             glfw
+            OpenEXR::OpenEXR
     )
 elseif (UNIX)
     target_link_libraries(Xen PRIVATE
@@ -117,6 +119,7 @@ elseif (UNIX)
             assimp::assimp
             xxHash::xxhash
             glfw
+            OpenEXR::OpenEXR
     )
 endif ()
 

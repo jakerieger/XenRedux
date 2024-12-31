@@ -13,6 +13,12 @@
 #include <memory>
 #include <array>
 #include <tinyfiledialogs.h>
+#include <OpenEXR/ImfOutputFile.h>
+#include <OpenEXR/ImfInputFile.h>
+#include <OpenEXR/ImfChannelList.h>
+#include <OpenEXR/ImfHeader.h>
+#include <OpenEXR/ImfFrameBuffer.h>
+#include <Imath/ImathBox.h>
 
 // XEN includes
 #include <Panic.hpp>
@@ -32,6 +38,7 @@ using namespace x::Graphics;
 #include <Graphics/Shaders/Include/Unlit_FS.h>
 #include <Graphics/Shaders/Include/BRDF_LUT_CS.h>
 #include <Graphics/Shaders/Include/IrradianceMap_CS.h>
+#include <Graphics/Shaders/Include/PrefilterMap_CS.h>
 #pragma endregion
 
 static constexpr i32 kWidth                = 1600;
@@ -85,6 +92,8 @@ public:
         if (!_brdfLutShader.get()) { Panic("Failed to load BRDF LUT shader"); }
         _irradianceShader = x::ShaderManager::get().getShaderProgram(IrradianceMap_CS_Source);
         if (!_irradianceShader.get()) { Panic("Failed to load Irradiance shader"); }
+        _prefilterShader = x::ShaderManager::get().getShaderProgram(PrefilterMap_CS_Source);
+        if (!_prefilterShader.get()) { Panic("Failed to load Prefilter shader"); }
 
         createCubemapTexture(_skyboxMap, 512, GL_RGB16F, GL_RGB, false);
         loadCubemap(R"(C:\Users\conta\Code\XenRedux\Tools\IBLGen\Data\test_sky.hdr)", _skyboxMap);
@@ -232,35 +241,27 @@ public:
         }
 
         if (_prefilterMap) {
-            // ImGui::Text("Prefilter Map");
-            // if (!_debugPrefilterFaces[0]) setupDebugCubemapFaces(Cubemaps::Prefilter);
-            // updateDebugCubemapFaces(_prefilterMap, kPrefilterResolution);
-            // f32 faceSize   = 64.0f;
-            // ImVec2 basePos = ImGui::GetCursorPos();
-            //
-            // // Draw the faces in a cross pattern
-            // //     [+Y]
-            // // [-X][+Z][+X][-Z]
-            // //     [-Y]
-            //
-            // // Top face (+Y)
-            // ImGui::SetCursorPos(ImVec2(basePos.x + faceSize, basePos.y));
-            // ImGui::Image((ImTextureID)(intptr_t)_debugPrefilterFaces[2],
-            //              ImVec2(faceSize, faceSize));
-            //
-            // // Middle row
-            // ImGui::SetCursorPos(ImVec2(basePos.x, basePos.y + faceSize));
-            // for (int i = 0; i < 4; i++) {
-            //     int faceIdx = (i == 0) ? 1 : (i == 1) ? 4 : (i == 2) ? 0 : 5;  // -X, +Z, +X, -Z
-            //     ImGui::Image((ImTextureID)(intptr_t)_debugPrefilterFaces[faceIdx],
-            //                  ImVec2(faceSize, faceSize));
-            //     ImGui::SameLine();
-            // }
-            //
-            // // Bottom face (-Y)
-            // ImGui::SetCursorPos(ImVec2(basePos.x + faceSize, basePos.y + 2 * faceSize));
-            // ImGui::Image((ImTextureID)(intptr_t)_debugPrefilterFaces[3],
-            //              ImVec2(faceSize, faceSize));
+            ImGui::Text("Prefilter Map");
+            if (!_debugPrefilterFaces[0]) setupDebugCubemapFaces(Cubemaps::Prefilter);
+            updateDebugCubemapFaces(_prefilterMap, kPrefilterResolution, Cubemaps::Prefilter);
+            f32 faceSize   = kViewportFaceSize;
+            ImVec2 basePos = ImGui::GetCursorPos();
+            ImGui::SetCursorPos(ImVec2(basePos.x + faceSize, basePos.y));
+            ImGui::Image((ImTextureID)(intptr_t)_debugPrefilterFaces[2],
+                         ImVec2(faceSize, faceSize));
+            ImGui::SetCursorPos(ImVec2(basePos.x, basePos.y + faceSize));
+            for (int i = 0; i < 4; i++) {
+                int faceIdx = (i == 0) ? 1 : (i == 1) ? 4 : (i == 2) ? 0 : 5;  // -X, +Z, +X, -Z
+                ImGui::Image((ImTextureID)(intptr_t)_debugPrefilterFaces[faceIdx],
+                             ImVec2(faceSize, faceSize));
+                if (i < 3) {
+                    // Calculate exact position for the next image
+                    ImGui::SameLine(basePos.x + (i + 1) * faceSize, 0.0f);
+                }
+            }
+            ImGui::SetCursorPos(ImVec2(basePos.x + faceSize, basePos.y + 2 * faceSize));
+            ImGui::Image((ImTextureID)(intptr_t)_debugPrefilterFaces[3],
+                         ImVec2(faceSize, faceSize));
         }
 
         ImGui::End();
@@ -471,7 +472,157 @@ private:
         // glGenerateMipmap(GL_TEXTURE_CUBE_MAP);
     }
 
-    void generatePrefilter() {}
+    void generatePrefilter() {
+        if (!_skyboxMap) {
+            Panic("Environment map has not been loaded.");
+            return;
+        }
+
+        // Create or recreate the prefilter map with mips
+        if (_prefilterMap) { glDeleteTextures(1, &_prefilterMap); }
+        createCubemapTexture(_prefilterMap, kPrefilterResolution, GL_RGBA16F, GL_RGBA, true);
+
+        // Create temporary framebuffer and 2D texture for compute shader output
+        u32 fbo;
+        glGenFramebuffers(1, &fbo);
+        glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+
+        u32 tempTexture;
+        glGenTextures(1, &tempTexture);
+        glBindTexture(GL_TEXTURE_2D, tempTexture);
+        glTexImage2D(GL_TEXTURE_2D,
+                     0,
+                     GL_RGBA16F,
+                     kPrefilterResolution,
+                     kPrefilterResolution,
+                     0,
+                     GL_RGB,
+                     GL_FLOAT,
+                     nullptr);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+        // Parameters for the compute shader
+        struct PrefilterParams {
+            glm::mat4 viewMatrix;
+            i32 faceIndex;
+            f32 roughness;
+            i32 numSamples;
+            f32 resolution;
+        };
+
+        // Create UBO for parameters
+        u32 ubo;
+        glGenBuffers(1, &ubo);
+        glBindBuffer(GL_UNIFORM_BUFFER, ubo);
+        glBufferData(GL_UNIFORM_BUFFER, sizeof(PrefilterParams), nullptr, GL_DYNAMIC_DRAW);
+
+        // Precompute number of mip levels
+        const u32 maxMipLevels = CAST<u32>(std::floor(std::log2(kPrefilterResolution))) + 1;
+
+        // Bind input environment map
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_CUBE_MAP, _skyboxMap);
+
+        _prefilterShader->use();
+        _prefilterShader->setInt("uEnvironmentMap", 0);
+
+        // Process each mip level
+        for (u32 mip = 0; mip < maxMipLevels; ++mip) {
+            // Calculate current mip dimension
+            const u32 mipWidth  = kPrefilterResolution >> mip;
+            const u32 mipHeight = mipWidth;  // Keep it square
+
+            // Skip if mip dimension becomes too small
+            if (mipWidth < 1) break;
+
+            // Roughness increases with mip level
+            const float roughness = CAST<f32>(mip) / CAST<f32>(maxMipLevels - 1);
+
+            PrefilterParams params;
+            params.numSamples = 1024;
+            params.roughness  = roughness;
+            params.resolution = CAST<f32>(mipWidth);
+
+            // Process each face
+            for (u32 face = 0; face < kCubeFaces; ++face) {
+                params.faceIndex = face;
+
+                // Calculate view matrix for current face
+                switch (face) {
+                    case 0:  // POSITIVE_X
+                        params.viewMatrix = glm::lookAt(glm::vec3(0.0f),
+                                                        glm::vec3(1.0f, 0.0f, 0.0f),
+                                                        glm::vec3(0.0f, -1.0f, 0.0f));
+                        break;
+                    case 1:  // NEGATIVE_X
+                        params.viewMatrix = glm::lookAt(glm::vec3(0.0f),
+                                                        glm::vec3(-1.0f, 0.0f, 0.0f),
+                                                        glm::vec3(0.0f, -1.0f, 0.0f));
+                        break;
+                    case 2:  // POSITIVE_Y
+                        params.viewMatrix = glm::lookAt(glm::vec3(0.0f),
+                                                        glm::vec3(0.0f, 1.0f, 0.0f),
+                                                        glm::vec3(0.0f, 0.0f, 1.0f));
+                        break;
+                    case 3:  // NEGATIVE_Y
+                        params.viewMatrix = glm::lookAt(glm::vec3(0.0f),
+                                                        glm::vec3(0.0f, -1.0f, 0.0f),
+                                                        glm::vec3(0.0f, 0.0f, -1.0f));
+                        break;
+                    case 4:  // POSITIVE_Z
+                        params.viewMatrix = glm::lookAt(glm::vec3(0.0f),
+                                                        glm::vec3(0.0f, 0.0f, 1.0f),
+                                                        glm::vec3(0.0f, -1.0f, 0.0f));
+                        break;
+                    case 5:  // NEGATIVE_Z
+                        params.viewMatrix = glm::lookAt(glm::vec3(0.0f),
+                                                        glm::vec3(0.0f, 0.0f, -1.0f),
+                                                        glm::vec3(0.0f, -1.0f, 0.0f));
+                        break;
+                }
+
+                // Bind output image
+                glBindImageTexture(1, tempTexture, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA16F);
+
+                // Update and bind uniform buffer
+                glBindBufferBase(GL_UNIFORM_BUFFER, 2, ubo);
+                glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(PrefilterParams), &params);
+
+                // Dispatch compute shader
+                const auto workgroupSize =
+                  ShaderProgram::getComputeWorkGroupSize(32, mipWidth, mipHeight);
+                _prefilterShader->dispatchCompute(workgroupSize.first, workgroupSize.second, 1);
+
+                // Memory barrier
+                glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+
+                // Copy result to proper face and mip level of the prefilter cubemap
+                glCopyImageSubData(tempTexture,
+                                   GL_TEXTURE_2D,
+                                   0,
+                                   0,
+                                   0,
+                                   0,
+                                   _prefilterMap,
+                                   GL_TEXTURE_CUBE_MAP,
+                                   mip,
+                                   0,
+                                   0,
+                                   face,
+                                   mipWidth,
+                                   mipHeight,
+                                   1);
+            }
+        }
+
+        // Cleanup
+        glDeleteFramebuffers(1, &fbo);
+        glDeleteTextures(1, &tempTexture);
+        glDeleteBuffers(1, &ubo);
+    }
 
     void createCubemapTexture(
       u32& texture, i32 resolution, GLenum internalFormat, GLenum format, bool genMips = false) {
@@ -668,7 +819,22 @@ private:
         glViewport(prevViewport[0], prevViewport[1], prevViewport[2], prevViewport[3]);
     }
 
-    void exportMaps() {}
+    void exportMaps() {
+        if (!_skyboxMap || !_brdfLut || !_irradianceMap || !_prefilterMap) {
+            tinyfd_messageBox(
+              "IBLGen",
+              "Not all maps have been generated. Please generate all maps before exporting.",
+              "ok",
+              "warning",
+              0);
+            return;
+        }
+
+        const char* title = "Export IBL Maps";
+        const char* selectedDir =
+          tinyfd_selectFolderDialog(title, Path::currentPath().toString().c_str());
+        if (selectedDir) { auto outputDir = Path(selectedDir); }
+    }
 };
 
 int main() {

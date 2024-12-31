@@ -16,4 +16,5 @@ target_link_libraries(IBLGen PRIVATE
         glfw
         glm::glm-header-only
         tinyfiledialogs::tinyfiledialogs
+        OpenEXR::OpenEXR
 )

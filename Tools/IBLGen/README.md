@@ -6,8 +6,6 @@ Internal tool used for precomputing IBL texture maps. It generates the following
 - Prefiltered environment map (5 mip levels by default)
 - BRDF LUT
 
-It also handles converting equirectangular environment maps into cube maps.
-
 All cube maps use the following face layout:
 
 ![](format.png)
