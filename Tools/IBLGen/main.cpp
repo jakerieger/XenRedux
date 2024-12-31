@@ -235,7 +235,7 @@ public:
         if (_brdfLut) {
             ImGui::Text("BRDF LUT");
             ImVec2 size(200.f, 200.f);
-            ImGui::Image((ImTextureID)(int*)_brdfLut, size, ImVec2(0, 1), ImVec2(1, 0));
+            ImGui::Image((ImTextureID)(intptr_t)(_brdfLut), size, ImVec2(0, 1), ImVec2(1, 0));
         }
 
         if (_irradianceMap) {
@@ -862,8 +862,8 @@ private:
     }
 
     void exportMaps() {
-        if (!_skyboxMap || !_brdfLut || !_irradianceMap || !_prefilterMap) {
-            tinyfd_messageBox(
+        if (!mapsGenerated()) {
+            std::ignore = tinyfd_messageBox(
               "IBLGen",
               "Not all maps have been generated. Please generate all maps before exporting.",
               "ok",
@@ -874,7 +874,22 @@ private:
 
         const char* title       = "Export IBL Maps";
         const char* selectedDir = tinyfd_selectFolderDialog(title, Path::currentPath().cStr());
-        if (selectedDir) { auto outputDir = Path(selectedDir); }
+        if (selectedDir) {
+            auto outputDir = Path(selectedDir) / "exported";
+            if (!outputDir.exists()) {
+                if (!outputDir.create()) {
+                    std::ignore = tinyfd_messageBox(
+                      "IBLGen",
+                      "Failed to create output directory. Try running as administrator.",
+                      "ok",
+                      "error",
+                      0);
+                    return;
+                }
+
+                // Retrieve and export generated map data
+            }
+        }
     }
 
     bool hasSkybox() {

@@ -3,6 +3,8 @@
 //
 
 #include "Filesystem.hpp"
+#include "Panic.hpp"
+
 #include <sstream>
 
 #ifdef _WIN32
@@ -11,6 +13,9 @@
     // in order for Microsoft's stat.h to define names like S_IFMT, S_IFREG, and S_IFDIR,
     // rather than just defining  _S_IFMT, _S_IFREG, and _S_IFDIR as it normally does.
     #define _CRT_INTERNAL_NONSTDC_NAMES 1
+    #define WIN32_LEAN_AND_MEAN
+    #define NOMINMAX
+    #include <Windows.h>
     #include <sys/stat.h>
     #if !defined(S_ISREG) && defined(S_IFMT) && defined(S_IFREG)
         #define S_ISREG(m) (((m) & S_IFMT) == S_IFREG)
@@ -111,6 +116,43 @@ namespace x::Filesystem {
         file.write(RCAST<const char*>(data.data()), CAST<std::streamsize>(data.size()));
         return file.good();
     }
+
+    std::future<std::vector<u8>> AsyncFileReader::readAllBytes(const str& path) {
+        return runAsync([path]() { return FileReader::readAllBytes(path); });
+    }
+
+    std::future<str> AsyncFileReader::readAllText(const str& path) {
+        return runAsync([path]() { return FileReader::readAllText(path); });
+    }
+
+    std::future<std::vector<str>> AsyncFileReader::readAllLines(const str& path) {
+        return runAsync([path]() { return FileReader::readAllLines(path); });
+    }
+
+    std::future<std::vector<u8>>
+    AsyncFileReader::readBlock(const str& path, size_t size, u64 offset) {
+        return runAsync(
+          [path, size, offset]() { return FileReader::readBlock(path, size, offset); });
+    }
+
+    std::future<bool> AsyncFileWriter::writeAllBytes(const str& path, const std::vector<u8>& data) {
+        return runAsync([path, data]() { return FileWriter::writeAllBytes(path, data); });
+    }
+
+    std::future<bool> AsyncFileWriter::writeAllText(const str& path, const str& text) {
+        return runAsync([path, text]() { return FileWriter::writeAllText(path, text); });
+    }
+
+    std::future<bool> AsyncFileWriter::writeAllLines(const str& path,
+                                                     const std::vector<str>& lines) {
+        return runAsync([path, lines]() { return FileWriter::writeAllLines(path, lines); });
+    }
+
+    std::future<bool>
+    AsyncFileWriter::writeBlock(const str& path, const std::vector<u8>& data, u64 offset) {
+        return runAsync(
+          [path, data, offset]() { return FileWriter::writeBlock(path, data, offset); });
+    }
 #pragma endregion
 
 #pragma region Path
@@ -132,11 +174,7 @@ namespace x::Filesystem {
 
     bool Path::exists() const {
         struct stat info {};
-        if (stat(path.c_str(), &info) != 0) {
-            std::perror(path.c_str());
-            return false;
-        }
-        return true;
+        return stat(path.c_str(), &info) == 0;
     }
 
     bool Path::isFile() const {
@@ -191,6 +229,35 @@ namespace x::Filesystem {
 
     bool Path::operator==(const Path& other) const {
         return path == other.path;
+    }
+
+    bool Path::create() const {
+        if (exists()) return true;
+
+#ifdef _WIN32
+        if (!CreateDirectoryA(path.c_str(), nullptr)) {
+            const DWORD error = GetLastError();
+            if (error != ERROR_ALREADY_EXISTS) { return false; }
+        }
+#else
+        if (mkdir(path.c_str(), 0755) != 0) {
+            if (errno != EEXIST) { return false; }
+        }
+#endif
+        return true;
+    }
+
+    bool Path::createAll() const {
+        if (exists()) return true;
+
+        if (path != str(1, PATH_SEPARATOR)) {
+            Path parentPath = parent();
+            if (!parentPath.exists()) {
+                if (!parentPath.createAll()) return false;
+            }
+        }
+
+        return create();
     }
 
     str Path::join(const str& lhs, const str& rhs) {
