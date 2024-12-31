@@ -22,6 +22,7 @@
 
 // XEN includes
 #include "Model.hpp"
+#include "PBRMaterial.hpp"
 #include "PerspectiveCamera.hpp"
 
 #include <Panic.hpp>
@@ -72,7 +73,7 @@ enum Cubemaps {
 class IBLGen final : public x::IGame {
 public:
     IBLGen() : IGame("IBL Gen", kWidth, kHeight, true, false) {
-        _sun.setIntensity(0.f);  // Disable sun for now
+        _sun.setIntensity(1.f);
     }
 
     void loadContent() override {
@@ -161,6 +162,25 @@ public:
         glm::mat4 p = _camera->getProjection();
         _skyboxShader->use();
         _skyboxShader->setMat4("uVP", p * glm::mat4(glm::mat3(v)));
+
+        if (mapsGenerated()) {
+            // Update maps in model PBR shader
+            auto* mat = _model->getMaterial<x::PBRMaterial>();
+            if (mat) {
+                mat->apply(_camera);
+
+                glActiveTexture(GL_TEXTURE0);
+                glBindTexture(GL_TEXTURE_CUBE_MAP, _irradianceMap);
+                glActiveTexture(GL_TEXTURE1);
+                glBindTexture(GL_TEXTURE_CUBE_MAP, _prefilterMap);
+                glActiveTexture(GL_TEXTURE2);
+                glBindTexture(GL_TEXTURE_2D, _brdfLut);
+
+                mat->setUniform("uIrradianceMap", 0);
+                mat->setUniform("uPrefilterMap", 1);
+                mat->setUniform("uBRDFLUT", 2);
+            }
+        }
     }
 
     void draw() override {
