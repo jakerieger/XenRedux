@@ -185,6 +185,10 @@ namespace x::Filesystem {
         return path;
     }
 
+    const char* Path::cStr() const {
+        return path.c_str();
+    }
+
     bool Path::operator==(const Path& other) const {
         return path == other.path;
     }

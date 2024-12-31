@@ -830,9 +830,8 @@ private:
             return;
         }
 
-        const char* title = "Export IBL Maps";
-        const char* selectedDir =
-          tinyfd_selectFolderDialog(title, Path::currentPath().toString().c_str());
+        const char* title       = "Export IBL Maps";
+        const char* selectedDir = tinyfd_selectFolderDialog(title, Path::currentPath().cStr());
         if (selectedDir) { auto outputDir = Path(selectedDir); }
     }
 };

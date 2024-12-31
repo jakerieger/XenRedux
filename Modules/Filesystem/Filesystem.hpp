@@ -56,6 +56,7 @@ namespace x {
             [[nodiscard]] Path join(const str& subPath) const;
             [[nodiscard]] Path operator/(const str& subPath) const;
             [[nodiscard]] str toString() const;
+            [[nodiscard]] const char* cStr() const;
             [[nodiscard]] bool operator==(const Path& other) const;
 
         private:
