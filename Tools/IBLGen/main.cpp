@@ -120,6 +120,22 @@ public:
             }
         }
 
+        if (_debugFBOs[Irradiance]) { glDeleteFramebuffers(1, &_debugFBOs[Irradiance]); }
+        if (_debugIrradianceFaces[0]) {
+            glDeleteFramebuffers(kCubeFaces, _debugIrradianceFaces);
+            for (i32 i = 0; i < kCubeFaces; ++i) {
+                _debugIrradianceFaces[i] = 0;
+            }
+        }
+
+        if (_debugFBOs[Prefilter]) { glDeleteFramebuffers(1, &_debugFBOs[Prefilter]); }
+        if (_debugPrefilterFaces[0]) {
+            glDeleteFramebuffers(kCubeFaces, _debugPrefilterFaces);
+            for (i32 i = 0; i < kCubeFaces; ++i) {
+                _debugPrefilterFaces[i] = 0;
+            }
+        }
+
         _skyboxShader.reset();
     }
 
