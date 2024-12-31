@@ -50,7 +50,7 @@ namespace x {
         return newState;
     }
 
-    void GameState::updateCameraState(glm::mat4& view, glm::mat4& projection, glm::vec3& position) {
+    void GameState::updateCameraState(glm::mat4 view, glm::mat4 projection, glm::vec3 position) {
         _globalState._camera.view       = view;
         _globalState._camera.projection = projection;
         _globalState._camera.position   = position;

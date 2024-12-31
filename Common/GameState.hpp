@@ -51,15 +51,15 @@ namespace x {
             if constexpr (std::is_same_v<T, TransformComponent>) { return _transforms; }
         }
 
-        CameraState& getCameraState() {
+        [[nodiscard]] CameraState const& getCameraState() const {
             return _globalState._camera;
         }
 
-        LightingState& getLightingState() {
+        [[nodiscard]] LightingState const& getLightingState() const {
             return _globalState._lighting;
         }
 
-        void updateCameraState(glm::mat4& view, glm::mat4& projection, glm::vec3& position);
+        void updateCameraState(glm::mat4 view, glm::mat4 projection, glm::vec3 position);
 
     private:
         std::set<EntityId> _activeEntities;

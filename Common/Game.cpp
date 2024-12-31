@@ -96,6 +96,7 @@ namespace x {
         glfwSetWindowUserPointer(_window, this);  // Give callbacks access to this IGame instance.
         glfwSetFramebufferSizeCallback(_window, resizeCallback);
         glfwSetWindowCloseCallback(_window, windowCloseCallback);
+        // TODO: Enabling these blocks input in ImGui
         // glfwSetKeyCallback(_window, keyCallback);
         // glfwSetMouseButtonCallback(_window, mouseButtonCallback);
         // glfwSetCursorPosCallback(_window, cursorPosCallback);
