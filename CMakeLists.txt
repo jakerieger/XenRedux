@@ -89,6 +89,8 @@ add_library(Xen STATIC
         ${COMMON}/Panic.hpp
         ${COMMON}/ArcballCamera.cpp
         ${COMMON}/ArcballCamera.hpp
+        ${COMMON}/PerspectiveCamera.cpp
+        ${COMMON}/PerspectiveCamera.hpp
         ${COMMON}/PointLight.cpp
         ${COMMON}/PointLight.hpp
         ${COMMON}/ShaderManager.cpp

@@ -34,6 +34,10 @@ namespace x {
             return DCAST<T*>(getMaterial().get());
         }
 
+        [[nodiscard]] bool valid() const {
+            return !_meshes.empty();
+        }
+
     private:
         std::vector<std::unique_ptr<Mesh>> _meshes;
         // TODO: Allow mapping different materials to different meshes

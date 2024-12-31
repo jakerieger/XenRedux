@@ -21,6 +21,9 @@
 #include <Imath/ImathBox.h>
 
 // XEN includes
+#include "Model.hpp"
+#include "PerspectiveCamera.hpp"
+
 #include <Panic.hpp>
 #include <Types.hpp>
 #include <Game.hpp>
@@ -68,7 +71,9 @@ enum Cubemaps {
 
 class IBLGen final : public x::IGame {
 public:
-    IBLGen() : IGame("IBL Gen", kWidth, kHeight, true, false) {}
+    IBLGen() : IGame("IBL Gen", kWidth, kHeight, true, false) {
+        _sun.setIntensity(0.f);  // Disable sun for now
+    }
 
     void loadContent() override {
         // Create the cube for viewing cubemaps
@@ -94,6 +99,12 @@ public:
         if (!_irradianceShader.get()) { Panic("Failed to load Irradiance shader"); }
         _prefilterShader = x::ShaderManager::get().getShaderProgram(PrefilterMap_CS_Source);
         if (!_prefilterShader.get()) { Panic("Failed to load Prefilter shader"); }
+
+        _model = std::make_shared<x::Model>();
+        if (!_model.get()) { Panic("Failed to create model"); }
+
+        _camera = std::make_shared<x::PerspectiveCamera>();
+        if (!_camera.get()) { Panic("Failed to create camera"); }
 
         // createCubemapTexture(_skyboxMap, 512, GL_RGB16F, GL_RGB, false);
         // loadCubemap(R"(C:\Users\conta\Code\XenRedux\Tools\IBLGen\Data\test_sky.hdr)",
@@ -138,14 +149,16 @@ public:
         }
 
         _skyboxShader.reset();
+        _brdfLutShader.reset();
+        _irradianceShader.reset();
+        _prefilterShader.reset();
+        _camera.reset();
     }
 
     void update() override {
-        glm::mat4 v =
-          glm::lookAt(glm::vec3(0.0, 0.0, 5.0), glm::vec3(0.0, 0.0, 0.0), glm::vec3(0.0, 1.0, 0.0));
-        glm::mat4 p =
-          glm::perspective(glm::radians(45.0f), (f32)kWidth / (f32)kHeight, 0.1f, 100.0f);
-
+        _camera->update(_clock);
+        glm::mat4 v = _camera->getView();
+        glm::mat4 p = _camera->getProjection();
         _skyboxShader->use();
         _skyboxShader->setMat4("uVP", p * glm::mat4(glm::mat3(v)));
     }
@@ -169,6 +182,8 @@ public:
 
         glDepthFunc(GL_LESS);
         glDepthMask(GL_TRUE);
+
+        if (_model->valid()) { _model->draw(_camera, _sun, {}); }
     }
 
     void configurePipeline() override {}
@@ -186,13 +201,30 @@ public:
 
         if (ImGui::Button("Load HDR Cubemap...", ImVec2(btnWidth, 0))) {
             const char* title      = "Load HDR Cubemap";
-            const char* patterns[] = {"*.hdr"};
-            const char* filename   = tinyfd_openFileDialog(title, "", 1, patterns, nullptr, 0);
+            const char* patterns[] = {"*.hdr", "*.exr"};
+            const char* filename   = tinyfd_openFileDialog(title, "", 2, patterns, nullptr, 0);
             if (filename) {
                 if (!_skyboxMap) {
                     createCubemapTexture(_skyboxMap, kSkyboxResolution, GL_RGBA16F, GL_RGBA, false);
                 }
                 loadCubemap(filename, _skyboxMap);
+            }
+        }
+
+        if (ImGui::Button("Load Model...", ImVec2(btnWidth, 0))) {
+            const char* title      = "Load Model";
+            const char* patterns[] = {"*.obj", "*.fbx", "*.glb"};
+            const char* filename   = tinyfd_openFileDialog(title, "", 3, patterns, nullptr, 0);
+            if (filename) {
+                // Load model
+                if (!_model->loadFromFile(filename)) {
+                    std::ignore = tinyfd_messageBox(
+                      "IBLGen",
+                      "Failed to load 3D model. Check file is valid 3D model format.",
+                      "ok",
+                      "error",
+                      0);
+                }
             }
         }
 
@@ -210,91 +242,99 @@ public:
 
         ImGui::Separator();
 
-        if (_skyboxMap) {
-            ImGui::Text("Skybox");
-            if (!_debugSkyboxFaces[0]) setupDebugCubemapFaces(Cubemaps::Skybox);
-            updateDebugCubemapFaces(_skyboxMap, kSkyboxResolution, Cubemaps::Skybox);
-            f32 faceSize   = kViewportFaceSize;
-            ImVec2 basePos = ImGui::GetCursorPos();
-            ImGui::SetCursorPos(ImVec2(basePos.x + faceSize, basePos.y));
-            ImGui::Image((ImTextureID)(intptr_t)_debugSkyboxFaces[2], ImVec2(faceSize, faceSize));
-            ImGui::SetCursorPos(ImVec2(basePos.x, basePos.y + faceSize));
-            for (int i = 0; i < 4; i++) {
-                int faceIdx = (i == 0) ? 1 : (i == 1) ? 4 : (i == 2) ? 0 : 5;  // -X, +Z, +X, -Z
-                ImGui::Image((ImTextureID)(intptr_t)_debugSkyboxFaces[faceIdx],
+        if (ImGui::CollapsingHeader("Environment Map")) {
+            if (_skyboxMap) {
+                if (!_debugSkyboxFaces[0]) setupDebugCubemapFaces(Cubemaps::Skybox);
+                updateDebugCubemapFaces(_skyboxMap, kSkyboxResolution, Cubemaps::Skybox);
+                f32 faceSize   = kViewportFaceSize;
+                ImVec2 basePos = ImGui::GetCursorPos();
+                ImGui::SetCursorPos(ImVec2(basePos.x + faceSize, basePos.y));
+                ImGui::Image((ImTextureID)(intptr_t)_debugSkyboxFaces[2],
                              ImVec2(faceSize, faceSize));
-                if (i < 3) {
-                    // Calculate exact position for the next image
-                    ImGui::SameLine(basePos.x + (i + 1) * faceSize, 0.0f);
+                ImGui::SetCursorPos(ImVec2(basePos.x, basePos.y + faceSize));
+                for (int i = 0; i < 4; i++) {
+                    int faceIdx = (i == 0) ? 1 : (i == 1) ? 4 : (i == 2) ? 0 : 5;  // -X, +Z, +X, -Z
+                    ImGui::Image((ImTextureID)(intptr_t)_debugSkyboxFaces[faceIdx],
+                                 ImVec2(faceSize, faceSize));
+                    if (i < 3) {
+                        // Calculate exact position for the next image
+                        ImGui::SameLine(basePos.x + (i + 1) * faceSize, 0.0f);
+                    }
                 }
+                ImGui::SetCursorPos(ImVec2(basePos.x + faceSize, basePos.y + 2 * faceSize));
+                ImGui::Image((ImTextureID)(intptr_t)_debugSkyboxFaces[3],
+                             ImVec2(faceSize, faceSize));
             }
-            ImGui::SetCursorPos(ImVec2(basePos.x + faceSize, basePos.y + 2 * faceSize));
-            ImGui::Image((ImTextureID)(intptr_t)_debugSkyboxFaces[3], ImVec2(faceSize, faceSize));
         }
 
-        if (_brdfLut) {
-            ImGui::Text("BRDF LUT");
-            ImVec2 size(200.f, 200.f);
-            ImGui::Image((ImTextureID)(intptr_t)(_brdfLut), size, ImVec2(0, 1), ImVec2(1, 0));
+        if (ImGui::CollapsingHeader("BRDF LUT")) {
+            if (_brdfLut) {
+                ImVec2 size(200.f, 200.f);
+                ImGui::Image((ImTextureID)(intptr_t)(_brdfLut), size, ImVec2(0, 1), ImVec2(1, 0));
+            }
         }
 
-        if (_irradianceMap) {
-            ImGui::Text("Irradiance Map");
-            if (!_debugIrradianceFaces[0]) setupDebugCubemapFaces(Cubemaps::Irradiance);
-            updateDebugCubemapFaces(_irradianceMap, kIrradianceResolution, Cubemaps::Irradiance);
-            f32 faceSize   = kViewportFaceSize;
-            ImVec2 basePos = ImGui::GetCursorPos();
+        if (ImGui::CollapsingHeader("Irradiance Map")) {
+            if (_irradianceMap) {
+                if (!_debugIrradianceFaces[0]) setupDebugCubemapFaces(Cubemaps::Irradiance);
+                updateDebugCubemapFaces(_irradianceMap,
+                                        kIrradianceResolution,
+                                        Cubemaps::Irradiance);
+                f32 faceSize   = kViewportFaceSize;
+                ImVec2 basePos = ImGui::GetCursorPos();
 
-            // Draw the faces in a cross pattern
-            //     [+Y]
-            // [-X][+Z][+X][-Z]
-            //     [-Y]
+                // Draw the faces in a cross pattern
+                //     [+Y]
+                // [-X][+Z][+X][-Z]
+                //     [-Y]
 
-            // Top face (+Y)
-            ImGui::SetCursorPos(ImVec2(basePos.x + faceSize, basePos.y));
-            ImGui::Image((ImTextureID)(intptr_t)_debugIrradianceFaces[2],
-                         ImVec2(faceSize, faceSize));
-
-            // Middle row
-            ImGui::SetCursorPos(ImVec2(basePos.x, basePos.y + faceSize));
-            for (int i = 0; i < 4; i++) {
-                int faceIdx = (i == 0) ? 1 : (i == 1) ? 4 : (i == 2) ? 0 : 5;  // -X, +Z, +X, -Z
-                ImGui::Image((ImTextureID)(intptr_t)_debugIrradianceFaces[faceIdx],
+                // Top face (+Y)
+                ImGui::SetCursorPos(ImVec2(basePos.x + faceSize, basePos.y));
+                ImGui::Image((ImTextureID)(intptr_t)_debugIrradianceFaces[2],
                              ImVec2(faceSize, faceSize));
-                if (i < 3) {
-                    // Calculate exact position for the next image
-                    ImGui::SameLine(basePos.x + (i + 1) * faceSize, 0.0f);
-                }
-            }
 
-            // Bottom face (-Y)
-            ImGui::SetCursorPos(ImVec2(basePos.x + faceSize, basePos.y + 2 * faceSize));
-            ImGui::Image((ImTextureID)(intptr_t)_debugIrradianceFaces[3],
-                         ImVec2(faceSize, faceSize));
+                // Middle row
+                ImGui::SetCursorPos(ImVec2(basePos.x, basePos.y + faceSize));
+                for (int i = 0; i < 4; i++) {
+                    int faceIdx = (i == 0) ? 1 : (i == 1) ? 4 : (i == 2) ? 0 : 5;  // -X, +Z, +X, -Z
+                    ImGui::Image((ImTextureID)(intptr_t)_debugIrradianceFaces[faceIdx],
+                                 ImVec2(faceSize, faceSize));
+                    if (i < 3) {
+                        // Calculate exact position for the next image
+                        ImGui::SameLine(basePos.x + (i + 1) * faceSize, 0.0f);
+                    }
+                }
+
+                // Bottom face (-Y)
+                ImGui::SetCursorPos(ImVec2(basePos.x + faceSize, basePos.y + 2 * faceSize));
+                ImGui::Image((ImTextureID)(intptr_t)_debugIrradianceFaces[3],
+                             ImVec2(faceSize, faceSize));
+            }
         }
 
-        if (_prefilterMap) {
-            ImGui::Text("Prefilter Map");
-            if (!_debugPrefilterFaces[0]) setupDebugCubemapFaces(Cubemaps::Prefilter);
-            updateDebugCubemapFaces(_prefilterMap, kPrefilterResolution, Cubemaps::Prefilter);
-            f32 faceSize   = kViewportFaceSize;
-            ImVec2 basePos = ImGui::GetCursorPos();
-            ImGui::SetCursorPos(ImVec2(basePos.x + faceSize, basePos.y));
-            ImGui::Image((ImTextureID)(intptr_t)_debugPrefilterFaces[2],
-                         ImVec2(faceSize, faceSize));
-            ImGui::SetCursorPos(ImVec2(basePos.x, basePos.y + faceSize));
-            for (int i = 0; i < 4; i++) {
-                int faceIdx = (i == 0) ? 1 : (i == 1) ? 4 : (i == 2) ? 0 : 5;  // -X, +Z, +X, -Z
-                ImGui::Image((ImTextureID)(intptr_t)_debugPrefilterFaces[faceIdx],
+        if (ImGui::CollapsingHeader("Prefiltered Environment Map")) {
+            if (_prefilterMap) {
+                if (!_debugPrefilterFaces[0]) setupDebugCubemapFaces(Cubemaps::Prefilter);
+                updateDebugCubemapFaces(_prefilterMap, kPrefilterResolution, Cubemaps::Prefilter);
+                f32 faceSize   = kViewportFaceSize;
+                ImVec2 basePos = ImGui::GetCursorPos();
+                ImGui::SetCursorPos(ImVec2(basePos.x + faceSize, basePos.y));
+                ImGui::Image((ImTextureID)(intptr_t)_debugPrefilterFaces[2],
                              ImVec2(faceSize, faceSize));
-                if (i < 3) {
-                    // Calculate exact position for the next image
-                    ImGui::SameLine(basePos.x + (i + 1) * faceSize, 0.0f);
+                ImGui::SetCursorPos(ImVec2(basePos.x, basePos.y + faceSize));
+                for (int i = 0; i < 4; i++) {
+                    int faceIdx = (i == 0) ? 1 : (i == 1) ? 4 : (i == 2) ? 0 : 5;  // -X, +Z, +X, -Z
+                    ImGui::Image((ImTextureID)(intptr_t)_debugPrefilterFaces[faceIdx],
+                                 ImVec2(faceSize, faceSize));
+                    if (i < 3) {
+                        // Calculate exact position for the next image
+                        ImGui::SameLine(basePos.x + (i + 1) * faceSize, 0.0f);
+                    }
                 }
+                ImGui::SetCursorPos(ImVec2(basePos.x + faceSize, basePos.y + 2 * faceSize));
+                ImGui::Image((ImTextureID)(intptr_t)_debugPrefilterFaces[3],
+                             ImVec2(faceSize, faceSize));
             }
-            ImGui::SetCursorPos(ImVec2(basePos.x + faceSize, basePos.y + 2 * faceSize));
-            ImGui::Image((ImTextureID)(intptr_t)_debugPrefilterFaces[3],
-                         ImVec2(faceSize, faceSize));
         }
 
         ImGui::End();
@@ -324,6 +364,9 @@ private:
     u32 _debugSkyboxFaces[6]     = {0};
     u32 _debugIrradianceFaces[6] = {0};
     u32 _debugPrefilterFaces[6]  = {0};
+    std::shared_ptr<x::Model> _model;
+    x::DirectionalLight _sun;
+    std::shared_ptr<x::PerspectiveCamera> _camera;
 
     struct FaceData {
         int width, height;
