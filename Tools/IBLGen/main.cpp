@@ -122,8 +122,6 @@ public:
     }
 
     void draw() override {
-        generateIrradiance();
-
         x::Context::clear(true);
         glDepthMask(GL_FALSE);
         glDepthFunc(GL_LEQUAL);
@@ -435,8 +433,8 @@ private:
         glDeleteBuffers(1, &ubo);
 
         // Generate mips if needed
-        // glBindTexture(GL_TEXTURE_CUBE_MAP, _irradianceMap);
-        // glGenerateMipmap(GL_TEXTURE_CUBE_MAP);
+        glBindTexture(GL_TEXTURE_CUBE_MAP, _irradianceMap);
+        glGenerateMipmap(GL_TEXTURE_CUBE_MAP);
     }
 
     void generatePrefilter() {}
@@ -550,10 +548,14 @@ private:
     }
 
     void updateDebugCubemapFaces(const u32 cubemap, const i32 resolution) {
+        i32 prevFramebuffer;
+        glGetIntegerv(GL_FRAMEBUFFER_BINDING, &prevFramebuffer);
+        i32 prevViewport[4];
+        glGetIntegerv(GL_VIEWPORT, prevViewport);
+
         glBindFramebuffer(GL_FRAMEBUFFER, _debugFBO);
-        i32 viewport[4];
-        glGetIntegerv(GL_VIEWPORT, viewport);
         glViewport(0, 0, resolution, resolution);
+
         for (u32 faceIdx = 0; faceIdx < kCubeFaces; ++faceIdx) {
             glFramebufferTexture2D(GL_FRAMEBUFFER,
                                    GL_COLOR_ATTACHMENT0,
@@ -561,11 +563,57 @@ private:
                                    _debugIrradianceFaces[faceIdx],
                                    0);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+            glm::mat4 viewMatrix;
+            switch (faceIdx) {
+                case 0:  // POSITIVE_X
+                    viewMatrix = glm::lookAt(glm::vec3(0.0f),
+                                             glm::vec3(1.0f, 0.0f, 0.0f),
+                                             glm::vec3(0.0f, -1.0f, 0.0f));
+                    break;
+                case 1:  // NEGATIVE_X
+                    viewMatrix = glm::lookAt(glm::vec3(0.0f),
+                                             glm::vec3(-1.0f, 0.0f, 0.0f),
+                                             glm::vec3(0.0f, -1.0f, 0.0f));
+                    break;
+                case 2:  // POSITIVE_Y
+                    viewMatrix = glm::lookAt(glm::vec3(0.0f),
+                                             glm::vec3(0.0f, 1.0f, 0.0f),
+                                             glm::vec3(0.0f, 0.0f, 1.0f));
+                    break;
+                case 3:  // NEGATIVE_Y
+                    viewMatrix = glm::lookAt(glm::vec3(0.0f),
+                                             glm::vec3(0.0f, -1.0f, 0.0f),
+                                             glm::vec3(0.0f, 0.0f, -1.0f));
+                    break;
+                case 4:  // POSITIVE_Z
+                    viewMatrix = glm::lookAt(glm::vec3(0.0f),
+                                             glm::vec3(0.0f, 0.0f, 1.0f),
+                                             glm::vec3(0.0f, -1.0f, 0.0f));
+                    break;
+                case 5:  // NEGATIVE_Z
+                    viewMatrix = glm::lookAt(glm::vec3(0.0f),
+                                             glm::vec3(0.0f, 0.0f, -1.0f),
+                                             glm::vec3(0.0f, -1.0f, 0.0f));
+                    break;
+            }
+            // Set up projection matrix (90 degree FOV for cube face)
+            glm::mat4 projMatrix = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 10.0f);
+
+            // Use skybox shader and set uniforms
+            _skyboxShader->use();
+            _skyboxShader->setMat4("uVP", projMatrix * viewMatrix);
+
+            // Bind the cubemap
+            glActiveTexture(GL_TEXTURE0);
             glBindTexture(GL_TEXTURE_CUBE_MAP, cubemap);
-            glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, resolution, resolution);
+
+            // Render the cube
+            glBindVertexArray(_cubeVAO);
+            glDrawArrays(GL_TRIANGLES, 0, 36);
         }
-        glViewport(viewport[0], viewport[1], viewport[2], viewport[3]);
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+        glBindFramebuffer(GL_FRAMEBUFFER, prevFramebuffer);
+        glViewport(prevViewport[0], prevViewport[1], prevViewport[2], prevViewport[3]);
     }
 };
 
