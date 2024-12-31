@@ -9,7 +9,7 @@
 #include "Camera.hpp"
 #include "DirectionalLight.hpp"
 #include "Material.hpp"
-#include "Transform.hpp"
+#include "TransformComponent.hpp"
 
 #include <vector>
 #include <assimp/mesh.h>
@@ -25,7 +25,7 @@ namespace x {
                   DirectionalLight& sun,
                   const std::vector<std::shared_ptr<ILight>>& lights = {});
 
-        Transform& getTransform();
+        TransformComponent& getTransform();
         std::shared_ptr<IMaterial>& getMaterial();
 
         template<class T>
@@ -42,7 +42,7 @@ namespace x {
         std::vector<std::unique_ptr<Mesh>> _meshes;
         // TODO: Allow mapping different materials to different meshes
         std::shared_ptr<IMaterial> _material;
-        Transform _transform;
+        TransformComponent _transform;
         void processNode(const aiNode* node, const aiScene* scene);
         std::unique_ptr<Mesh> processMesh(aiMesh* mesh, const aiScene* scene) const;
     };

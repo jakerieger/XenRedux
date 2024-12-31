@@ -62,6 +62,11 @@ namespace x {
         if (game) {}
     }
 
+    static void windowCloseCallback(GLFWwindow* window) {
+        auto* game = CAST<IGame*>(glfwGetWindowUserPointer(window));
+        if (game) { game->quit(); }
+    }
+
     IGame::IGame(const str& title, int initWidth, int initHeight, bool escToQuit, bool canResize)
         : title(title), initWidth(initWidth), initHeight(initHeight), width(initWidth),
           height(initHeight), escToQuit(escToQuit), _window(nullptr) {
@@ -90,6 +95,7 @@ namespace x {
 
         glfwSetWindowUserPointer(_window, this);  // Give callbacks access to this IGame instance.
         glfwSetFramebufferSizeCallback(_window, resizeCallback);
+        glfwSetWindowCloseCallback(_window, windowCloseCallback);
         // glfwSetKeyCallback(_window, keyCallback);
         // glfwSetMouseButtonCallback(_window, mouseButtonCallback);
         // glfwSetCursorPosCallback(_window, cursorPosCallback);
@@ -112,32 +118,20 @@ namespace x {
     }
 
     void IGame::run() {
-        loadContent();
+        loadContent(_stateBuffer.getWriteBuffer());
         configurePipeline();
         _clock->start();
-        // glfwMaximizeWindow(_window);
-        while (!glfwWindowShouldClose(_window)) {
-            _clock->tick();
-            glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-            {
-                glfwPollEvents();
-                update();
-                draw();
 
-                _clock->update();
+        _updateThread = std::thread(&IGame::updateLoop, this);
+        renderLoop();
 
-                if (debug) {
-                    Graphics::DebugUI::beginFrame();
-                    drawDebugUI();
-                    Graphics::DebugUI::endFrame();
-                }
-
-                glfwSwapBuffers(_window);
-            }
-        }
+        _updateThread.join();
         _clock->stop();
         unloadContent();
+    }
+
+    void IGame::quit() {
+        _running = false;
     }
 
     Context* IGame::getContext() const {
@@ -146,5 +140,39 @@ namespace x {
 
     Input::InputManager& IGame::getInputManager() {
         return _inputManager;
+    }
+
+    void IGame::updateLoop() {
+        while (_running) {
+            _clock->tick();
+
+            // update game state
+            auto& writeState = _stateBuffer.getWriteBuffer();
+            update(writeState);
+
+            _stateBuffer.swapWriteBuffer();
+            _clock->update();
+        }
+    }
+
+    void IGame::renderLoop() {
+        while (_running && !glfwWindowShouldClose(_window)) {
+            glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+            glfwPollEvents();
+
+            _stateBuffer.swapReadBuffer();
+            const auto& readState = _stateBuffer.getReadBuffer();
+            draw(readState);
+
+            if (debug) {
+                Graphics::DebugUI::beginFrame();
+                drawDebugUI(readState);
+                Graphics::DebugUI::endFrame();
+            }
+
+            glfwSwapBuffers(_window);
+        }
     }
 }  // namespace x

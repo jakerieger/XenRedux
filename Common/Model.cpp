@@ -58,7 +58,7 @@ namespace x {
         }
     }
 
-    Transform& Model::getTransform() {
+    TransformComponent& Model::getTransform() {
         return _transform;
     }
 

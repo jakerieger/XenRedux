@@ -6,15 +6,51 @@
 
 #include <glad.h>
 #include <GLFW/glfw3.h>
+#include <array>
+#include <memory>
+#include <atomic>
+#include <mutex>
 
 #include "Clock.hpp"
 #include "Context.hpp"
 #include "Types.hpp"
 #include "Input/InputManager.hpp"
-
-#include <memory>
+#include "GameState.hpp"
+#include "ComponentManager.hpp"
 
 namespace x {
+    class StateBuffer {
+    public:
+        GameState& getWriteBuffer() {
+            return buffers[writeIndex];
+        }
+
+        const GameState& getReadBuffer() const {
+            return buffers[readIndex];
+        }
+
+        // Called by update thread when it's done writing
+        void swapWriteBuffer() {
+            std::lock_guard<std::mutex> lock(swapMutex);
+            i32 nextIndex = (writeIndex.load() + 1) % kBufferCount;
+            // Only swap if the next buffer isn't being read
+            if (nextIndex != readIndex.load()) { writeIndex.store(nextIndex); }
+        }
+
+        // Called by render thread when it's ready to render
+        void swapReadBuffer() {
+            std::lock_guard<std::mutex> lock(swapMutex);
+            if (readIndex.load() != writeIndex.load()) { readIndex.store(writeIndex.load()); }
+        }
+
+    private:
+        static constexpr i32 kBufferCount = 3;  // Triple buffering
+        std::array<GameState, kBufferCount> buffers;
+        std::atomic<i32> writeIndex = {0};
+        std::atomic<i32> readIndex  = {0};
+        std::mutex swapMutex;
+    };
+
     /// @brief Handles window and context creation and manages the application lifetime
     class IGame {
     public:
@@ -25,12 +61,12 @@ namespace x {
                        bool canResize = false);
         virtual ~IGame();
 
-        virtual void loadContent()       = 0;
-        virtual void unloadContent()     = 0;
-        virtual void update()            = 0;
-        virtual void draw()              = 0;
-        virtual void configurePipeline() = 0;
-        virtual void drawDebugUI() {}
+        virtual void loadContent(GameState& state) = 0;
+        virtual void unloadContent()               = 0;
+        virtual void update(GameState& state)      = 0;
+        virtual void draw(const GameState& state)  = 0;
+        virtual void configurePipeline()           = 0;
+        virtual void drawDebugUI(const GameState& state) {}
 
         // input events
         virtual void onKeyDown(u16 key)                    = 0;
@@ -40,11 +76,15 @@ namespace x {
         virtual void onMouseUp(u16 button, i32 x, i32 y)   = 0;
 
         void run();
+        void quit();
 
         [[nodiscard]] Context* getContext() const;
         Input::InputManager& getInputManager();
 
     protected:
+        StateBuffer _stateBuffer;
+        std::atomic<bool> _running {true};
+        std::thread _updateThread;
         GLFWwindow* _window;
         std::shared_ptr<Clock> _clock;
         std::unique_ptr<Context> _context;
@@ -60,5 +100,8 @@ namespace x {
 #else
         const bool debug = false;
 #endif
+
+        void updateLoop();
+        void renderLoop();
     };
 }  // namespace x

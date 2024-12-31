@@ -35,6 +35,10 @@ namespace x {
         updateViewProjection();
     }
 
+    glm::vec3 PerspectiveCamera::getPosition() const {
+        return _position;
+    }
+
     void PerspectiveCamera::updateViewProjection() {
         _projection = glm::perspective(glm::radians(_fov), _aspect, _near, _far);
         _view       = glm::lookAt(_position, _lookAt, _up);

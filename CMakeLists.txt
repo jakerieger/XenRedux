@@ -64,11 +64,15 @@ add_library(Xen STATIC
         ${MEMORY_SRCS}
         ${MATH_SRCS}
         # Runtime
+        ${COMMON}/ArcballCamera.cpp
+        ${COMMON}/ArcballCamera.hpp
         ${COMMON}/BlinnPhongMaterial.cpp
         ${COMMON}/BlinnPhongMaterial.hpp
         ${COMMON}/Camera.hpp
+        ${COMMON}/CameraState.hpp
         ${COMMON}/Clock.cpp
         ${COMMON}/Clock.hpp
+        ${COMMON}/ComponentManager.hpp
         ${COMMON}/Context.cpp
         ${COMMON}/Context.hpp
         ${COMMON}/DirectionalLight.cpp
@@ -76,8 +80,11 @@ add_library(Xen STATIC
         ${COMMON}/EventSystem.hpp
         ${COMMON}/Game.cpp
         ${COMMON}/Game.hpp
+        ${COMMON}/GameState.cpp
+        ${COMMON}/GameState.hpp
         ${COMMON}/Light.cpp
         ${COMMON}/Light.hpp
+        ${COMMON}/LightingState.hpp
         ${COMMON}/Material.cpp
         ${COMMON}/Material.hpp
         ${COMMON}/Mesh.cpp
@@ -87,8 +94,6 @@ add_library(Xen STATIC
         ${COMMON}/PBRMaterial.cpp
         ${COMMON}/PBRMaterial.hpp
         ${COMMON}/Panic.hpp
-        ${COMMON}/ArcballCamera.cpp
-        ${COMMON}/ArcballCamera.hpp
         ${COMMON}/PerspectiveCamera.cpp
         ${COMMON}/PerspectiveCamera.hpp
         ${COMMON}/PointLight.cpp
@@ -97,8 +102,8 @@ add_library(Xen STATIC
         ${COMMON}/ShaderManager.hpp
         ${COMMON}/Skybox.cpp
         ${COMMON}/Skybox.hpp
-        ${COMMON}/Transform.cpp
-        ${COMMON}/Transform.hpp
+        ${COMMON}/TransformComponent.cpp
+        ${COMMON}/TransformComponent.hpp
         ${COMMON}/Types.hpp
         ${COMMON}/Volatile.hpp
 )

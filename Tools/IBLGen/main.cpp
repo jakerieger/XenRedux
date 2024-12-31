@@ -76,7 +76,7 @@ public:
         _sun.setIntensity(1.f);
     }
 
-    void loadContent() override {
+    void loadContent(x::GameState& state) override {
         // Create the cube for viewing cubemaps
         glGenVertexArrays(1, &_cubeVAO);
         glBindVertexArray(_cubeVAO);
@@ -156,10 +156,11 @@ public:
         _camera.reset();
     }
 
-    void update() override {
+    void update(x::GameState& state) override {
         _camera->update(_clock);
-        glm::mat4 v = _camera->getView();
-        glm::mat4 p = _camera->getProjection();
+        glm::mat4 v   = _camera->getView();
+        glm::mat4 p   = _camera->getProjection();
+        auto position = _camera->getPosition();
         _skyboxShader->use();
         _skyboxShader->setMat4("uVP", p * glm::mat4(glm::mat3(v)));
 
@@ -183,7 +184,7 @@ public:
         }
     }
 
-    void draw() override {
+    void draw(const x::GameState& state) override {
         x::Context::clear(true);
         glDepthMask(GL_FALSE);
         glDepthFunc(GL_LEQUAL);
@@ -208,7 +209,7 @@ public:
 
     void configurePipeline() override {}
 
-    void drawDebugUI() override {
+    void drawDebugUI(const x::GameState& state) override {
         ImGui::GetStyle().FrameRounding = 4.0f;
         ImGui::SetNextWindowPos(ImVec2(0, 0));
         ImGui::Begin("Settings",
