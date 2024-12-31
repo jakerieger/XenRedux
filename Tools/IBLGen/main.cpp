@@ -95,8 +95,9 @@ public:
         _prefilterShader = x::ShaderManager::get().getShaderProgram(PrefilterMap_CS_Source);
         if (!_prefilterShader.get()) { Panic("Failed to load Prefilter shader"); }
 
-        createCubemapTexture(_skyboxMap, 512, GL_RGB16F, GL_RGB, false);
-        loadCubemap(R"(C:\Users\conta\Code\XenRedux\Tools\IBLGen\Data\test_sky.hdr)", _skyboxMap);
+        // createCubemapTexture(_skyboxMap, 512, GL_RGB16F, GL_RGB, false);
+        // loadCubemap(R"(C:\Users\conta\Code\XenRedux\Tools\IBLGen\Data\test_sky.hdr)",
+        // _skyboxMap);
     }
 
     void unloadContent() override {
@@ -173,23 +174,39 @@ public:
     void configurePipeline() override {}
 
     void drawDebugUI() override {
+        ImGui::GetStyle().FrameRounding = 4.0f;
+        ImGui::SetNextWindowPos(ImVec2(0, 0));
         ImGui::Begin("Settings",
                      nullptr,
-                     ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_AlwaysAutoResize);
-        if (ImGui::Button("Load HDR Cubemap")) {
+                     ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_AlwaysAutoResize |
+                       ImGuiWindowFlags_NoMove);
+        f32 windowWidth = ImGui::GetWindowWidth();
+        f32 paddingX    = ImGui::GetStyle().WindowPadding.x;
+        f32 btnWidth    = windowWidth - (paddingX * 2);
+
+        if (ImGui::Button("Load HDR Cubemap...", ImVec2(btnWidth, 0))) {
             const char* title      = "Load HDR Cubemap";
             const char* patterns[] = {"*.hdr"};
             const char* filename   = tinyfd_openFileDialog(title, "", 1, patterns, nullptr, 0);
-            if (filename) { loadCubemap(filename, _skyboxMap); }
+            if (filename) {
+                if (!_skyboxMap) {
+                    createCubemapTexture(_skyboxMap, kSkyboxResolution, GL_RGBA16F, GL_RGBA, false);
+                }
+                loadCubemap(filename, _skyboxMap);
+            }
         }
 
-        if (ImGui::Button("Generate BRDF LUT")) { generateBRDF(); }
+        ImGui::BeginDisabled(!hasSkybox());
+        if (ImGui::Button("Generate BRDF LUT", ImVec2(btnWidth, 0))) { generateBRDF(); }
 
-        if (ImGui::Button("Generate Irradiance Map")) { generateIrradiance(); }
+        if (ImGui::Button("Generate Irradiance Map", ImVec2(btnWidth, 0))) { generateIrradiance(); }
 
-        if (ImGui::Button("Generate Prefilter")) { generatePrefilter(); }
+        if (ImGui::Button("Generate Prefilter", ImVec2(btnWidth, 0))) { generatePrefilter(); }
+        ImGui::EndDisabled();
 
-        if (ImGui::Button("Export Maps")) { exportMaps(); }
+        ImGui::BeginDisabled(!mapsGenerated());
+        if (ImGui::Button("Export Maps", ImVec2(btnWidth, 0))) { exportMaps(); }
+        ImGui::EndDisabled();
 
         ImGui::Separator();
 
@@ -336,7 +353,16 @@ private:
         f32* data = stbi_loadf(filename.c_str(), &width, &height, &channels, 3);
         if (!data) { Panic("Couldn't load image"); }
         auto faceSize = width / 4;
-        auto faces    = extractCubemapFaces(faceSize, data);
+        if (faceSize != kSkyboxResolution || faceSize != (height / 3)) {
+            stbi_image_free(data);
+            tinyfd_messageBox("IBLGen",
+                              "Environment map is incorrect resolution (should be 512).",
+                              "ok",
+                              "warning",
+                              0);
+            return;
+        }
+        auto faces = extractCubemapFaces(faceSize, data);
         for (int i = 0; i < faces.size(); i++) {
             updateCubemapFace(cubemap, i, 0, faceSize, faceSize, faces[i].data.data());
         }
@@ -849,6 +875,26 @@ private:
         const char* title       = "Export IBL Maps";
         const char* selectedDir = tinyfd_selectFolderDialog(title, Path::currentPath().cStr());
         if (selectedDir) { auto outputDir = Path(selectedDir); }
+    }
+
+    bool hasSkybox() {
+        return _skyboxMap;
+    }
+
+    bool hasBRDF() {
+        return _brdfLut;
+    }
+
+    bool hasIrradiance() {
+        return _irradianceMap;
+    }
+
+    bool hasPrefilter() {
+        return _prefilterMap;
+    }
+
+    bool mapsGenerated() {
+        return hasSkybox() && hasBRDF() && hasIrradiance() && hasPrefilter();
     }
 };
 
