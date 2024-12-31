@@ -9,6 +9,7 @@
 #include "CameraState.hpp"
 #include "LightingState.hpp"
 #include "TransformComponent.hpp"
+#include "RenderComponent.hpp"
 
 #include <set>
 #include <vector>
@@ -23,32 +24,39 @@ namespace x {
         [[nodiscard]] GameState clone() const;
 
         template<typename T>
-        T* getComponent(EntityId entity) {
+        const T* getComponent(EntityId entity) const {
             if constexpr (std::is_same_v<T, TransformComponent>) {
                 return _transforms.getComponent(entity);
+            } else if constexpr (std::is_same_v<T, RenderComponent>) {
+                return _renderables.getComponent(entity);
             }
-            // else if constexpr (std::is_same_v<T, PhysicsComponent>) {
-            //     return _physics.getComponent(entity);
-            // } else if constexpr (std::is_same_v<T, RenderComponent>) {
-            //     return _renderables.getComponent(entity);
-            // }
         }
 
         template<typename T>
         T& addComponent(EntityId entity) {
             if constexpr (std::is_same_v<T, TransformComponent>) {
-                return _transforms.addComponent(entity);
+                return _transforms.addComponent(entity).component;
+            } else if constexpr (std::is_same_v<T, RenderComponent>) {
+                return _renderables.addComponent(entity).component;
             }
-            // else if constexpr (std::is_same_v<T, PhysicsComponent>) {
-            //     return _physics.addComponent(entity);
-            // } else if constexpr (std::is_same_v<T, RenderComponent>) {
-            //     return _renderables.addComponent(entity);
-            // }
         }
 
         template<typename T>
-        std::vector<T> getComponents() {
-            if constexpr (std::is_same_v<T, TransformComponent>) { return _transforms; }
+        const ComponentManager<T>& getComponents() const {
+            if constexpr (std::is_same_v<T, TransformComponent>) {
+                return _transforms;
+            } else if constexpr (std::is_same_v<T, RenderComponent>) {
+                return _renderables;
+            }
+        }
+
+        template<typename T>
+        ComponentManager<T>& getComponents() {
+            if constexpr (std::is_same_v<T, TransformComponent>) {
+                return _transforms;
+            } else if constexpr (std::is_same_v<T, RenderComponent>) {
+                return _renderables;
+            }
         }
 
         [[nodiscard]] CameraState const& getCameraState() const {
@@ -66,8 +74,7 @@ namespace x {
         EntityId _nextEntityId = 0;
 
         ComponentManager<TransformComponent> _transforms;
-        // ComponentManager<PhysicsComponent> _physics;
-        // ComponentManager<RenderComponent> _renderables;
+        ComponentManager<RenderComponent> _renderables;
 
         struct HierarchyNode {
             EntityId parent = 0;

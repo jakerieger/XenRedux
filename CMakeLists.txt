@@ -98,6 +98,8 @@ add_library(Xen STATIC
         ${COMMON}/PerspectiveCamera.hpp
         ${COMMON}/PointLight.cpp
         ${COMMON}/PointLight.hpp
+        ${COMMON}/RenderComponent.cpp
+        ${COMMON}/RenderComponent.hpp
         ${COMMON}/ShaderManager.cpp
         ${COMMON}/ShaderManager.hpp
         ${COMMON}/Skybox.cpp

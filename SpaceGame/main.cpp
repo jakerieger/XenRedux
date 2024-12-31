@@ -39,9 +39,14 @@ public:
 
 private:
     x::PerspectiveCamera _camera;
+    x::EntityId _modelEntity;
 };
 
-void SpaceGame::loadContent(x::GameState& state) {}
+void SpaceGame::loadContent(x::GameState& state) {
+    _modelEntity = state.createEntity();
+    state.addComponent<x::TransformComponent>(_modelEntity);
+    state.addComponent<x::RenderComponent>(_modelEntity);
+}
 
 void SpaceGame::unloadContent() {}
 
@@ -50,7 +55,16 @@ void SpaceGame::update(x::GameState& state) {
     state.updateCameraState(_camera.getView(), _camera.getProjection(), _camera.getPosition());
 }
 
-void SpaceGame::draw(const x::GameState& state) {}
+void SpaceGame::draw(const x::GameState& state) {
+    const auto& cameraState = state.getCameraState();
+    const auto& lightState  = state.getLightingState();
+    const auto& renderables = state.getComponents<x::RenderComponent>();
+    for (const auto& [entityId, renderable] : renderables) {
+        if (auto* transform = state.getComponent<x::TransformComponent>(entityId)) {
+            renderable.draw(cameraState, lightState, *transform);
+        }
+    }
+}
 
 void SpaceGame::drawDebugUI(const x::GameState& state) {
     auto& cameraState = state.getCameraState();

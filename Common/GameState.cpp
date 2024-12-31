@@ -26,8 +26,13 @@ namespace x {
                   std::remove(parentChildren.begin(), parentChildren.end(), entity),
                   parentChildren.end());
             }
-            _hierarchy.erase(entity);
+            // Reparent any children to root (or you could choose to destroy them)
+            for (EntityId child : node.children) {
+                setParent(child, 0);
+            }
+            _hierarchy.erase(hierarchyIt);
         }
+
         _activeEntities.erase(entity);
     }
 
@@ -45,8 +50,15 @@ namespace x {
 
     GameState GameState::clone() const {
         GameState newState;
+
         // Deep copy all components and state
         // This is called when swapping buffers
+        newState._activeEntities = _activeEntities;
+        newState._nextEntityId   = _nextEntityId;
+        newState._transforms     = _transforms;
+        newState._hierarchy      = _hierarchy;
+        newState._globalState    = _globalState;
+
         return newState;
     }
 
