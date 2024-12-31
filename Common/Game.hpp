@@ -18,7 +18,11 @@ namespace x {
     /// @brief Handles window and context creation and manages the application lifetime
     class IGame {
     public:
-        explicit IGame(const str& title, int initWidth, int initHeight, bool escToQuit = false);
+        explicit IGame(const str& title,
+                       int initWidth,
+                       int initHeight,
+                       bool escToQuit = false,
+                       bool canResize = false);
         virtual ~IGame();
 
         virtual void loadContent()       = 0;

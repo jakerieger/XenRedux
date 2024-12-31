@@ -120,5 +120,8 @@ elseif (UNIX)
     )
 endif ()
 
+# Tools
+add_subdirectory(Tools/IBLGen)
+
 # Game project
 add_subdirectory(SpaceGame)

@@ -57,11 +57,16 @@ namespace x {
         CHECK_GL_ERROR();
     }
 
-    void Skybox::draw() {
+    void Skybox::draw(i32 cubemapId) {
         glDepthMask(GL_FALSE);
         glDepthFunc(GL_LEQUAL);
         _shader->use();
-        _cubemap->bind(0);
+        if (cubemapId != -1) {
+            glActiveTexture(GL_TEXTURE0);
+            glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapId);
+        } else {
+            _cubemap->bind(0);
+        }
         // draw cube vertices
         glBindVertexArray(_vao);
         glBindBuffer(GL_ARRAY_BUFFER, _vbo);

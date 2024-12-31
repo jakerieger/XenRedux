@@ -49,6 +49,13 @@ namespace x::Graphics {
         }
     }
 
+    std::pair<u32, u32>
+    ShaderProgram::getComputeWorkGroupSize(u32 workGroups, i32 width, i32 height) {
+        const auto x = (width + (workGroups - 1)) / workGroups;
+        const auto y = (height + (workGroups - 1)) / workGroups;
+        return std::make_pair(x, y);
+    }
+
     void ShaderProgram::setBool(const str& name, bool value) const {
         if (const auto location = getUniformLocation(name); location != -1) {
             glUniform1i(location, value);

@@ -62,7 +62,7 @@ namespace x {
         if (game) {}
     }
 
-    IGame::IGame(const str& title, int initWidth, int initHeight, bool escToQuit)
+    IGame::IGame(const str& title, int initWidth, int initHeight, bool escToQuit, bool canResize)
         : title(title), initWidth(initWidth), initHeight(initHeight), width(initWidth),
           height(initHeight), escToQuit(escToQuit), _window(nullptr) {
         if (!glfwInit()) { Panic("Failed to initialize GLFW"); }
@@ -70,6 +70,7 @@ namespace x {
         glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
         glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
         glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+        if (!canResize) { glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE); }
 
         _window = glfwCreateWindow(initWidth, initHeight, title.c_str(), nullptr, nullptr);
         if (!_window) { Panic("Failed to create GLFW window"); }
@@ -89,10 +90,10 @@ namespace x {
 
         glfwSetWindowUserPointer(_window, this);  // Give callbacks access to this IGame instance.
         glfwSetFramebufferSizeCallback(_window, resizeCallback);
-        glfwSetKeyCallback(_window, keyCallback);
-        glfwSetMouseButtonCallback(_window, mouseButtonCallback);
-        glfwSetCursorPosCallback(_window, cursorPosCallback);
-        glfwSetScrollCallback(_window, mouseScrollCallback);
+        // glfwSetKeyCallback(_window, keyCallback);
+        // glfwSetMouseButtonCallback(_window, mouseButtonCallback);
+        // glfwSetCursorPosCallback(_window, cursorPosCallback);
+        // glfwSetScrollCallback(_window, mouseScrollCallback);
 
         // glfwSetInputMode(_window, GLFW_CURSOR, GLFW_CURSOR_DISABLED); // Hides cursor
 

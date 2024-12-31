@@ -134,6 +134,32 @@ namespace x::Graphics {
         _format         = format;
 
         // TODO: IMPLEMENT CUBE MAPS
+        if (_target == GL_TEXTURE_CUBE_MAP) {
+            glGenTextures(1, &_textureId);
+            glBindTexture(GL_TEXTURE_CUBE_MAP, _textureId);
+            for (int i = 0; i < 6; i++) {
+                glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i,
+                             0,
+                             _internalFormat,
+                             width,
+                             height,
+                             0,
+                             _format,
+                             getTypeFromInternal(_internalFormat),
+                             nullptr);
+                if (CHECK_GL_ERROR()) {
+                    release();
+                    return false;
+                }
+            }
+            glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+            glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+            glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+            glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+            glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+            glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
+            return true;
+        }
 
         glGenTextures(1, &_textureId);
         glBindTexture(_target, _textureId);

@@ -18,8 +18,11 @@ namespace x {
         explicit Skybox(const str& filename);
         ~Skybox() override;
 
+        void setCubemap(Graphics::Texture& cubemap) {
+            _cubemap.reset(&cubemap);
+        }
         void update(const std::weak_ptr<Clock>& clock, const std::shared_ptr<ICamera>& camera);
-        void draw();
+        void draw(i32 cubemapId = -1);
         void onResize(int newWidth, int newHeight) override;
 
     private:

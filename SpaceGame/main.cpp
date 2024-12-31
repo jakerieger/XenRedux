@@ -121,6 +121,11 @@ void SpaceGame::loadContent() {
     const auto skyboxTexture = getDataPath() / "Sky.hdr";
     _skybox                  = std::make_unique<Skybox>(skyboxTexture.toString());
 
+    auto envMap = Graphics::Texture(GL_TEXTURE_CUBE_MAP);
+    if (!envMap.loadFromFile(skyboxTexture.toString(), true)) {
+        Panic("Failed to load environment map texture");
+    }
+
     const auto shaderBallPath = getDataPath() / "ShaderBall.fbx";
     _shaderBall->loadFromFile(shaderBallPath.toString());
     DebugParams.material = _shaderBall->getMaterial<PBRMaterial>();
@@ -173,6 +178,10 @@ void SpaceGame::update() {
 }
 
 void SpaceGame::draw() {
+    // _iblMaps->brdfLUT.bind(0);
+    // _postProcessQuad->draw(_iblMaps->brdfLUT.getId());
+    // return;
+
     const auto drawStart = std::chrono::high_resolution_clock::now();
     _renderTarget->bind();
     Context::clear();  // Clear the render target before drawing
@@ -185,8 +194,8 @@ void SpaceGame::draw() {
     _renderTarget->unbind();
 
     const auto ppStart = std::chrono::high_resolution_clock::now();
-    _antiAliasing->apply();
-    _tonemapper->setInputTexture(_antiAliasing->getOutputTexture());
+    // _antiAliasing->apply();
+    _tonemapper->setInputTexture(_renderTarget->getColorTexture());
     _tonemapper->apply();
     _postProcessQuad->draw(_tonemapper->getOutputTexture());
     const auto ppEnd            = std::chrono::high_resolution_clock::now();
@@ -205,7 +214,7 @@ void SpaceGame::onKeyDown(u16 key) {}
 void SpaceGame::onKeyUp(u16 key) {}
 
 void SpaceGame::onMouseMove(i32 x, i32 y) {
-    if (_camera->isDragging()) _camera->updateMousePos(x, y);
+    // if (_camera->isDragging()) _camera->updateMousePos(x, y);
 }
 
 void SpaceGame::onMouseDown(u16 button, i32 x, i32 y) {

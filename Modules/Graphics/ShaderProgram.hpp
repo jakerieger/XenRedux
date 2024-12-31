@@ -22,6 +22,8 @@ namespace x::Graphics {
         u32 getId() const;
         void dispatchCompute(u32 x, u32 y, u32 z) const;
 
+        static std::pair<u32, u32> getComputeWorkGroupSize(u32 workGroups, i32 width, i32 height);
+
         // TODO: Refactor these to use templates / generics
 
         // Common setters
