@@ -101,6 +101,13 @@ namespace x {
         const bool debug = false;
 #endif
 
+        struct FrameGraph {
+            std::atomic<f32> mainThreadTime   = 0.0f;  // ms
+            std::atomic<f32> renderThreadTime = 0.0f;  // ms
+            std::atomic<f32> gpuTime          = 0.0f;  // ms
+            std::atomic<f32> frameTime        = 0.0f;  // ms
+        } _frameGraph;
+
         void updateLoop();
         void renderLoop();
     };

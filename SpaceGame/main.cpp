@@ -39,7 +39,7 @@ public:
 
 private:
     x::PerspectiveCamera _camera;
-    x::EntityId _modelEntity;
+    x::EntityId _modelEntity = 0;
 };
 
 void SpaceGame::loadContent(x::GameState& state) {
@@ -53,6 +53,8 @@ void SpaceGame::unloadContent() {}
 void SpaceGame::update(x::GameState& state) {
     _camera.update(_clock);
     state.updateCameraState(_camera.getView(), _camera.getProjection(), _camera.getPosition());
+
+    // update other engine systems like physics or AI
 }
 
 void SpaceGame::draw(const x::GameState& state) {
@@ -69,14 +71,61 @@ void SpaceGame::draw(const x::GameState& state) {
 void SpaceGame::drawDebugUI(const x::GameState& state) {
     auto& cameraState = state.getCameraState();
 
-    ImGui::Begin("Settings");
-    ImGui::Text("Camera");
-    ImGui::Text("Position: (%.2f, %.2f, %.2f)",
-                cameraState.position.x,
-                cameraState.position.y,
-                cameraState.position.z);
-    ImGui::Text("View");
-    ImGui::Text("Projection");
+    f32 mainThread   = _frameGraph.mainThreadTime.load();
+    f32 renderThread = _frameGraph.renderThreadTime.load();
+    f32 gpuTime      = _frameGraph.gpuTime.load();
+    f32 frameTime    = _frameGraph.frameTime.load();
+    f32 fps          = 1000.0f / frameTime;
+
+    ImGui::SetNextWindowPos(ImVec2(4, 4));
+    ImGui::Begin("Frame Graph",
+                 nullptr,
+                 ImGuiWindowFlags_NoResize | ImGuiWindowFlags_AlwaysAutoResize |
+                   ImGuiWindowFlags_NoMove);
+    ImGui::Text("Frame Timings (ms):");
+    ImGui::Separator();
+
+    // Create a more detailed breakdown
+    ImGui::Columns(2, "timings");
+    ImGui::Text("Main Thread:");
+    ImGui::NextColumn();
+    ImGui::Text("%.2f ms", mainThread);
+    ImGui::NextColumn();
+
+    ImGui::Text("Render Thread:");
+    ImGui::NextColumn();
+    ImGui::Text("%.2f ms", renderThread);
+    ImGui::NextColumn();
+
+    ImGui::Text("GPU Time:");
+    ImGui::NextColumn();
+    ImGui::Text("%.2f ms", gpuTime);
+    ImGui::NextColumn();
+
+    ImGui::Text("Total Frame:");
+    ImGui::NextColumn();
+    ImGui::Text("%.2f ms (%.1f FPS)", frameTime, fps);
+    ImGui::NextColumn();
+
+    ImGui::Columns(1);
+    ImGui::Separator();
+
+    // Add a simple frame time graph
+    static float frameTimes[100] = {};
+    static int frameTimeIndex    = 0;
+
+    frameTimes[frameTimeIndex] = frameTime;
+    frameTimeIndex             = (frameTimeIndex + 1) % IM_ARRAYSIZE(frameTimes);
+
+    ImGui::PlotLines("Frame Times",
+                     frameTimes,
+                     IM_ARRAYSIZE(frameTimes),
+                     frameTimeIndex,
+                     nullptr,
+                     0.0f,
+                     33.3f,  // 33.3ms = 30 FPS
+                     ImVec2(0, 80));
+
     ImGui::End();
 }
 

@@ -5,4 +5,7 @@
 #include "RenderComponent.hpp"
 
 namespace x {
+    void RenderComponent::draw(const CameraState& camera,
+                               const LightingState& lights,
+                               const x::TransformComponent& transform) const {}
 } // x

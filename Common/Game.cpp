@@ -145,6 +145,8 @@ namespace x {
 
     void IGame::updateLoop() {
         while (_running) {
+            auto startTime = std::chrono::high_resolution_clock::now();
+
             _clock->tick();
 
             // update game state
@@ -153,11 +155,22 @@ namespace x {
 
             _stateBuffer.swapWriteBuffer();
             _clock->update();
+
+            auto endTime  = std::chrono::high_resolution_clock::now();
+            auto duration = std::chrono::duration<f32, std::milli>(endTime - startTime);
+            _frameGraph.mainThreadTime.store(duration.count());
         }
     }
 
     void IGame::renderLoop() {
         while (_running && !glfwWindowShouldClose(_window)) {
+            auto frameStart  = std::chrono::high_resolution_clock::now();
+            auto renderStart = std::chrono::high_resolution_clock::now();
+
+            u32 queryId;
+            glGenQueries(1, &queryId);
+            glBeginQuery(GL_TIME_ELAPSED, queryId);
+
             glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -173,7 +186,22 @@ namespace x {
                 Graphics::DebugUI::endFrame();
             }
 
+            glEndQuery(GL_TIME_ELAPSED);
+            auto renderEnd      = std::chrono::high_resolution_clock::now();
+            auto renderDuration = std::chrono::duration<f32, std::milli>(renderEnd - renderStart);
+            _frameGraph.renderThreadTime.store(renderDuration.count());
+
+            u64 gpuTime;
+            glGetQueryObjectui64v(queryId, GL_QUERY_RESULT, &gpuTime);
+            _frameGraph.gpuTime.store(CAST<f32>(gpuTime) /
+                                      1000000.0f);  // Convert nanoseconds to milliseconds
+
+            auto frameEnd      = std::chrono::high_resolution_clock::now();
+            auto frameDuration = std::chrono::duration<f32, std::milli>(frameEnd - frameStart);
+            _frameGraph.frameTime.store(frameDuration.count());
+
             glfwSwapBuffers(_window);
+            glDeleteQueries(1, &queryId);
         }
     }
 }  // namespace x

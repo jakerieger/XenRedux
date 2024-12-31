@@ -14,8 +14,6 @@ namespace x {
     public:
         void draw(const CameraState& camera,
                   const LightingState& lights,
-                  const x::TransformComponent& transform) const {
-            printf("Drawing\n");
-        }
+                  const x::TransformComponent& transform) const;
     };
 }  // namespace x
