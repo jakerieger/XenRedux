@@ -20,6 +20,7 @@ namespace x {
         }
 
         static void clear(bool depth = true);
+        static void setVsync(bool vsync);
 
         void registerVolatile(Volatile* vol) {
             _volatiles.push_back(vol);

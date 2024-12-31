@@ -104,8 +104,6 @@ namespace x {
 
         // glfwSetInputMode(_window, GLFW_CURSOR, GLFW_CURSOR_DISABLED); // Hides cursor
 
-        glfwSwapInterval(0);  // Disabled vertical sync
-
         _context = Context::create();
         _clock   = Clock::create();
     }
