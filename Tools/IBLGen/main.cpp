@@ -83,10 +83,7 @@ public:
         _irradianceShader = x::ShaderManager::get().getShaderProgram(IrradianceMap_CS_Source);
         if (!_irradianceShader.get()) { Panic("Failed to load Irradiance shader"); }
 
-        createCubemapTexture(_irradianceMap, kIrradianceResolution, false);
-        createCubemapTexture(_prefilterMap, kPrefilterResolution, true);
-
-        createCubemapTexture(_skyboxMap, 512, false);
+        createCubemapTexture(_skyboxMap, 512, GL_RGB16F, GL_RGB, false);
         loadCubemap(R"(C:\Users\conta\Code\XenRedux\Tools\IBLGen\Data\test_sky.hdr)", _skyboxMap);
     }
 
@@ -125,6 +122,8 @@ public:
     }
 
     void draw() override {
+        generateIrradiance();
+
         x::Context::clear(true);
         glDepthMask(GL_FALSE);
         glDepthFunc(GL_LEQUAL);
@@ -200,7 +199,37 @@ public:
                          ImVec2(faceSize, faceSize));
         }
 
-        if (_prefilterMap) { ImGui::Text("Prefilter Map"); }
+        if (_prefilterMap) {
+            // ImGui::Text("Prefilter Map");
+            // if (!_debugPrefilterFaces[0]) setupDebugCubemapFaces(Cubemaps::Prefilter);
+            // updateDebugCubemapFaces(_prefilterMap, kPrefilterResolution);
+            // f32 faceSize   = 64.0f;
+            // ImVec2 basePos = ImGui::GetCursorPos();
+            //
+            // // Draw the faces in a cross pattern
+            // //     [+Y]
+            // // [-X][+Z][+X][-Z]
+            // //     [-Y]
+            //
+            // // Top face (+Y)
+            // ImGui::SetCursorPos(ImVec2(basePos.x + faceSize, basePos.y));
+            // ImGui::Image((ImTextureID)(intptr_t)_debugPrefilterFaces[2],
+            //              ImVec2(faceSize, faceSize));
+            //
+            // // Middle row
+            // ImGui::SetCursorPos(ImVec2(basePos.x, basePos.y + faceSize));
+            // for (int i = 0; i < 4; i++) {
+            //     int faceIdx = (i == 0) ? 1 : (i == 1) ? 4 : (i == 2) ? 0 : 5;  // -X, +Z, +X, -Z
+            //     ImGui::Image((ImTextureID)(intptr_t)_debugPrefilterFaces[faceIdx],
+            //                  ImVec2(faceSize, faceSize));
+            //     ImGui::SameLine();
+            // }
+            //
+            // // Bottom face (-Y)
+            // ImGui::SetCursorPos(ImVec2(basePos.x + faceSize, basePos.y + 2 * faceSize));
+            // ImGui::Image((ImTextureID)(intptr_t)_debugPrefilterFaces[3],
+            //              ImVec2(faceSize, faceSize));
+        }
 
         ImGui::End();
     }
@@ -290,13 +319,130 @@ private:
     }
 
     void generateIrradiance() {
+        if (!_skyboxMap) { Panic("Environment map has not been loaded."); }
         if (_irradianceMap) { glDeleteTextures(1, &_irradianceMap); }
-        createCubemapTexture(_irradianceMap, kIrradianceResolution);
+        createCubemapTexture(_irradianceMap, kIrradianceResolution, GL_RGBA16F, GL_RGBA);
+
+        u32 fbo;
+        glGenFramebuffers(1, &fbo);
+        glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+
+        u32 tempTexture;
+        glGenTextures(1, &tempTexture);
+        glBindTexture(GL_TEXTURE_2D, tempTexture);
+        glTexImage2D(GL_TEXTURE_2D,
+                     0,
+                     GL_RGBA16F,
+                     kIrradianceResolution,
+                     kIrradianceResolution,
+                     0,
+                     GL_RGBA,
+                     GL_FLOAT,
+                     nullptr);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+        struct IrradianceParams {
+            glm::mat4 viewMatrix;
+            i32 faceIndex;
+            f32 deltaPhi;
+            f32 deltaTheta;
+            i32 numSamples;
+        };
+
+        u32 ubo;
+        glGenBuffers(1, &ubo);
+        glBindBuffer(GL_UNIFORM_BUFFER, ubo);
+        glBufferData(GL_UNIFORM_BUFFER, sizeof(IrradianceParams), nullptr, GL_DYNAMIC_DRAW);
+
+        IrradianceParams params;
+        params.deltaPhi   = glm::two_pi<f32>() / 180.0f;  // 2° steps
+        params.deltaTheta = glm::half_pi<f32>() / 64.0f;  // ~1.4° steps
+        params.numSamples = 1024;
+
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_CUBE_MAP, _skyboxMap);
+
+        _irradianceShader->use();
+        _irradianceShader->setInt("uEnvironmentMap", 0);
+
+        for (u32 face = 0; face < kCubeFaces; ++face) {
+            params.faceIndex = face;
+            // Calculate view matrix for current face
+            switch (face) {
+                case 0:  // POSITIVE_X
+                    params.viewMatrix = glm::lookAt(glm::vec3(0.0f),
+                                                    glm::vec3(1.0f, 0.0f, 0.0f),
+                                                    glm::vec3(0.0f, -1.0f, 0.0f));
+                    break;
+                case 1:  // NEGATIVE_X
+                    params.viewMatrix = glm::lookAt(glm::vec3(0.0f),
+                                                    glm::vec3(-1.0f, 0.0f, 0.0f),
+                                                    glm::vec3(0.0f, -1.0f, 0.0f));
+                    break;
+                case 2:  // POSITIVE_Y
+                    params.viewMatrix = glm::lookAt(glm::vec3(0.0f),
+                                                    glm::vec3(0.0f, 1.0f, 0.0f),
+                                                    glm::vec3(0.0f, 0.0f, 1.0f));
+                    break;
+                case 3:  // NEGATIVE_Y
+                    params.viewMatrix = glm::lookAt(glm::vec3(0.0f),
+                                                    glm::vec3(0.0f, -1.0f, 0.0f),
+                                                    glm::vec3(0.0f, 0.0f, -1.0f));
+                    break;
+                case 4:  // POSITIVE_Z
+                    params.viewMatrix = glm::lookAt(glm::vec3(0.0f),
+                                                    glm::vec3(0.0f, 0.0f, 1.0f),
+                                                    glm::vec3(0.0f, -1.0f, 0.0f));
+                    break;
+                case 5:  // NEGATIVE_Z
+                    params.viewMatrix = glm::lookAt(glm::vec3(0.0f),
+                                                    glm::vec3(0.0f, 0.0f, -1.0f),
+                                                    glm::vec3(0.0f, -1.0f, 0.0f));
+                    break;
+            }
+
+            glBindImageTexture(1, tempTexture, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA16F);
+            glBindBufferBase(GL_UNIFORM_BUFFER, 2, ubo);
+            glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(IrradianceParams), &params);
+            const auto workgroupSize =
+              x::Graphics::ShaderProgram::getComputeWorkGroupSize(32,
+                                                                  kIrradianceResolution,
+                                                                  kIrradianceResolution);
+            _irradianceShader->dispatchCompute(workgroupSize.first, workgroupSize.second, 1);
+            glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+            glCopyImageSubData(tempTexture,
+                               GL_TEXTURE_2D,
+                               0,
+                               0,
+                               0,
+                               0,
+                               _irradianceMap,
+                               GL_TEXTURE_CUBE_MAP,
+                               0,
+                               0,
+                               0,
+                               face,
+                               kIrradianceResolution,
+                               kIrradianceResolution,
+                               1);
+        }
+
+        glDeleteFramebuffers(1, &fbo);
+        glDeleteTextures(1, &tempTexture);
+        glDeleteBuffers(1, &ubo);
+
+        // Generate mips if needed
+        // glBindTexture(GL_TEXTURE_CUBE_MAP, _irradianceMap);
+        // glGenerateMipmap(GL_TEXTURE_CUBE_MAP);
     }
 
     void generatePrefilter() {}
 
-    void createCubemapTexture(u32& texture, i32 resolution, bool genMips = false) {
+    void createCubemapTexture(
+      u32& texture, i32 resolution, GLenum internalFormat, GLenum format, bool genMips = false) {
         if (resolution < 1) { return; }
         if (texture) { glDeleteTextures(1, &texture); }
         glGenTextures(1, &texture);
@@ -304,11 +450,11 @@ private:
         for (u32 i = 0; i < kCubeFaces; i++) {
             glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i,
                          0,
-                         GL_RGB16F,
+                         internalFormat,
                          resolution,
                          resolution,
                          0,
-                         GL_RGB,
+                         format,
                          GL_FLOAT,
                          nullptr);
         }
