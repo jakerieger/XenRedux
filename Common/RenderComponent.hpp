@@ -8,6 +8,7 @@
 #include "Types.hpp"
 #include "ComponentManager.hpp"
 #include "LightingState.hpp"
+#include "Model.hpp"
 
 namespace x {
     class RenderComponent {
@@ -15,5 +16,10 @@ namespace x {
         void draw(const CameraState& camera,
                   const LightingState& lights,
                   const x::TransformComponent& transform) const;
+
+    private:
+        x::Model _model;
+        bool _castsShadows = true;
+        bool _visible      = true;
     };
 }  // namespace x
