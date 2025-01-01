@@ -109,6 +109,9 @@ namespace x {
     }
 
     IGame::~IGame() {
+        if (_running) quit();  // Stop all threads
+        if (_updateThread.joinable()) _updateThread.join();
+        _stateBuffer.cleanup();
         _clock.reset();
         _context.reset();
         if (debug) { Graphics::DebugUI::shutdown(); }
@@ -117,7 +120,9 @@ namespace x {
     }
 
     void IGame::run() {
-        loadContent(_stateBuffer.getWriteBuffer());
+        auto& writeBuffer = _stateBuffer.getWriteBuffer();
+        loadContent(writeBuffer);
+        _stateBuffer.init(writeBuffer);
         configurePipeline();
         _clock->start();
 

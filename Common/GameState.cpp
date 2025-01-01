@@ -13,9 +13,7 @@ namespace x {
 
     void GameState::destroyEntity(EntityId entity) {
         _transforms.removeComponent(entity);
-        // _physics.removeComponent(entity);
-        // _renderables.removeComponent(entity);
-        // other components
+        _renderables.removeComponent(entity);
 
         auto hierarchyIt = _hierarchy.find(entity);
         if (hierarchyIt != _hierarchy.end()) {
@@ -55,9 +53,12 @@ namespace x {
         // This is called when swapping buffers
         newState._activeEntities = _activeEntities;
         newState._nextEntityId   = _nextEntityId;
-        newState._transforms     = _transforms;
         newState._hierarchy      = _hierarchy;
         newState._globalState    = _globalState;
+
+        // Component Managers
+        newState._transforms  = _transforms;
+        newState._renderables = _renderables;
 
         return newState;
     }
@@ -66,5 +67,9 @@ namespace x {
         _globalState._camera.view       = view;
         _globalState._camera.projection = projection;
         _globalState._camera.position   = position;
+    }
+
+    void GameState::releaseAllResources() {
+        releaseComponentResources<RenderComponent>();
     }
 }  // namespace x

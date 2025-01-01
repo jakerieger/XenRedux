@@ -6,51 +6,16 @@
 
 #include <glad.h>
 #include <GLFW/glfw3.h>
-#include <array>
 #include <memory>
-#include <atomic>
-#include <mutex>
 
 #include "Clock.hpp"
 #include "Context.hpp"
 #include "Types.hpp"
 #include "Input/InputManager.hpp"
-#include "GameState.hpp"
 #include "ComponentManager.hpp"
+#include "StateBuffer.hpp"
 
 namespace x {
-    class StateBuffer {
-    public:
-        GameState& getWriteBuffer() {
-            return buffers[writeIndex];
-        }
-
-        const GameState& getReadBuffer() const {
-            return buffers[readIndex];
-        }
-
-        // Called by update thread when it's done writing
-        void swapWriteBuffer() {
-            std::lock_guard<std::mutex> lock(swapMutex);
-            i32 nextIndex = (writeIndex.load() + 1) % kBufferCount;
-            // Only swap if the next buffer isn't being read
-            if (nextIndex != readIndex.load()) { writeIndex.store(nextIndex); }
-        }
-
-        // Called by render thread when it's ready to render
-        void swapReadBuffer() {
-            std::lock_guard<std::mutex> lock(swapMutex);
-            if (readIndex.load() != writeIndex.load()) { readIndex.store(writeIndex.load()); }
-        }
-
-    private:
-        static constexpr i32 kBufferCount = 3;  // Triple buffering
-        std::array<GameState, kBufferCount> buffers;
-        std::atomic<i32> writeIndex = {0};
-        std::atomic<i32> readIndex  = {0};
-        std::mutex swapMutex;
-    };
-
     /// @brief Handles window and context creation and manages the application lifetime
     class IGame {
     public:

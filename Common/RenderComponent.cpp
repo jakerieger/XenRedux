@@ -22,4 +22,8 @@ namespace x {
     void RenderComponent::setCastsShadows(bool castsShadows) {
         _castsShadows = castsShadows;
     }
+
+    void RenderComponent::release() {
+        if (_model.valid()) { _model.release(); }
+    }
 }  // namespace x

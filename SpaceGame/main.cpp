@@ -44,8 +44,8 @@ private:
 
 void SpaceGame::loadContent(x::GameState& state) {
     x::EntityId modelEntity = state.createEntity();
-    auto transform          = state.addComponent<x::TransformComponent>(modelEntity);
-    auto renderer           = state.addComponent<x::RenderComponent>(modelEntity);
+    auto& transform         = state.addComponent<x::TransformComponent>(modelEntity);
+    auto& renderer          = state.addComponent<x::RenderComponent>(modelEntity);
     auto modelPath          = getDataPath() / "ShaderBall.fbx";
     if (x::ModelHandle::tryLoad(modelPath.string(), _model)) {
         renderer.setModel(_model);

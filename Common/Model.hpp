@@ -32,6 +32,7 @@ namespace x {
         void draw(const CameraState& camera,
                   const LightingState& lighting,
                   const TransformComponent& transform) const;
+        void release();
 
         std::shared_ptr<IMaterial> getMaterial() const;
         [[nodiscard]] bool valid() const;

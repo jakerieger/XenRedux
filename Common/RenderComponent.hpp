@@ -9,9 +9,10 @@
 #include "ComponentManager.hpp"
 #include "LightingState.hpp"
 #include "Model.hpp"
+#include "Resource.hpp"
 
 namespace x {
-    class RenderComponent {
+    class RenderComponent : public Resource {
     public:
         RenderComponent() = default;
 
@@ -26,6 +27,7 @@ namespace x {
         void setModel(ModelHandle model);
         void setVisible(bool visible);
         void setCastsShadows(bool castsShadows);
+        void release() override;
 
     private:
         x::ModelHandle _model;

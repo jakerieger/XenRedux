@@ -36,6 +36,10 @@ namespace x {
         if (_modelData) _modelData->draw(camera, lighting, transform);
     }
 
+    void ModelHandle::release() {
+        _modelData.reset();
+    }
+
     std::shared_ptr<IMaterial> ModelHandle::getMaterial() const {
         return _modelData->_material;
     }

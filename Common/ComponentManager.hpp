@@ -4,12 +4,20 @@
 
 #pragma once
 
+#include "Resource.hpp"
 #include "Types.hpp"
 
 #include <vector>
 #include <unordered_map>
 
 namespace x {
+    namespace detail {
+        template<typename T>
+        struct release_resources {
+            static constexpr bool value = std::is_base_of_v<Resource, T>;
+        };
+    }  // namespace detail
+
     // Forward declarations
     class TransformComponent;
     class PhysicsComponent;
@@ -25,6 +33,14 @@ namespace x {
         std::vector<EntityId> _indexToEntity;
 
     public:
+        void releaseResources() {
+            if constexpr (detail::release_resources<T>::value) {
+                for (auto& component : _components) {
+                    component.release();
+                }
+            }
+        }
+
         struct ComponentView {
             EntityId entity;
             T& component;

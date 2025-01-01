@@ -20,7 +20,7 @@ namespace x {
     }
 
     Mesh::~Mesh() {
-        _vertexArray.reset();
+        destroy();
     }
 
     void Mesh::update(const std::weak_ptr<Clock>& clock) const {

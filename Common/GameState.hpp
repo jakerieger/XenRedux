@@ -69,6 +69,8 @@ namespace x {
 
         void updateCameraState(glm::mat4 view, glm::mat4 projection, glm::vec3 position);
 
+        void releaseAllResources();
+
     private:
         std::set<EntityId> _activeEntities;
         EntityId _nextEntityId = 0;
@@ -87,5 +89,12 @@ namespace x {
             CameraState _camera;
             LightingState _lighting;
         } _globalState;
+
+        template<typename T>
+        void releaseComponentResources() {
+            if constexpr (detail::release_resources<T>::value) {
+                getComponents<T>().releaseResources();
+            }
+        }
     };
 }  // namespace x

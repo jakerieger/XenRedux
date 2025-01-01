@@ -96,8 +96,11 @@ add_library(Xen STATIC
         ${COMMON}/PointLight.hpp
         ${COMMON}/RenderComponent.cpp
         ${COMMON}/RenderComponent.hpp
+        ${COMMON}/Resource.hpp
         ${COMMON}/ShaderManager.cpp
         ${COMMON}/ShaderManager.hpp
+        ${COMMON}/StateBuffer.cpp
+        ${COMMON}/StateBuffer.hpp
         ${COMMON}/Skybox.cpp
         ${COMMON}/Skybox.hpp
         ${COMMON}/TransformComponent.cpp
