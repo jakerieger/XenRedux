@@ -59,6 +59,20 @@ void SpaceGame::loadContent(x::GameState& state) {
     transform.setScale(glm::vec3(0.01f));
     transform.setPosition(glm::vec3(0.0f, -1.0f, 0.0f));
 
+    auto modelEntity2 = state.createEntity();
+    auto& transform2  = state.addComponent<x::TransformComponent>(modelEntity2);
+    auto& renderer2   = state.addComponent<x::RenderComponent>(modelEntity2);
+    renderer2.setModel(_model);
+    transform2.setScale(glm::vec3(0.005f));
+    transform2.setPosition(glm::vec3(3.0f, -1.0f, -2.0f));
+
+    auto modelEntity3 = state.createEntity();
+    auto& transform3  = state.addComponent<x::TransformComponent>(modelEntity3);
+    auto& renderer3   = state.addComponent<x::RenderComponent>(modelEntity3);
+    renderer3.setModel(_model);
+    transform3.setScale(glm::vec3(0.005f));
+    transform3.setPosition(glm::vec3(-3.0f, -1.0f, -2.0f));
+
     _renderTarget    = std::make_unique<RenderTarget>(1600, 900, true);
     _postProcessQuad = std::make_unique<PostProcessQuad>();
 }
@@ -136,6 +150,11 @@ void SpaceGame::drawDebugUI(const x::GameState& state) {
     ImGui::Text("Total Frame:");
     ImGui::NextColumn();
     ImGui::Text("%.2f ms (%.1f FPS)", frameTime, fps);
+    ImGui::NextColumn();
+
+    ImGui::Text("ImGui Frame:");
+    ImGui::NextColumn();
+    ImGui::Text("%.2f ms (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
     ImGui::NextColumn();
 
     ImGui::Columns(1);
