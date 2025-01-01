@@ -53,6 +53,7 @@ void SpaceGame::loadContent(x::GameState& state) {
         Panic("Failed to load model");
     }
     transform.setScale(glm::vec3(0.01f));
+    transform.setPosition(glm::vec3(0.0f, -1.0f, 0.0f));
 }
 
 void SpaceGame::unloadContent() {}
