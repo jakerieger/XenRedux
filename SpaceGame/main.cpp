@@ -66,8 +66,8 @@ void SpaceGame::loadContent(x::GameState& state) {
     transform1.setPosition(glm::vec3(0, -1.25, -3));
     renderer1.setModel(_model);
     renderer1.getMaterial()->As<x::PBRMaterial>()->setAlbedo(glm::vec3(1.f, 0.5f, 0.0f));
-    renderer1.getMaterial()->As<x::PBRMaterial>()->setMetallic(1.f);
-    renderer1.getMaterial()->As<x::PBRMaterial>()->setRoughness(0.15f);
+    renderer1.getMaterial()->As<x::PBRMaterial>()->setMetallic(0.5f);
+    renderer1.getMaterial()->As<x::PBRMaterial>()->setRoughness(0.3f);
 
     auto model2      = _activeScene->createEntity(root);
     auto& transform2 = state.addComponent<x::TransformComponent>(model2);
@@ -84,9 +84,9 @@ void SpaceGame::loadContent(x::GameState& state) {
     renderer3.setModel(_model);
 
     x::DirectionalLight sun;
-    sun.setDirection(glm::vec3(-1, -1, -1));
+    sun.setDirection(glm::vec3(-0.577, -0.577, -0.577));
     sun.setColor(1.f, 1.f, 1.f);
-    sun.setIntensity(100.f);
+    sun.setIntensity(10.f);
     state.setSun(sun);
 
     _renderTarget    = std::make_unique<RenderTarget>(1600, 900, true);
