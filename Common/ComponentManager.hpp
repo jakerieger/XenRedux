@@ -11,19 +11,83 @@
 #include <unordered_map>
 
 namespace x {
+    // TODO: Put this in its own class file
+    class EntityId {
+    public:
+        constexpr EntityId() : _value(kInvalidValue) {}
+        explicit constexpr EntityId(u64 value) : _value(value) {}
+
+        constexpr u64 value() const {
+            return _value;
+        }
+
+        constexpr bool operator==(const EntityId& other) const {
+            return _value == other._value;
+        }
+
+        constexpr bool operator!=(const EntityId& other) const {
+            return _value != other._value;
+        }
+
+        constexpr bool operator<(const EntityId& other) const {
+            return _value < other._value;
+        }
+
+        constexpr bool operator>(const EntityId& other) const {
+            return _value > other._value;
+        }
+
+        constexpr bool operator<=(const EntityId& other) const {
+            return _value <= other._value;
+        }
+
+        constexpr bool operator>=(const EntityId& other) const {
+            return _value >= other._value;
+        }
+
+        constexpr u64 operator*() const {
+            return _value;
+        }
+
+        constexpr bool valid() const {
+            return _value != kInvalidValue;
+        }
+
+        static constexpr EntityId Invalid() {
+            return EntityId();
+        }
+
+    private:
+        u64 _value;
+        static constexpr u64 kInvalidValue = std::numeric_limits<u64>::max();
+    };
+
     namespace detail {
         template<typename T>
         struct release_resources {
             static constexpr bool value = std::is_base_of_v<Resource, T>;
         };
     }  // namespace detail
+}  // namespace x
 
+#ifndef X_ENTITY_ID_HASH_SPECIALIZATION
+    #define X_ENTITY_ID_HASH_SPECIALIZATION
+// Allow EntityId to be used in std::unordered_map/set
+namespace std {
+    template<>
+    struct hash<x::EntityId> {
+        std::size_t operator()(const x::EntityId& id) const {
+            return std::hash<u64> {}(id.value());
+        }
+    };
+}  // namespace std
+#endif
+
+namespace x {
     // Forward declarations
     class TransformComponent;
     class PhysicsComponent;
     class RenderComponent;
-
-    using EntityId = u64;
 
     template<typename T>
     class ComponentManager {

@@ -45,6 +45,7 @@ find_package(assimp CONFIG REQUIRED)
 find_package(xxHash CONFIG REQUIRED)
 find_package(glfw3 CONFIG REQUIRED)
 find_package(OpenEXR CONFIG REQUIRED)
+find_package(pugixml CONFIG REQUIRED)
 
 include_directories(
         ${VENDOR}/imgui
@@ -97,6 +98,8 @@ add_library(Xen STATIC
         ${COMMON}/RenderComponent.cpp
         ${COMMON}/RenderComponent.hpp
         ${COMMON}/Resource.hpp
+        ${COMMON}/Scene.cpp
+        ${COMMON}/Scene.hpp
         ${COMMON}/ShaderManager.cpp
         ${COMMON}/ShaderManager.hpp
         ${COMMON}/StateBuffer.cpp
@@ -119,6 +122,7 @@ if (WIN32)
             xxHash::xxhash
             glfw
             OpenEXR::OpenEXR
+            pugixml::pugixml
     )
 elseif (UNIX)
     target_link_libraries(Xen PRIVATE
@@ -129,6 +133,7 @@ elseif (UNIX)
             xxHash::xxhash
             glfw
             OpenEXR::OpenEXR
+            pugixml::pugixml
     )
 endif ()
 

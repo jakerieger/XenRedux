@@ -20,7 +20,6 @@ namespace x {
     public:
         EntityId createEntity();
         void destroyEntity(EntityId entity);
-        void setParent(EntityId child, EntityId parent);
         [[nodiscard]] GameState clone() const;
 
         template<typename T>
@@ -72,18 +71,10 @@ namespace x {
         void releaseAllResources();
 
     private:
-        std::set<EntityId> _activeEntities;
-        EntityId _nextEntityId = 0;
+        u64 _nextEntityId;
 
         ComponentManager<TransformComponent> _transforms;
         ComponentManager<RenderComponent> _renderables;
-
-        struct HierarchyNode {
-            EntityId parent = 0;
-            std::vector<EntityId> children;
-        };
-
-        std::unordered_map<EntityId, HierarchyNode> _hierarchy;
 
         struct {
             CameraState _camera;
