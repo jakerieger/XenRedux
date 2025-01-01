@@ -5,7 +5,7 @@
 #pragma once
 
 #include "Camera.hpp"
-#include "ArcballCamera.hpp"
+#include "Clock.hpp"
 #include "ShaderManager.hpp"
 #include "Types.hpp"
 #include "Graphics/ShaderProgram.hpp"

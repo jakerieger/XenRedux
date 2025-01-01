@@ -96,7 +96,7 @@ namespace x {
             [[nodiscard]] Path replaceExtension(const str& ext) const;
             [[nodiscard]] Path join(const str& subPath) const;
             [[nodiscard]] Path operator/(const str& subPath) const;
-            [[nodiscard]] str toString() const;
+            [[nodiscard]] str string() const;
             [[nodiscard]] const char* cStr() const;
             [[nodiscard]] bool operator==(const Path& other) const;
 

@@ -36,8 +36,7 @@ namespace x {
         return _scale;
     }
 
-    glm::mat4 TransformComponent::getMatrix() {
-        if (_needsUpdate) { updateMM(); }
+    glm::mat4 TransformComponent::getMatrix() const {
         return _transform;
     }
 
@@ -54,6 +53,10 @@ namespace x {
     void TransformComponent::scale(const glm::vec3& scale) {
         _scale *= scale;
         _needsUpdate = true;
+    }
+
+    void TransformComponent::update() {
+        if (_needsUpdate) { updateMM(); }
     }
 
     void TransformComponent::updateMM() {

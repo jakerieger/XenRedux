@@ -64,10 +64,6 @@ add_library(Xen STATIC
         ${MEMORY_SRCS}
         ${MATH_SRCS}
         # Runtime
-        ${COMMON}/ArcballCamera.cpp
-        ${COMMON}/ArcballCamera.hpp
-        ${COMMON}/BlinnPhongMaterial.cpp
-        ${COMMON}/BlinnPhongMaterial.hpp
         ${COMMON}/Camera.hpp
         ${COMMON}/CameraState.hpp
         ${COMMON}/Clock.cpp
@@ -106,6 +102,7 @@ add_library(Xen STATIC
         ${COMMON}/Skybox.hpp
         ${COMMON}/TransformComponent.cpp
         ${COMMON}/TransformComponent.hpp
+        ${COMMON}/TransformMatrices.hpp
         ${COMMON}/Types.hpp
         ${COMMON}/Volatile.hpp
 )

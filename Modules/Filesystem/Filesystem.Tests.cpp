@@ -40,7 +40,7 @@ TEST_CASE("Filesystem I/O (Writing)", "[Filesystem]") {
 TEST_CASE("Filesystem::Path", "[Filesystem]") {
     using Filesystem::Path;
     const Path cwd = Path::currentPath();
-    str pathStr    = cwd.toString();
+    str pathStr    = cwd.str();
     REQUIRE(!pathStr.empty());
     REQUIRE(cwd.isDirectory());
     auto testData1Mb = cwd / oneMb;

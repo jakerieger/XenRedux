@@ -39,20 +39,32 @@ public:
 
 private:
     x::PerspectiveCamera _camera;
-    x::EntityId _modelEntity = 0;
+    x::ModelHandle _model;
 };
 
 void SpaceGame::loadContent(x::GameState& state) {
-    _modelEntity = state.createEntity();
-    state.addComponent<x::TransformComponent>(_modelEntity);
-    state.addComponent<x::RenderComponent>(_modelEntity);
+    x::EntityId modelEntity = state.createEntity();
+    auto transform          = state.addComponent<x::TransformComponent>(modelEntity);
+    auto renderer           = state.addComponent<x::RenderComponent>(modelEntity);
+    auto modelPath          = getDataPath() / "ShaderBall.fbx";
+    if (x::ModelHandle::tryLoad(modelPath.string(), _model)) {
+        renderer.setModel(_model);
+    } else {
+        Panic("Failed to load model");
+    }
+    transform.setScale(glm::vec3(0.01f));
 }
 
 void SpaceGame::unloadContent() {}
 
 void SpaceGame::update(x::GameState& state) {
-    _camera.update(_clock);
+    _camera.update();
     state.updateCameraState(_camera.getView(), _camera.getProjection(), _camera.getPosition());
+
+    for (const auto& [entityId, transform] :
+         state.getComponents<x::TransformComponent>().mutableView()) {
+        transform.update();
+    }
 
     // update other engine systems like physics or AI
 }
@@ -62,9 +74,8 @@ void SpaceGame::draw(const x::GameState& state) {
     const auto& lightState  = state.getLightingState();
     const auto& renderables = state.getComponents<x::RenderComponent>();
     for (const auto& [entityId, renderable] : renderables) {
-        if (auto* transform = state.getComponent<x::TransformComponent>(entityId)) {
-            renderable.draw(cameraState, lightState, *transform);
-        }
+        auto* transform = state.getComponent<x::TransformComponent>(entityId);
+        if (transform) { renderable.draw(cameraState, lightState, *transform); }
     }
 }
 

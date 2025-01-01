@@ -4,7 +4,6 @@
 
 #pragma once
 
-#include "Clock.hpp"
 #include "Types.hpp"
 #include "Volatile.hpp"
 
@@ -17,7 +16,7 @@ namespace x {
         [[nodiscard]] virtual glm::mat4 getViewProjection() const = 0;
         [[nodiscard]] virtual glm::mat4 getView() const           = 0;
         [[nodiscard]] virtual glm::mat4 getProjection() const     = 0;
-        virtual void update(const std::weak_ptr<Clock>& clock)    = 0;
+        virtual void update()                                     = 0;
 
         template<class Camera>
         Camera* as() {

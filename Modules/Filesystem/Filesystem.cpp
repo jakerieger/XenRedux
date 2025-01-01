@@ -219,7 +219,7 @@ namespace x::Filesystem {
         return Path(join(path, subPath));
     }
 
-    str Path::toString() const {
+    str Path::string() const {
         return path;
     }
 

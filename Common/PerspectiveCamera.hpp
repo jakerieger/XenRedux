@@ -19,7 +19,7 @@ namespace x {
                                    glm::vec3 up       = glm::vec3(0.0f, 1.0f, 0.0f));
 
         void onResize(int newWidth, int newHeight) override;
-        void update(const std::weak_ptr<Clock>& clock) override;
+        void update() override;
 
         [[nodiscard]] glm::mat4 getViewProjection() const override;
         [[nodiscard]] glm::mat4 getView() const override;

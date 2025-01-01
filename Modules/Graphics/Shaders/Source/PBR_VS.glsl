@@ -5,8 +5,12 @@ layout (location = 2) in vec3 aTangent;
 layout (location = 3) in vec3 aBiTangent;
 layout (location = 4) in vec2 aTexCoord;
 
-uniform mat4 uVP;
-uniform mat4 uModel;
+uniform mat4 M;
+uniform mat4 V;
+uniform mat4 P;
+uniform mat4 MV;
+uniform mat4 VP;
+uniform mat4 MVP;
 
 out struct VSOut {
     vec2 texCoord;
@@ -15,9 +19,9 @@ out struct VSOut {
 } vsOut;
 
 void main() {
-    vsOut.fragPos = vec3(uModel * vec4(aPos, 1.0));
-    mat3 normalMatrix = mat3(transpose(inverse(uModel)));
+    vsOut.fragPos = vec3(M * vec4(aPos, 1.0));
+    mat3 normalMatrix = mat3(transpose(inverse(M)));
     vsOut.normal = normalize(normalMatrix * aNormal);
     vsOut.texCoord = aTexCoord;
-    gl_Position = uVP * vec4(vsOut.fragPos, 1.0);
+    gl_Position = VP * vec4(vsOut.fragPos, 1.0);
 }

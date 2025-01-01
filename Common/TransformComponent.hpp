@@ -18,10 +18,11 @@ namespace x {
         [[nodiscard]] glm::vec3 getPosition() const;
         [[nodiscard]] glm::vec3 getRotation() const;
         [[nodiscard]] glm::vec3 getScale() const;
-        glm::mat4 getMatrix();
+        glm::mat4 getMatrix() const;
         void translate(const glm::vec3& translation);
         void rotate(const glm::vec3& rotation);
         void scale(const glm::vec3& scale);
+        void update();
 
     private:
         glm::vec3 _position;

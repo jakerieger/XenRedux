@@ -3,8 +3,6 @@
 //
 
 #include "Model.hpp"
-
-#include "BlinnPhongMaterial.hpp"
 #include "PBRMaterial.hpp"
 #include "ShaderManager.hpp"
 #include "Graphics/Vertex.hpp"
@@ -16,14 +14,52 @@
 #include "Graphics/Shaders/Include/PBR_VS.h"
 
 namespace x {
-    Model::Model() {
-        auto program = ShaderManager::get().getShaderProgram(PBR_VS_Source, PBR_FS_Source);
-        _material    = std::make_shared<PBRMaterial>(program);
-        _transform.setScale(glm::vec3(0.01f));
-        _transform.setPosition(glm::vec3(0.0f, -1.4f, -3.0f));
+    ModelHandle ModelHandle::loadFromFile(const str& filename) {
+        ModelHandle handle;
+        handle._modelData = std::make_shared<ModelData>();
+        if (!handle._modelData->loadFromFile(filename)) { handle._modelData.reset(); }
+        return handle;
     }
 
-    bool Model::loadFromFile(const str& filename) {
+    ModelHandle ModelHandle::loadFromMemory(const std::vector<u8>& data) {
+        Panic("Unimplemented");
+    }
+
+    bool ModelHandle::tryLoad(const str& filename, ModelHandle& outHandle) {
+        outHandle = loadFromFile(filename);
+        return outHandle.valid();
+    }
+
+    void ModelHandle::draw(const CameraState& camera,
+                           const LightingState& lighting,
+                           const TransformComponent& transform) const {
+        if (_modelData) _modelData->draw(camera, lighting, transform);
+    }
+
+    std::shared_ptr<IMaterial> ModelHandle::getMaterial() const {
+        return _modelData->_material;
+    }
+
+    void ModelData::draw(const CameraState& camera,
+                         const LightingState& lighting,
+                         const TransformComponent& transform) {
+        const auto view       = camera.view;
+        const auto projection = camera.projection;
+        const auto model      = transform.getMatrix();
+        const auto matrices   = TransformMatrices(model, view, projection);
+
+        _material->apply(matrices);
+
+        for (const auto& mesh : _meshes) {
+            mesh->draw();
+        }
+    }
+
+    bool ModelData::loadFromFile(const str& filename) {
+        auto program = ShaderManager::get().getShaderProgram(PBR_VS_Source, PBR_FS_Source);
+        if (!program) { return false; }
+        _material = std::make_shared<PBRMaterial>(program);
+
         Assimp::Importer importer;
         const auto* scene = importer.ReadFile(filename.c_str(),
                                               aiProcess_Triangulate | aiProcess_GenNormals |
@@ -31,42 +67,20 @@ namespace x {
         if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode) {
             return false;
         }
-
         processNode(scene->mRootNode, scene);
 
         return true;
     }
 
-    void Model::draw(const std::shared_ptr<ICamera>& camera,
-                     DirectionalLight& sun,
-                     const std::vector<std::shared_ptr<ILight>>& lights) {
-        const auto vp    = camera->getViewProjection();
-        const auto model = _transform.getMatrix();
-
-        _material->apply(camera);
-        _material->setUniform("uVP", vp);
-        _material->setUniform("uModel", model);
-        sun.updateUniforms(_material);  // Should be done after material has been applied
-
-        // Other scene lights
-        for (auto& light : lights) {
-            if (light) { light->updateUniforms(_material); }
-        }
-
-        for (const auto& mesh : _meshes) {
-            mesh->draw();
-        }
+    bool ModelHandle::valid() const {
+        return _modelData && _modelData->valid();
     }
 
-    TransformComponent& Model::getTransform() {
-        return _transform;
+    bool ModelData::valid() const {
+        return !_meshes.empty();
     }
 
-    std::shared_ptr<IMaterial>& Model::getMaterial() {
-        return _material;
-    }
-
-    void Model::processNode(const aiNode* node, const aiScene* scene) {
+    void ModelData::processNode(const aiNode* node, const aiScene* scene) {
         for (u32 i = 0; i < node->mNumMeshes; i++) {
             aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
             _meshes.push_back(processMesh(mesh, scene));
@@ -77,12 +91,12 @@ namespace x {
         }
     }
 
-    std::unique_ptr<Mesh> Model::processMesh(aiMesh* mesh, const aiScene*) const {
+    std::unique_ptr<Mesh> ModelData::processMesh(aiMesh* mesh, const aiScene*) {
         std::vector<Graphics::VertexPosNormTanBiTanTex> vertices;
         std::vector<u32> indices;
 
         for (u32 i = 0; i < mesh->mNumVertices; i++) {
-            Graphics::VertexPosNormTanBiTanTex vertex;
+            Graphics::VertexPosNormTanBiTanTex vertex = {};
 
             vertex.position.x = mesh->mVertices[i].x;
             vertex.position.y = mesh->mVertices[i].y;

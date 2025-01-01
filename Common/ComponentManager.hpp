@@ -63,12 +63,30 @@ namespace x {
             const T& component;
         };
 
-        Iterator beginMutable() const {
+        Iterator beginMutable() {
             return {_components, _indexToEntity, 0};
         }
 
-        Iterator endMutable() const {
+        Iterator endMutable() {
             return {_components, _indexToEntity, _components.size()};
+        }
+
+        class MutableView {
+        private:
+            ComponentManager& _manager;
+
+        public:
+            MutableView(ComponentManager& manager) : _manager(manager) {}
+            Iterator begin() const {
+                return _manager.beginMutable();
+            }
+            Iterator end() const {
+                return _manager.endMutable();
+            }
+        };
+
+        MutableView mutableView() {
+            return {*this};
         }
 
         class ConstIterator {

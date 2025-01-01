@@ -5,6 +5,7 @@
 #pragma once
 
 #include "Camera.hpp"
+#include "TransformMatrices.hpp"
 #include "Types.hpp"
 #include "Graphics/ShaderProgram.hpp"
 #include "Graphics/Texture.hpp"
@@ -37,7 +38,14 @@ namespace x {
         virtual void setUniform(const str& name, i32 x, i32 y, i32 z, i32 w);
         virtual void setUniform(const str& name, const f32* values, size_t count);
 
-        virtual void apply(const std::weak_ptr<ICamera>& camera) = 0;
+        // Binds shader and updates shader uniforms
+        virtual void apply(const TransformMatrices& matrices) = 0;
+
+        template<typename T>
+            requires std::is_base_of_v<IMaterial, T>
+        T* As() {
+            return DCAST<T*>(this);
+        }
 
     protected:
         std::shared_ptr<Graphics::ShaderProgram> _shaderProgram;

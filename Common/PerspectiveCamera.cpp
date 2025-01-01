@@ -31,7 +31,7 @@ namespace x {
         return _projection;
     }
 
-    void PerspectiveCamera::update(const std::weak_ptr<Clock>& clock) {
+    void PerspectiveCamera::update() {
         updateViewProjection();
     }
 

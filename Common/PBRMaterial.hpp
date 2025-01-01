@@ -11,7 +11,7 @@ namespace x {
     public:
         explicit PBRMaterial(const std::shared_ptr<Graphics::ShaderProgram>& shader)
             : IMaterial(shader) {}
-        void apply(const std::weak_ptr<ICamera>& camera) override;
+        void apply(const TransformMatrices& matrices) override;
 
         void setAlbedo(const glm::vec3& albedo);
         void setMetallic(f32 metallic);
