@@ -89,11 +89,12 @@ void SpaceGame::drawDebugUI(const x::GameState& state) {
     f32 frameTime    = _frameGraph.frameTime.load();
     f32 fps          = 1000.0f / frameTime;
 
+    ImGuiWindowFlags windowFlags = ImGuiWindowFlags_NoResize | ImGuiWindowFlags_AlwaysAutoResize |
+                                   ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse;
+
     ImGui::SetNextWindowPos(ImVec2(4, 4));
-    ImGui::Begin("Frame Graph",
-                 nullptr,
-                 ImGuiWindowFlags_NoResize | ImGuiWindowFlags_AlwaysAutoResize |
-                   ImGuiWindowFlags_NoMove);
+    ImGui::SetNextWindowBgAlpha(0.4f);
+    ImGui::Begin("Frame Graph", nullptr, windowFlags);
     ImGui::Text("Frame Timings (ms):");
     ImGui::Separator();
 
