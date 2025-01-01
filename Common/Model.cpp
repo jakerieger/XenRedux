@@ -53,6 +53,7 @@ namespace x {
         const auto matrices   = TransformMatrices(model, view, projection);
 
         _material->apply(matrices);
+        lighting.sun.updateUniforms(_material);
 
         for (const auto& mesh : _meshes) {
             mesh->draw();

@@ -176,28 +176,31 @@ void main() {
     // Initialize reflectance
     vec3 Lo = vec3(0.0);
     Lo += CalculateSun(V, N, roughness, F0);
-    for (int i = 0; i < MAX_POINT_LIGHTS; ++i) {
-        PointLight light = uPointLights[i];
-        Lo += CalculatePointLight(V, N, roughness, F0, light);
-    }
+    //    for (int i = 0; i < MAX_POINT_LIGHTS; ++i) {
+    //        PointLight light = uPointLights[i];
+    //        Lo += CalculatePointLight(V, N, roughness, F0, light);
+    //    }
 
-    vec3 F = FresnelSchlickRoughness(NdotV, F0, roughness);
-    vec3 kS = F;
-    vec3 kD = 1.0 - kS;
-    kD *= 1.0 - uMaterial.metallic;
+    //    vec3 F = FresnelSchlickRoughness(NdotV, F0, roughness);
+    //    vec3 kS = F;
+    //    vec3 kD = 1.0 - kS;
+    //    kD *= 1.0 - uMaterial.metallic;
+    //
+    //    // Diffuse IBL
+    //    vec3 irradiance = texture(uIrradianceMap, N).rgb;
+    //    vec3 diffuse = irradiance * uMaterial.albedo;
+    //
+    //    // Specular IBL
+    //    // Sample both the prefilter map and the BRDF LUT and combine them together
+    //    vec3 prefilteredColor = textureLod(uPrefilterMap, R, roughness * MAX_REFLECTION_LOD).rgb;
+    //    vec2 brdf = texture(uBRDFLUT, vec2(NdotV, roughness)).rg;
+    //    vec3 specular = prefilteredColor * (F * brdf.x + brdf.y);
 
-    // Diffuse IBL
-    vec3 irradiance = texture(uIrradianceMap, N).rgb;
-    vec3 diffuse = irradiance * uMaterial.albedo;
+    //    vec3 ambient = (kD * diffuse + specular) * uMaterial.ao;
+    //    vec3 color = ambient + Lo;
 
-    // Specular IBL
-    // Sample both the prefilter map and the BRDF LUT and combine them together
-    vec3 prefilteredColor = textureLod(uPrefilterMap, R, roughness * MAX_REFLECTION_LOD).rgb;
-    vec2 brdf = texture(uBRDFLUT, vec2(NdotV, roughness)).rg;
-    vec3 specular = prefilteredColor * (F * brdf.x + brdf.y);
-
-    vec3 ambient = (kD * diffuse + specular) * uMaterial.ao;
+    vec3 ambient = uSun.color * 0.01 * uMaterial.albedo * uMaterial.ao;
     vec3 color = ambient + Lo;
 
-    FragColor = vec4(1.0, 0.0, 0.0, 1.0);//vec4(color, 1.0);
+    FragColor = vec4(color, 1.0);
 }

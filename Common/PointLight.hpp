@@ -4,12 +4,16 @@
 
 #pragma once
 
-#include "Light.hpp"
+#include "Material.hpp"
+#include "Types.hpp"
+#include "glm/glm.hpp"
+
+#include <memory>
 
 namespace x {
     static constexpr u32 kMaxPointLights = 100;
 
-    class PointLight final : public ILight {
+    class PointLight {
     public:
         explicit PointLight(const glm::vec3& position = glm::vec3(0.0f),
                             const glm::vec3& color    = glm::vec3(1.0f),
@@ -20,7 +24,7 @@ namespace x {
                             f32 linear                = 0.09f,
                             f32 quadratic             = 0.032f);
 
-        void updateUniforms(const std::weak_ptr<IMaterial>& material) override;
+        void updateUniforms(const std::weak_ptr<IMaterial>& material) const;
 
         void setPosition(const glm::vec3& position);
         void setIndex(u32 index);
@@ -31,6 +35,8 @@ namespace x {
 
     private:
         glm::vec3 _position;
+        glm::vec3 _color;
+        f32 _intensity;
         // Attenuation factors
         f32 _constant;   // Constant term (usually 1.0)
         f32 _linear;     // Linear term, affects medium range falloff

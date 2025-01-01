@@ -3,11 +3,14 @@
 //
 
 #include "Game.hpp"
+#include "PBRMaterial.hpp"
 #include "PerspectiveCamera.hpp"
+#include "Scene.hpp"
 #include "Filesystem/Filesystem.hpp"
 #include "Graphics/Pipeline.hpp"
 #include "Graphics/PostProcessQuad.hpp"
 #include "Graphics/RenderTarget.hpp"
+#include "Graphics/Effects/Tonemapper.hpp"
 
 #include <imgui/imgui.h>
 
@@ -42,39 +45,56 @@ public:
 private:
     x::PerspectiveCamera _camera;
     x::ModelHandle _model;
+    std::unique_ptr<x::Scene> _activeScene;
     std::unique_ptr<RenderTarget> _renderTarget;
     std::unique_ptr<PostProcessQuad> _postProcessQuad;
+    std::unique_ptr<Tonemapper> _tonemapper;
 };
 
 void SpaceGame::loadContent(x::GameState& state) {
-    x::EntityId modelEntity = state.createEntity();
-    auto& transform         = state.addComponent<x::TransformComponent>(modelEntity);
-    auto& renderer          = state.addComponent<x::RenderComponent>(modelEntity);
-    auto modelPath          = getDataPath() / "ShaderBall.fbx";
-    if (x::ModelHandle::tryLoad(modelPath.string(), _model)) {
-        renderer.setModel(_model);
-    } else {
-        Panic("Failed to load model");
-    }
-    transform.setScale(glm::vec3(0.01f));
-    transform.setPosition(glm::vec3(0.0f, -1.0f, 0.0f));
+    _activeScene = std::make_unique<x::Scene>("MainScene", state);
+    auto root    = _activeScene->createEntity();
 
-    auto modelEntity2 = state.createEntity();
-    auto& transform2  = state.addComponent<x::TransformComponent>(modelEntity2);
-    auto& renderer2   = state.addComponent<x::RenderComponent>(modelEntity2);
+    // Load the shader ball model
+    auto modelPath = getDataPath() / "ShaderBall.fbx";
+    if (!x::ModelHandle::tryLoad(modelPath.string(), _model)) { Panic("Failed to load model"); }
+
+    auto model1      = _activeScene->createEntity(root);
+    auto& transform1 = state.addComponent<x::TransformComponent>(model1);
+    auto& renderer1  = state.addComponent<x::RenderComponent>(model1);
+    transform1.setScale(glm::vec3(0.01f));
+    transform1.setPosition(glm::vec3(0, -1.25, -3));
+    renderer1.setModel(_model);
+    renderer1.getMaterial()->As<x::PBRMaterial>()->setAlbedo(glm::vec3(1.f, 0.5f, 0.0f));
+    renderer1.getMaterial()->As<x::PBRMaterial>()->setMetallic(1.f);
+    renderer1.getMaterial()->As<x::PBRMaterial>()->setRoughness(0.15f);
+
+    auto model2      = _activeScene->createEntity(root);
+    auto& transform2 = state.addComponent<x::TransformComponent>(model2);
+    auto& renderer2  = state.addComponent<x::RenderComponent>(model2);
+    transform2.setScale(glm::vec3(0.008f));
+    transform2.setPosition(glm::vec3(-2, -1.25, -1));
     renderer2.setModel(_model);
-    transform2.setScale(glm::vec3(0.005f));
-    transform2.setPosition(glm::vec3(3.0f, -1.0f, -2.0f));
 
-    auto modelEntity3 = state.createEntity();
-    auto& transform3  = state.addComponent<x::TransformComponent>(modelEntity3);
-    auto& renderer3   = state.addComponent<x::RenderComponent>(modelEntity3);
+    auto model3      = _activeScene->createEntity(root);
+    auto& transform3 = state.addComponent<x::TransformComponent>(model3);
+    auto& renderer3  = state.addComponent<x::RenderComponent>(model3);
+    transform3.setScale(glm::vec3(0.008f));
+    transform3.setPosition(glm::vec3(2, -1.25, -1));
     renderer3.setModel(_model);
-    transform3.setScale(glm::vec3(0.005f));
-    transform3.setPosition(glm::vec3(-3.0f, -1.0f, -2.0f));
+
+    x::DirectionalLight sun;
+    sun.setDirection(glm::vec3(-1, -1, -1));
+    sun.setColor(1.f, 1.f, 1.f);
+    sun.setIntensity(100.f);
+    state.setSun(sun);
 
     _renderTarget    = std::make_unique<RenderTarget>(1600, 900, true);
     _postProcessQuad = std::make_unique<PostProcessQuad>();
+    _tonemapper      = std::make_unique<Tonemapper>();
+    _tonemapper->setTextureSize(1600, 900);
+    _tonemapper->setInputTexture(_renderTarget->getColorTexture());
+    _tonemapper->setTonemapOperator(0);
 }
 
 void SpaceGame::unloadContent() {
@@ -109,7 +129,8 @@ void SpaceGame::draw(const x::GameState& state) {
     _renderTarget->unbind();
 
     // Post processing pass
-    _postProcessQuad->draw(_renderTarget->getColorTexture());
+    _tonemapper->apply();
+    _postProcessQuad->draw(_tonemapper->getOutputTexture());
 }
 
 void SpaceGame::drawDebugUI(const x::GameState& state) {
@@ -167,14 +188,40 @@ void SpaceGame::drawDebugUI(const x::GameState& state) {
     frameTimes[frameTimeIndex] = frameTime;
     frameTimeIndex             = (frameTimeIndex + 1) % IM_ARRAYSIZE(frameTimes);
 
-    ImGui::PlotLines("Frame Times",
+    // Find the maximum value in our current buffer to determine color
+    float maxFrameTime = 0.0f;
+    for (int i = 0; i < IM_ARRAYSIZE(frameTimes); i++) {
+        maxFrameTime = std::max(maxFrameTime, frameTimes[i]);
+    }
+
+    // Choose color based on max frame time
+    ImVec4 plotColor;
+    if (maxFrameTime <= 16.6f) {                     // 60 FPS
+        plotColor = ImVec4(0.0f, 1.0f, 0.0f, 1.0f);  // Green
+    } else if (maxFrameTime <= 33.3f) {              // 30 FPS
+        plotColor = ImVec4(1.0f, 1.0f, 0.0f, 1.0f);  // Yellow
+    } else {
+        plotColor = ImVec4(1.0f, 0.0f, 0.0f, 1.0f);  // Red
+    }
+
+    // Save the current plot color
+    ImVec4 oldPlotColor = ImGui::GetStyle().Colors[ImGuiCol_PlotLines];
+
+    // Set our new color
+    ImGui::GetStyle().Colors[ImGuiCol_PlotLines] = plotColor;
+
+    // Draw the plot
+    ImGui::PlotLines("##FrameTimes",
                      frameTimes,
                      IM_ARRAYSIZE(frameTimes),
                      frameTimeIndex,
-                     nullptr,
+                     "FT Graph",
                      0.0f,
-                     33.3f,  // 33.3ms = 30 FPS
-                     ImVec2(0, 80));
+                     33.3f,
+                     ImVec2(0, 64));
+
+    // Restore the original plot color
+    ImGui::GetStyle().Colors[ImGuiCol_PlotLines] = oldPlotColor;
 
     ImGui::End();
 }

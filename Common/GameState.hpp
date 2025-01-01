@@ -10,7 +10,6 @@
 #include "LightingState.hpp"
 #include "TransformComponent.hpp"
 #include "RenderComponent.hpp"
-#include "Input/Input.hpp"
 
 #include <set>
 #include <vector>
@@ -78,6 +77,10 @@ namespace x {
             return _globalState._lighting;
         }
 
+        void setSun(const DirectionalLight& sun);
+        // void updatePointLight(i32 index);
+        // void updateSpotLight(i32 index);
+        // void updateAreaLight(i32 index);
         void updateCameraState(glm::mat4 view, glm::mat4 projection, glm::vec3 position);
 
         void releaseAllResources();

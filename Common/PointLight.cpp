@@ -13,10 +13,10 @@ namespace x {
                            f32 constant,
                            f32 linear,
                            f32 quadratic)
-        : ILight(color, intensity, castsShadows), _position(position), _constant(constant),
+        : _position(position), _color(color), _intensity(intensity), _constant(constant),
           _linear(linear), _quadratic(quadratic), _radius(radius), _index(0) {}
 
-    void PointLight::updateUniforms(const std::weak_ptr<IMaterial>& material) {
+    void PointLight::updateUniforms(const std::weak_ptr<IMaterial>& material) const {
         const auto materialPtr = material.lock();
         if (materialPtr) {
             const auto posName       = "uPointLights[" + std::to_string(_index) + "].position";

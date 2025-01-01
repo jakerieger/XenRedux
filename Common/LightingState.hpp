@@ -4,10 +4,11 @@
 
 #pragma once
 
+#include "Types.hpp"
+#include "DirectionalLight.hpp"
+
 namespace x {
-
-class LightingState {
-
-};
-
-} // x
+    struct LightingState {
+        DirectionalLight sun;
+    };
+}  // namespace x

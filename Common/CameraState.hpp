@@ -8,8 +8,7 @@
 #include <glm/glm.hpp>
 
 namespace x {
-    class CameraState {
-    public:
+    struct CameraState {
         glm::mat4 view;
         glm::mat4 projection;
         glm::vec3 position;

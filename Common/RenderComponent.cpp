@@ -26,4 +26,8 @@ namespace x {
     void RenderComponent::release() {
         if (_model.valid()) { _model.release(); }
     }
+
+    std::shared_ptr<IMaterial> RenderComponent::getMaterial() const {
+        return _model.getMaterial();
+    }
 }  // namespace x

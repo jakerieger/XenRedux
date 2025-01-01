@@ -28,6 +28,7 @@ namespace x {
         void setVisible(bool visible);
         void setCastsShadows(bool castsShadows);
         void release() override;
+        std::shared_ptr<IMaterial> getMaterial() const;
 
     private:
         x::ModelHandle _model;
