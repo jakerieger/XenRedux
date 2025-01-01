@@ -6,6 +6,8 @@
 #include "PerspectiveCamera.hpp"
 #include "Filesystem/Filesystem.hpp"
 #include "Graphics/Pipeline.hpp"
+#include "Graphics/PostProcessQuad.hpp"
+#include "Graphics/RenderTarget.hpp"
 
 #include <imgui/imgui.h>
 
@@ -40,6 +42,8 @@ public:
 private:
     x::PerspectiveCamera _camera;
     x::ModelHandle _model;
+    std::unique_ptr<RenderTarget> _renderTarget;
+    std::unique_ptr<PostProcessQuad> _postProcessQuad;
 };
 
 void SpaceGame::loadContent(x::GameState& state) {
@@ -54,9 +58,15 @@ void SpaceGame::loadContent(x::GameState& state) {
     }
     transform.setScale(glm::vec3(0.01f));
     transform.setPosition(glm::vec3(0.0f, -1.0f, 0.0f));
+
+    _renderTarget    = std::make_unique<RenderTarget>(1600, 900, true);
+    _postProcessQuad = std::make_unique<PostProcessQuad>();
 }
 
-void SpaceGame::unloadContent() {}
+void SpaceGame::unloadContent() {
+    _renderTarget.reset();
+    _postProcessQuad.reset();
+}
 
 void SpaceGame::update(x::GameState& state) {
     _camera.update();
@@ -73,11 +83,19 @@ void SpaceGame::update(x::GameState& state) {
 void SpaceGame::draw(const x::GameState& state) {
     const auto& cameraState = state.getCameraState();
     const auto& lightState  = state.getLightingState();
+
+    // Scene pass
+    _renderTarget->bind();
+    x::Context::clear();
     const auto& renderables = state.getComponents<x::RenderComponent>();
     for (const auto& [entityId, renderable] : renderables) {
         auto* transform = state.getComponent<x::TransformComponent>(entityId);
         if (transform) { renderable.draw(cameraState, lightState, *transform); }
     }
+    _renderTarget->unbind();
+
+    // Post processing pass
+    _postProcessQuad->draw(_renderTarget->getColorTexture());
 }
 
 void SpaceGame::drawDebugUI(const x::GameState& state) {
