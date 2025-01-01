@@ -7,8 +7,6 @@
 #include "Types.hpp"
 #include "GameState.hpp"
 
-#include <pugixml.hpp>
-
 namespace x {
     class Scene {
     public:
@@ -32,7 +30,7 @@ namespace x {
         bool saveToFile(const str& filename);
         void unload();
 
-        void setWorldTransform(EntityId entity, const glm::mat4& transform);
+        void setWorldTransform(EntityId entity, const glm::mat4& worldTransform);
         glm::mat4 getWorldTransform(EntityId entity) const;
 
     private:

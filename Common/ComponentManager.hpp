@@ -238,6 +238,12 @@ namespace x {
             return nullptr;
         }
 
+        T* getComponentMutable(EntityId entity) {
+            auto it = _entityToIndex.find(entity);
+            if (it != _entityToIndex.end()) { return &_components[it->second]; }
+            return nullptr;
+        }
+
         EntityId getEntity(const T* component) const {
             size_t index = component - _components.data();
             if (index < _components.size()) { return _indexToEntity[index]; }

@@ -10,6 +10,7 @@
 #include "LightingState.hpp"
 #include "TransformComponent.hpp"
 #include "RenderComponent.hpp"
+#include "Input/Input.hpp"
 
 #include <set>
 #include <vector>
@@ -29,6 +30,17 @@ namespace x {
             } else if constexpr (std::is_same_v<T, RenderComponent>) {
                 return _renderables.getComponent(entity);
             }
+            return nullptr;
+        }
+
+        template<typename T>
+        T* getComponentMutable(EntityId entity) {
+            if constexpr (std::is_same_v<T, TransformComponent>) {
+                return _transforms.getComponentMutable(entity);
+            } else if constexpr (std::is_same_v<T, RenderComponent>) {
+                return _renderables.getComponentMutable(entity);
+            }
+            return nullptr;
         }
 
         template<typename T>
