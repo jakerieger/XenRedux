@@ -62,7 +62,7 @@ namespace x {
         return {envCubemap, irradianceMap, prefilterMap, 0};
     }
 
-    u32 IBLPreprocessor::convertEquirectangularToCubemap(i32 size) {
+    u32 IBLPreprocessor::convertEquirectangularToCubemap(u32 size) {
         stbi_set_flip_vertically_on_load(true);
         i32 width, height, channels;
         f32* data = stbi_loadf(_hdrPath.cStr(), &width, &height, &channels, 0);
@@ -99,7 +99,7 @@ namespace x {
         glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
         glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-        u32 captureFBO = createFramebuffer();
+        auto [captureFBO, captureRBO] = createFramebuffer();
         glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, size, size);
 
         if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
@@ -141,7 +141,7 @@ namespace x {
         return envCubemap;
     }
 
-    u32 IBLPreprocessor::generateIrradianceMap(u32 envCubemap, i32 size) {
+    u32 IBLPreprocessor::generateIrradianceMap(u32 envCubemap, u32 size) {
         u32 irradianceMap;
         glGenTextures(1, &irradianceMap);
         glBindTexture(GL_TEXTURE_CUBE_MAP, irradianceMap);
@@ -162,7 +162,7 @@ namespace x {
         glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-        u32 captureFBO = createFramebuffer();
+        auto [captureFBO, captureRBO] = createFramebuffer();
         glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, size, size);
 
         if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
@@ -200,11 +200,10 @@ namespace x {
         return irradianceMap;
     }
 
-    u32 IBLPreprocessor::generatePrefilterMap(u32 envCubemap, i32 size, i32 mipLevels) {
+    u32 IBLPreprocessor::generatePrefilterMap(u32 envCubemap, u32 size, u32 mipLevels) {
         u32 prefilterMap;
         glGenTextures(1, &prefilterMap);
         glBindTexture(GL_TEXTURE_CUBE_MAP, prefilterMap);
-
         for (u32 i = 0; i < 6; i++) {
             glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i,
                          0,
@@ -219,30 +218,37 @@ namespace x {
         glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
         glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
         glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
-        // we're using trilinear filtering for the mipmaps
         glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
         glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-        // ggen mipmaps first
+        // gen mipmaps first
         glGenerateMipmap(GL_TEXTURE_CUBE_MAP);
+
+        auto [captureFBO, captureRBO] = createFramebuffer();
+        glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, size, size);
+        if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+            glDeleteTextures(1, &prefilterMap);
+            glDeleteFramebuffers(1, &captureFBO);
+            CHECK_GL_ERROR();
+            Panic("Failed to create framebuffer.");
+        }
 
         _prefilterShader->use();
         _prefilterShader->setInt("uEnvironmentMap", 0);
         _prefilterShader->setMat4("uProjection", kCaptureProjection);
 
-        u32 captureFBO = createFramebuffer();
-
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_CUBE_MAP, envCubemap);
+        glViewport(0, 0, size, size);
+        glBindFramebuffer(GL_FRAMEBUFFER, captureFBO);
 
         for (u32 mip = 0; mip < mipLevels; mip++) {
             // Resize framebuffer according to mip level size
-            u32 mipSize = size * std::pow(0.5, mip);
+            u32 mipSize = size * CAST<u32>(std::pow(0.5, mip));
             glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, mipSize, mipSize);
             glViewport(0, 0, mipSize, mipSize);
 
             // Calculate roughness for this mip level
-            float roughness = (float)mip / (float)(mipLevels - 1);
+            f32 roughness = (f32)mip / (f32)(mipLevels - 1);
             _prefilterShader->setFloat("uRoughness", roughness);
 
             // Render each cube face
@@ -266,13 +272,13 @@ namespace x {
         return prefilterMap;
     }
 
-    u32 IBLPreprocessor::generateBRDFLUT(i32 size) {
+    u32 IBLPreprocessor::generateBRDFLUT(u32 size) {
         return 0;
     }
 
-    void IBLPreprocessor::saveCubemapToDisk(u32 cubemap, i32 size, const str& basename) {}
+    void IBLPreprocessor::saveCubemapToDisk(u32 cubemap, u32 size, const str& basename) {}
 
-    void IBLPreprocessor::save2DTextureToDisk(u32 texture, i32 size, const str& filename) {}
+    void IBLPreprocessor::save2DTextureToDisk(u32 texture, u32 size, const str& filename) {}
 
     void IBLPreprocessor::setupCubemapCapture() {
         glGenVertexArrays(1, &_captureVAO);
@@ -286,7 +292,7 @@ namespace x {
         CHECK_GL_ERROR();
     }
 
-    u32 IBLPreprocessor::createFramebuffer() {
+    std::pair<u32, u32> IBLPreprocessor::createFramebuffer() {
         u32 captureFBO, captureRBO;
         glGenFramebuffers(1, &captureFBO);
         glGenRenderbuffers(1, &captureRBO);
@@ -299,6 +305,6 @@ namespace x {
         glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, captureRBO);
         CHECK_GL_ERROR();
 
-        return captureFBO;
+        return {captureFBO, captureRBO};
     }
 }  // namespace x

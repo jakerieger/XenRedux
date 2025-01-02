@@ -67,11 +67,11 @@ namespace x {
          * @brief Configuration settings for IBL texture generation.
          */
         struct Settings {
-            i32 cubemapSize;
-            i32 irradianceSize;
-            i32 prefilterSize;
-            i32 brdfLUTSize;
-            i32 prefilterMipLevels;
+            u32 cubemapSize;
+            u32 irradianceSize;
+            u32 prefilterSize;
+            u32 brdfLUTSize;
+            u32 prefilterMipLevels;
 
             static constexpr Settings defaultSettings() {
                 return {
@@ -126,7 +126,7 @@ namespace x {
          * @param size Size of each cubemap face in pixels.
          * @return u32 OpenGL texture ID of the generated cubemap.
          */
-        u32 convertEquirectangularToCubemap(i32 size);
+        u32 convertEquirectangularToCubemap(u32 size);
 
         /**
          * @brief Generates a diffuse irradiance cubemap by convolving the environment map.
@@ -135,7 +135,7 @@ namespace x {
          * @param size Size of each irradiance map face in pixels.
          * @return u32 OpenGL texture ID of the generated irradiance map.
          */
-        u32 generateIrradianceMap(u32 envCubemap, i32 size);
+        u32 generateIrradianceMap(u32 envCubemap, u32 size);
 
         /**
          * @brief Creates a pre-filtered environment map for specular reflections.
@@ -145,7 +145,7 @@ namespace x {
          * @param mipLevels Number of mip levels to generate.
          * @return u32 OpenGL texture ID of the generated prefiltered map.
          */
-        u32 generatePrefilterMap(u32 envCubemap, i32 size, i32 mipLevels);
+        u32 generatePrefilterMap(u32 envCubemap, u32 size, u32 mipLevels);
 
         /**
          * @brief Generates a BRDF Look-Up Texture.
@@ -153,7 +153,7 @@ namespace x {
          * @param size Size of the 2D LUT texture in pixels.
          * @return u32 OpenGL texture ID of the generated BRDF LUT.
          */
-        u32 generateBRDFLUT(i32 size);
+        u32 generateBRDFLUT(u32 size);
 
         /**
          * @brief Saves a cubemap texture to disk as separate face images.
@@ -162,7 +162,7 @@ namespace x {
          * @param size Size of each face in pixels.
          * @param basename Base filename for the saved images.
          */
-        void saveCubemapToDisk(u32 cubemap, i32 size, const str& basename);
+        void saveCubemapToDisk(u32 cubemap, u32 size, const str& basename);
 
         /**
          * @brief Saves a 2D texture to disk.
@@ -171,7 +171,7 @@ namespace x {
          * @param size Size of the texture in pixels.
          * @param filename Output filename.
          */
-        void save2DTextureToDisk(u32 texture, i32 size, const str& filename);
+        void save2DTextureToDisk(u32 texture, u32 size, const str& filename);
 
         /**
          * @brief Sets up OpenGL state for cubemap capture.
@@ -183,7 +183,7 @@ namespace x {
          *
          * @return u32 OpenGL framebuffer ID.
          */
-        u32 createFramebuffer();
+        std::pair<u32, u32> createFramebuffer();
 
         IBLPreprocessor(const IBLPreprocessor&)            = delete;
         IBLPreprocessor& operator=(const IBLPreprocessor&) = delete;
