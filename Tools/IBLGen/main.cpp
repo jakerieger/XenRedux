@@ -6,8 +6,7 @@
 #include <GLFW/glfw3.h>
 #include <stb_image.h>
 #include <glm/glm.hpp>
-#include <glm/ext/matrix_clip_space.hpp>
-#include <glm/ext/matrix_transform.hpp>
+#include <glm/gtc/matrix_transform.hpp>
 #include <imgui/imgui.h>
 #include <tinyfiledialogs/tinyfiledialogs.h>
 
@@ -21,41 +20,52 @@ static Path getDataPath() {
     return Path(__FILE__).parent() / "Data";
 }
 
-class IBLGen : public x::IGame {
+class IBLGen final : public x::IGame {
 private:
     std::unique_ptr<x::IBLPreprocessor> _iblPreprocessor;
     x::IBLPreprocessor::Settings _settings;
     x::IBLTextureHandles _textureHandles;
     str _exportPath;
+    u32 _skyboxVAO = 0;
+    u32 _skyboxVBO = 0;
 
-    ImVec4 colorToImVec4(uint32_t color) {
+    static ImVec4 colorToImVec4(const u32 color) {
         f32 a = CAST<f32>((color >> 24) & 0xFF) / 255.0f;
         f32 r = CAST<f32>((color >> 16) & 0xFF) / 255.0f;
         f32 g = CAST<f32>((color >> 8) & 0xFF) / 255.0f;
         f32 b = CAST<f32>(color & 0xFF) / 255.0f;
-        return ImVec4(r, g, b, a);
+        return {r, g, b, a};
     }
 
-    void setTheme() {
+    static void setTheme() {
+        const auto fontPath = getDataPath() / "inter.ttf";
+        ImGuiIO& io         = ImGui::GetIO();
+        io.Fonts->AddFontFromFileTTF(fontPath.cStr(), 14);
+
         auto& style          = ImGui::GetStyle();
         style.FrameRounding  = 4.f;
         style.WindowRounding = 4.f;
         ImVec4* colors       = style.Colors;
 
-        colors[ImGuiCol_HeaderHovered] = ImVec4(0.45f, 0.21f, 0.69f, 0.80f);  // Purple
-        colors[ImGuiCol_HeaderActive]  = ImVec4(0.46f, 0.22f, 0.70f, 1.00f);  // Darker purple
-        colors[ImGuiCol_Header] = ImVec4(0.44f, 0.20f, 0.68f, 0.31f);  // Semi-transparent purple
+        const auto accent     = colorToImVec4(0xFF585858);
+        const auto accentDark = ImVec4(accent.x, accent.y, accent.z, 0.6f);
+        const auto background = colorToImVec4(0xff1b1b1b);
+        const auto input      = colorToImVec4(0xff303030);
+
+        colors[ImGuiCol_HeaderHovered] = accent;  // Purple
+        colors[ImGuiCol_HeaderActive]  = accent;  // Darker purple
+        colors[ImGuiCol_Header]        = accent;  // Semi-transparent purple
         // Also update related UI elements that use the accent color
-        colors[ImGuiCol_Button]        = ImVec4(0.44f, 0.20f, 0.68f, 0.40f);  // Button color
-        colors[ImGuiCol_ButtonHovered] = ImVec4(0.45f, 0.21f, 0.69f, 1.00f);  // Button hover
-        colors[ImGuiCol_ButtonActive]  = ImVec4(0.46f, 0.22f, 0.70f, 1.00f);  // Button active
+        colors[ImGuiCol_Button]        = accent;      // Button color
+        colors[ImGuiCol_ButtonHovered] = accentDark;  // Button hover
+        colors[ImGuiCol_ButtonActive]  = accentDark;  // Button active
         // Slider and checkbox colors
-        colors[ImGuiCol_SliderGrab]       = ImVec4(0.44f, 0.20f, 0.68f, 0.80f);
-        colors[ImGuiCol_SliderGrabActive] = ImVec4(0.46f, 0.22f, 0.70f, 1.00f);
-        colors[ImGuiCol_CheckMark]        = ImVec4(0.46f, 0.22f, 0.70f, 1.00f);
+        colors[ImGuiCol_SliderGrab]       = accent;
+        colors[ImGuiCol_SliderGrabActive] = accentDark;
+        colors[ImGuiCol_CheckMark]        = accent;
         // Background colors
-        colors[ImGuiCol_WindowBg] = ImVec4(0.10f, 0.10f, 0.13f, 1.00f);
-        colors[ImGuiCol_PopupBg]  = ImVec4(0.11f, 0.11f, 0.14f, 0.92f);
+        colors[ImGuiCol_WindowBg] = background;
+        colors[ImGuiCol_PopupBg]  = background;
         // Text colors
         colors[ImGuiCol_Text]         = ImVec4(0.86f, 0.86f, 0.86f, 1.00f);
         colors[ImGuiCol_TextDisabled] = ImVec4(0.86f, 0.86f, 0.86f, 0.58f);
@@ -64,21 +74,23 @@ private:
         colors[ImGuiCol_BorderShadow] = ImVec4(0.00f, 0.00f, 0.00f, 0.24f);
         colors[ImGuiCol_Separator]    = ImVec4(0.44f, 0.20f, 0.68f, 0.29f);
         // Frame colors (for elements like input fields)
-        colors[ImGuiCol_FrameBg]        = ImVec4(0.20f, 0.20f, 0.22f, 0.54f);
-        colors[ImGuiCol_FrameBgHovered] = ImVec4(0.44f, 0.20f, 0.68f, 0.27f);
-        colors[ImGuiCol_FrameBgActive]  = ImVec4(0.44f, 0.20f, 0.68f, 0.39f);
+        colors[ImGuiCol_FrameBg]        = input;
+        colors[ImGuiCol_FrameBgHovered] = input;
+        colors[ImGuiCol_FrameBgActive]  = input;
         // Scrollbar colors
-        colors[ImGuiCol_ScrollbarBg]          = ImVec4(0.02f, 0.02f, 0.02f, 0.53f);
-        colors[ImGuiCol_ScrollbarGrab]        = ImVec4(0.31f, 0.31f, 0.31f, 1.00f);
-        colors[ImGuiCol_ScrollbarGrabHovered] = ImVec4(0.41f, 0.41f, 0.41f, 1.00f);
-        colors[ImGuiCol_ScrollbarGrabActive]  = ImVec4(0.51f, 0.51f, 0.51f, 1.00f);
+        colors[ImGuiCol_ScrollbarBg]          = input;
+        colors[ImGuiCol_ScrollbarGrab]        = accent;
+        colors[ImGuiCol_ScrollbarGrabHovered] = accentDark;
+        colors[ImGuiCol_ScrollbarGrabActive]  = accentDark;
     }
 
 public:
-    IBLGen() : IGame("IBLGen", 1280, 720, false, false) {}
+    IBLGen()
+        : IGame("IBLGen", 1280, 720, false, false),
+          _settings(x::IBLPreprocessor::Settings::defaultSettings()) {}
 
     void loadContent(x::GameState& state) override {
-        // setTheme();
+        setTheme();
     }
 
     void unloadContent() override {}
