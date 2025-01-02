@@ -7,6 +7,7 @@
 #include <glad.h>
 #include <GLFW/glfw3.h>
 #include <memory>
+#include <thread>
 
 #include "Clock.hpp"
 #include "Context.hpp"

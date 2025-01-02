@@ -7,6 +7,8 @@
 #include "Types.hpp"
 #include "GameState.hpp"
 
+#include <optional>
+
 namespace x {
     class Scene {
     public:

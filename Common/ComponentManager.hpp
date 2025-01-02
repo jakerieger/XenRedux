@@ -9,6 +9,7 @@
 
 #include <vector>
 #include <unordered_map>
+#include <numeric>
 
 namespace x {
     // TODO: Put this in its own class file

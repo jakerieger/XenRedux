@@ -3,6 +3,7 @@
 //
 
 #include "StateBuffer.hpp"
+#include <thread>
 
 namespace x {
     void StateBuffer::init(const GameState& initState) {

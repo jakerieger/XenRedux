@@ -8,6 +8,8 @@
 #include "Graphics/ShaderProgram.hpp"
 #include "Graphics/Texture.hpp"
 
+#include <memory>
+
 namespace x::Graphics {
     enum class AATechnique { FXAA, SMAA };
 
