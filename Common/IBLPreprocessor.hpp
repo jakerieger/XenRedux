@@ -45,10 +45,13 @@ namespace {
 
 namespace x {
     struct IBLTextureHandles {
-        u32 envCubemap;
-        u32 irradianceMap;
-        u32 prefilterMap;
-        u32 brdfLut;
+        u32 envCubemap    = 0;
+        u32 irradianceMap = 0;
+        u32 prefilterMap  = 0;
+        u32 brdfLut       = 0;
+        bool valid() const {
+            return envCubemap && irradianceMap && prefilterMap && brdfLut;
+        }
     };
 
     /**
@@ -104,9 +107,9 @@ namespace x {
          * @throws std::runtime_error if texture generation or saving fails.
          */
         IBLTextureHandles
-        generateIBLTextures(const Settings& settings = Settings::defaultSettings(),
-                            bool exportToDisk        = false,
-                            const str& outputDir     = "");
+        generateIBLTextures(const Settings& settings = Settings::defaultSettings());
+
+        static bool exportIBLTextures(const IBLTextureHandles& iblTextures, const str& outputDir);
 
     private:
         Filesystem::Path _hdrPath;

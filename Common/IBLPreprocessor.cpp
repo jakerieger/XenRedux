@@ -46,9 +46,7 @@ namespace x {
         // _brdfShader.reset();
     }
 
-    IBLTextureHandles IBLPreprocessor::generateIBLTextures(const Settings& settings,
-                                                           bool exportToDisk,
-                                                           const str& outputDir) {
+    IBLTextureHandles IBLPreprocessor::generateIBLTextures(const Settings& settings) {
         u32 envCubemap = convertEquirectangularToCubemap(settings.cubemapSize);
         if (!envCubemap) { Panic("Failed to convert Equirectangular to Cubemap"); }
 
@@ -60,6 +58,13 @@ namespace x {
         if (!prefilterMap) { Panic("Failed to generate prefilter map"); }
 
         return {envCubemap, irradianceMap, prefilterMap, 0};
+    }
+
+    bool IBLPreprocessor::exportIBLTextures(const IBLTextureHandles& iblTextures,
+                                            const str& outputDir) {
+        if (!iblTextures.valid()) { return false; }
+
+        return true;
     }
 
     u32 IBLPreprocessor::convertEquirectangularToCubemap(u32 size) {
