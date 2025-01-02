@@ -35,7 +35,16 @@ public:
     void update(x::GameState& state) override {}
 
     void draw(const x::GameState& state) override {
-        if (_iblPreprocessor) { _iblPreprocessor->generateIBLTextures(""); }
+        x::IBLPreprocessor::Settings settings = {};
+        settings.cubemapSize                  = 1024;
+        settings.irradianceSize               = 32;
+        settings.prefilterSize                = 128;
+        settings.brdfLUTSize                  = 512;
+        settings.prefilterMipLevels           = 5;
+
+        if (_iblPreprocessor) {
+            std::ignore = _iblPreprocessor->generateIBLTextures(settings, false, "");
+        }
     }
 
     void configurePipeline() override {}

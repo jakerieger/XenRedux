@@ -10,26 +10,30 @@
 #include "Graphics/Shaders/Include/EquirectToCubemap_FS.h"
 #include "Graphics/Shaders/Include/IrradianceMap_VS.h"
 #include "Graphics/Shaders/Include/IrradianceMap_FS.h"
+#include "Graphics/Shaders/Include/PrefilteredMap_VS.h"
+#include "Graphics/Shaders/Include/PrefilteredMap_FS.h"
 #pragma endregion
 
 namespace x {
     IBLPreprocessor::IBLPreprocessor(const Filesystem::Path& hdr) : _hdrPath(hdr) {
-        std::cout << "Loading HDR: " << _hdrPath.string() << std::endl;
+        std::cout << " -- Loading HDR: " << _hdrPath.string() << std::endl;
 
         _equirectToCubemapShader =
           ShaderManager::instance().getShaderProgram(EquirectToCubemap_VS_Source,
                                                      EquirectToCubemap_FS_Source);
         _irradianceShader = ShaderManager::instance().getShaderProgram(IrradianceMap_VS_Source,
                                                                        IrradianceMap_FS_Source);
-        // _prefilterShader  = ShaderManager::instance().getShaderProgram("", "");
+        _prefilterShader  = ShaderManager::instance().getShaderProgram(PrefilteredMap_VS_Source,
+                                                                      PrefilteredMap_FS_Source);
         // _brdfShader       = ShaderManager::instance().getShaderProgram("", "");
 
-        if (!_equirectToCubemapShader or
-            !_irradianceShader /*or !_prefilterShader or !_brdfShader*/) {
-            throw std::runtime_error("Failed to initialize one or more shaders.");
+        if (!_equirectToCubemapShader or !_irradianceShader or
+            !_prefilterShader /*or !_brdfShader*/) {
+            Panic("Failed to initialize one or more shaders.");
         }
 
         setupCubemapCapture();
+        std::cout << " -- IBLGen is ready to generate texture maps." << std::endl;
     }
 
     IBLPreprocessor::~IBLPreprocessor() {
@@ -38,15 +42,24 @@ namespace x {
 
         _equirectToCubemapShader.reset();
         _irradianceShader.reset();
-        // _prefilterShader.reset();
+        _prefilterShader.reset();
         // _brdfShader.reset();
     }
 
-    void IBLPreprocessor::generateIBLTextures(const str& outputDir, const Settings& settings) {
-        i32 envCubemap = convertEquirectangularToCubemap(settings.cubemapSize);
+    IBLTextureHandles IBLPreprocessor::generateIBLTextures(const Settings& settings,
+                                                           bool exportToDisk,
+                                                           const str& outputDir) {
+        u32 envCubemap = convertEquirectangularToCubemap(settings.cubemapSize);
         if (!envCubemap) { Panic("Failed to convert Equirectangular to Cubemap"); }
-        i32 irradianceMap = generateIrradianceMap(envCubemap, settings.irradianceSize);
+
+        u32 irradianceMap = generateIrradianceMap(envCubemap, settings.irradianceSize);
         if (!irradianceMap) { Panic("Failed to generate irradiance map"); }
+
+        u32 prefilterMap =
+          generatePrefilterMap(envCubemap, settings.prefilterSize, settings.prefilterMipLevels);
+        if (!prefilterMap) { Panic("Failed to generate prefilter map"); }
+
+        return {envCubemap, irradianceMap, prefilterMap, 0};
     }
 
     u32 IBLPreprocessor::convertEquirectangularToCubemap(i32 size) {
@@ -97,11 +110,10 @@ namespace x {
             Panic("Failed to create framebuffer.");
         }
 
-        glm::mat4 captureProjection = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 10.0f);
         // Setup equirect shader
         _equirectToCubemapShader->use();
         _equirectToCubemapShader->setInt("uHDR", 0);
-        _equirectToCubemapShader->setMat4("uProjection", captureProjection);
+        _equirectToCubemapShader->setMat4("uProjection", kCaptureProjection);
 
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, hdrTexture);
@@ -110,7 +122,7 @@ namespace x {
 
         // render each cubemap face
         for (u32 i = 0; i < 6; i++) {
-            _equirectToCubemapShader->setMat4("uView", captureViews[i]);
+            _equirectToCubemapShader->setMat4("uView", kCaptureViews[i]);
             glFramebufferTexture2D(GL_FRAMEBUFFER,
                                    GL_COLOR_ATTACHMENT0,
                                    GL_TEXTURE_CUBE_MAP_POSITIVE_X + i,
@@ -160,10 +172,9 @@ namespace x {
             Panic("Failed to create framebuffer.");
         }
 
-        glm::mat4 captureProjection = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 10.0f);
         _irradianceShader->use();
         _irradianceShader->setInt("uEnvironmentMap", 0);
-        _irradianceShader->setMat4("uProjection", captureProjection);
+        _irradianceShader->setMat4("uProjection", kCaptureProjection);
 
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_CUBE_MAP, envCubemap);
@@ -171,7 +182,7 @@ namespace x {
         glBindFramebuffer(GL_FRAMEBUFFER, captureFBO);
 
         for (u32 i = 0; i < 6; i++) {
-            _irradianceShader->setMat4("uView", captureViews[i]);
+            _irradianceShader->setMat4("uView", kCaptureViews[i]);
             glFramebufferTexture2D(GL_FRAMEBUFFER,
                                    GL_COLOR_ATTACHMENT0,
                                    GL_TEXTURE_CUBE_MAP_POSITIVE_X + i,
@@ -190,7 +201,69 @@ namespace x {
     }
 
     u32 IBLPreprocessor::generatePrefilterMap(u32 envCubemap, i32 size, i32 mipLevels) {
-        return 0;
+        u32 prefilterMap;
+        glGenTextures(1, &prefilterMap);
+        glBindTexture(GL_TEXTURE_CUBE_MAP, prefilterMap);
+
+        for (u32 i = 0; i < 6; i++) {
+            glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i,
+                         0,
+                         GL_RGB16F,
+                         size,
+                         size,
+                         0,
+                         GL_RGB,
+                         GL_FLOAT,
+                         nullptr);
+        }
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+        // we're using trilinear filtering for the mipmaps
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+        // ggen mipmaps first
+        glGenerateMipmap(GL_TEXTURE_CUBE_MAP);
+
+        _prefilterShader->use();
+        _prefilterShader->setInt("uEnvironmentMap", 0);
+        _prefilterShader->setMat4("uProjection", kCaptureProjection);
+
+        u32 captureFBO = createFramebuffer();
+
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_CUBE_MAP, envCubemap);
+
+        for (u32 mip = 0; mip < mipLevels; mip++) {
+            // Resize framebuffer according to mip level size
+            u32 mipSize = size * std::pow(0.5, mip);
+            glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, mipSize, mipSize);
+            glViewport(0, 0, mipSize, mipSize);
+
+            // Calculate roughness for this mip level
+            float roughness = (float)mip / (float)(mipLevels - 1);
+            _prefilterShader->setFloat("uRoughness", roughness);
+
+            // Render each cube face
+            for (u32 i = 0; i < 6; i++) {
+                _prefilterShader->setMat4("uView", kCaptureViews[i]);
+                glFramebufferTexture2D(GL_FRAMEBUFFER,
+                                       GL_COLOR_ATTACHMENT0,
+                                       GL_TEXTURE_CUBE_MAP_POSITIVE_X + i,
+                                       prefilterMap,
+                                       mip);
+
+                glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+                glBindVertexArray(_captureVAO);
+                glDrawArrays(GL_TRIANGLES, 0, 36);
+            }
+        }
+
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        glDeleteFramebuffers(1, &captureFBO);
+
+        return prefilterMap;
     }
 
     u32 IBLPreprocessor::generateBRDFLUT(i32 size) {
@@ -206,7 +279,7 @@ namespace x {
         glGenBuffers(1, &_captureVBO);
         glBindVertexArray(_captureVAO);
         glBindBuffer(GL_ARRAY_BUFFER, _captureVBO);
-        glBufferData(GL_ARRAY_BUFFER, sizeof(cubeVertices), cubeVertices, GL_STATIC_DRAW);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(kCubeVertices), kCubeVertices, GL_STATIC_DRAW);
         glEnableVertexAttribArray(0);
         glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(f32), (void*)0);
         glBindVertexArray(0);

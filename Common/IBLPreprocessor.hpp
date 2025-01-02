@@ -16,9 +16,9 @@
 #include "Graphics/ShaderProgram.hpp"
 #include "Filesystem/Filesystem.hpp"
 
+// Globals / Constants
 namespace {
-    // Capture view matrices for each face of the cubemap
-    const glm::mat4 captureViews[] {
+    static const glm::mat4 kCaptureViews[] {
       glm::lookAt(glm::vec3(0.0f), glm::vec3(1.0f, 0.0f, 0.0f), glm::vec3(0.0f, -1.0f, 0.0f)),
       glm::lookAt(glm::vec3(0.0f), glm::vec3(-1.0f, 0.0f, 0.0f), glm::vec3(0.0f, -1.0f, 0.0f)),
       glm::lookAt(glm::vec3(0.0f), glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f)),
@@ -27,7 +27,7 @@ namespace {
       glm::lookAt(glm::vec3(0.0f), glm::vec3(0.0f, 0.0f, -1.0f), glm::vec3(0.0f, -1.0f, 0.0f)),
     };
 
-    constexpr f32 cubeVertices[] = {
+    static constexpr f32 kCubeVertices[] = {
       -1.0f, 1.0f,  -1.0f, -1.0f, -1.0f, -1.0f, 1.0f,  -1.0f, -1.0f, 1.0f,  -1.0f, -1.0f,
       1.0f,  1.0f,  -1.0f, -1.0f, 1.0f,  -1.0f, -1.0f, -1.0f, 1.0f,  -1.0f, -1.0f, -1.0f,
       -1.0f, 1.0f,  -1.0f, -1.0f, 1.0f,  -1.0f, -1.0f, 1.0f,  1.0f,  -1.0f, -1.0f, 1.0f,
@@ -38,9 +38,18 @@ namespace {
       -1.0f, 1.0f,  1.0f,  -1.0f, 1.0f,  -1.0f, -1.0f, -1.0f, -1.0f, -1.0f, -1.0f, 1.0f,
       1.0f,  -1.0f, -1.0f, 1.0f,  -1.0f, -1.0f, -1.0f, -1.0f, 1.0f,  1.0f,  -1.0f, 1.0f,
     };
+
+    static const glm::mat4 kCaptureProjection =
+      glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 10.0f);
 }  // namespace
 
 namespace x {
+    struct IBLTextureHandles {
+        u32 envCubemap;
+        u32 irradianceMap;
+        u32 prefilterMap;
+        u32 brdfLut;
+    };
 
     /**
      * @brief Handles the preprocessing of HDR environment maps for Image-Based Lighting (IBL).
@@ -58,11 +67,21 @@ namespace x {
          * @brief Configuration settings for IBL texture generation.
          */
         struct Settings {
-            i32 cubemapSize        = 1024;
-            i32 irradianceSize     = 32;
-            i32 prefilterSize      = 128;
-            i32 brdfLUTSize        = 512;
-            i32 prefilterMipLevels = 5;
+            i32 cubemapSize;
+            i32 irradianceSize;
+            i32 prefilterSize;
+            i32 brdfLUTSize;
+            i32 prefilterMipLevels;
+
+            static constexpr Settings defaultSettings() {
+                return {
+                  1024,
+                  32,
+                  1288,
+                  512,
+                  5,
+                };
+            }
         };
 
         /**
@@ -84,7 +103,10 @@ namespace x {
          * @param settings Optional settings to control texture generation parameters.
          * @throws std::runtime_error if texture generation or saving fails.
          */
-        void generateIBLTextures(const str& outputDir, const Settings& settings = Settings());
+        IBLTextureHandles
+        generateIBLTextures(const Settings& settings = Settings::defaultSettings(),
+                            bool exportToDisk        = false,
+                            const str& outputDir     = "");
 
     private:
         Filesystem::Path _hdrPath;
