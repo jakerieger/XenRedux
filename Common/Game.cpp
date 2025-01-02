@@ -110,8 +110,6 @@ namespace x {
 
     IGame::~IGame() {
         if (_running) quit();  // Stop all threads
-        if (_updateThread.joinable()) _updateThread.join();
-        _stateBuffer.cleanup();
         _clock.reset();
         _context.reset();
         if (debug) { Graphics::DebugUI::shutdown(); }
@@ -129,13 +127,14 @@ namespace x {
         _updateThread = std::thread(&IGame::updateLoop, this);
         renderLoop();
 
-        _updateThread.join();
         _clock->stop();
         unloadContent();
     }
 
     void IGame::quit() {
         _running = false;
+        if (_updateThread.joinable()) _updateThread.join();
+        _stateBuffer.cleanup();
     }
 
     Context* IGame::getContext() const {

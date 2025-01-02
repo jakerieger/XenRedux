@@ -4,7 +4,6 @@
 
 #pragma once
 
-#include "Types.hpp"
 #include <glm/glm.hpp>
 
 namespace x {

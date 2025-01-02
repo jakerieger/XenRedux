@@ -20,17 +20,17 @@ namespace x {
         GameState& getWriteBuffer();
         const GameState& getReadBuffer() const;
 
-        // Called by update thread when it's done writing
         void swapWriteBuffer();
-
-        // Called by render thread when it's ready to render
         void swapReadBuffer();
 
     private:
-        static constexpr i32 kBufferCount = 3;  // Triple buffering
+        enum class BufferState { Available, Writing, Ready, Reading };
+        static constexpr i32 kBufferCount = 3;
+
         std::array<GameState, kBufferCount> _buffers;
+        std::array<std::atomic<BufferState>, kBufferCount> _bufferStates;
         std::atomic<i32> _writeIndex = {0};
         std::atomic<i32> _readIndex  = {0};
-        std::mutex _swapMutex;
+        std::atomic<bool> _isShuttingDown {false};
     };
 }  // namespace x
