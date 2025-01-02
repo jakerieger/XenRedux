@@ -79,6 +79,8 @@ add_library(Xen STATIC
         ${COMMON}/Game.hpp
         ${COMMON}/GameState.cpp
         ${COMMON}/GameState.hpp
+        ${COMMON}/IBLPreprocessor.cpp
+        ${COMMON}/IBLPreprocessor.hpp
         ${COMMON}/LightingState.hpp
         ${COMMON}/Material.cpp
         ${COMMON}/Material.hpp

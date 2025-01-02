@@ -17,7 +17,7 @@ namespace x {
         ShaderManager(ShaderManager&&)                 = delete;
         ShaderManager& operator=(ShaderManager&&)      = delete;
 
-        static ShaderManager& get();
+        static ShaderManager& instance();
 
         std::shared_ptr<Graphics::ShaderProgram> getShaderProgram(const str& vertexSource,
                                                                   const str& fragmentSource);

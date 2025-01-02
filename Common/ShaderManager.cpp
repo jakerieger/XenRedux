@@ -7,7 +7,7 @@
 #include <xxhash.h>
 
 namespace x {
-    ShaderManager& ShaderManager::get() {
+    ShaderManager& ShaderManager::instance() {
         static ShaderManager instance;  // Guaranteed to be lazy-initialized and thread-safe
         return instance;
     }

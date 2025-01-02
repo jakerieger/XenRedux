@@ -22,7 +22,7 @@ namespace x {
     Skybox::Skybox(const str& filename) : _vao(0), _vbo(0) {
         _cubemap = std::make_unique<Graphics::Texture>(GL_TEXTURE_CUBE_MAP);
         if (!_cubemap->loadFromFile(filename, true)) { Panic("Failed to load cubemap from file"); }
-        _shader = ShaderManager::get().getShaderProgram(Skybox_VS_Source, Skybox_FS_Source);
+        _shader = ShaderManager::instance().getShaderProgram(Skybox_VS_Source, Skybox_FS_Source);
 
         _shader->use();
         _shader->setInt("uSkybox", 0);

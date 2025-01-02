@@ -61,7 +61,7 @@ namespace x {
     }
 
     bool ModelData::loadFromFile(const str& filename) {
-        auto program = ShaderManager::get().getShaderProgram(PBR_VS_Source, PBR_FS_Source);
+        auto program = ShaderManager::instance().getShaderProgram(PBR_VS_Source, PBR_FS_Source);
         if (!program) { return false; }
         _material = std::make_shared<PBRMaterial>(program);
 
