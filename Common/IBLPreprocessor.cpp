@@ -5,16 +5,27 @@
 #include "IBLPreprocessor.hpp"
 #include "Graphics/DebugOpenGL.hpp"
 
+#pragma region Shaders
+#include "Graphics/Shaders/Include/EquirectToCubemap_VS.h"
+#include "Graphics/Shaders/Include/EquirectToCubemap_FS.h"
+#include "Graphics/Shaders/Include/IrradianceMap_VS.h"
+#include "Graphics/Shaders/Include/IrradianceMap_FS.h"
+#pragma endregion
+
 namespace x {
     IBLPreprocessor::IBLPreprocessor(const Filesystem::Path& hdr) : _hdrPath(hdr) {
         std::cout << "Loading HDR: " << _hdrPath.string() << std::endl;
 
-        _equirectToCubemapShader = ShaderManager::instance().getShaderProgram("", "");
-        _irradianceShader        = ShaderManager::instance().getShaderProgram("", "");
-        _prefilterShader         = ShaderManager::instance().getShaderProgram("", "");
-        _brdfShader              = ShaderManager::instance().getShaderProgram("", "");
+        _equirectToCubemapShader =
+          ShaderManager::instance().getShaderProgram(EquirectToCubemap_VS_Source,
+                                                     EquirectToCubemap_FS_Source);
+        _irradianceShader = ShaderManager::instance().getShaderProgram(IrradianceMap_VS_Source,
+                                                                       IrradianceMap_FS_Source);
+        // _prefilterShader  = ShaderManager::instance().getShaderProgram("", "");
+        // _brdfShader       = ShaderManager::instance().getShaderProgram("", "");
 
-        if (!_equirectToCubemapShader or !_irradianceShader or !_prefilterShader or !_brdfShader) {
+        if (!_equirectToCubemapShader or
+            !_irradianceShader /*or !_prefilterShader or !_brdfShader*/) {
             throw std::runtime_error("Failed to initialize one or more shaders.");
         }
 
@@ -27,18 +38,155 @@ namespace x {
 
         _equirectToCubemapShader.reset();
         _irradianceShader.reset();
-        _prefilterShader.reset();
-        _brdfShader.reset();
+        // _prefilterShader.reset();
+        // _brdfShader.reset();
     }
 
-    void IBLPreprocessor::generateIBLTextures(const str& outputDir, const Settings& settings) {}
+    void IBLPreprocessor::generateIBLTextures(const str& outputDir, const Settings& settings) {
+        i32 envCubemap = convertEquirectangularToCubemap(settings.cubemapSize);
+        if (!envCubemap) { Panic("Failed to convert Equirectangular to Cubemap"); }
+        i32 irradianceMap = generateIrradianceMap(envCubemap, settings.irradianceSize);
+        if (!irradianceMap) { Panic("Failed to generate irradiance map"); }
+    }
 
     u32 IBLPreprocessor::convertEquirectangularToCubemap(i32 size) {
-        return 0;
+        stbi_set_flip_vertically_on_load(true);
+        i32 width, height, channels;
+        f32* data = stbi_loadf(_hdrPath.cStr(), &width, &height, &channels, 0);
+        if (!data) { throw std::runtime_error("Failed to load image."); }
+
+        u32 hdrTexture;
+        glGenTextures(1, &hdrTexture);
+        glBindTexture(GL_TEXTURE_2D, hdrTexture);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, width, height, 0, GL_RGB, GL_FLOAT, data);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+        stbi_image_free(data);
+
+        u32 envCubemap;
+        glGenTextures(1, &envCubemap);
+        glBindTexture(GL_TEXTURE_CUBE_MAP, envCubemap);
+        for (u32 i = 0; i < 6; i++) {
+            glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i,
+                         0,
+                         GL_RGB16F,
+                         size,
+                         size,
+                         0,
+                         GL_RGB,
+                         GL_FLOAT,
+                         nullptr);
+        }
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+        u32 captureFBO = createFramebuffer();
+        glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, size, size);
+
+        if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+            glDeleteTextures(1, &hdrTexture);
+            glDeleteTextures(1, &envCubemap);
+            glDeleteFramebuffers(1, &captureFBO);
+            CHECK_GL_ERROR();
+            Panic("Failed to create framebuffer.");
+        }
+
+        glm::mat4 captureProjection = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 10.0f);
+        // Setup equirect shader
+        _equirectToCubemapShader->use();
+        _equirectToCubemapShader->setInt("uHDR", 0);
+        _equirectToCubemapShader->setMat4("uProjection", captureProjection);
+
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, hdrTexture);
+        glViewport(0, 0, size, size);
+        glBindFramebuffer(GL_FRAMEBUFFER, captureFBO);
+
+        // render each cubemap face
+        for (u32 i = 0; i < 6; i++) {
+            _equirectToCubemapShader->setMat4("uView", captureViews[i]);
+            glFramebufferTexture2D(GL_FRAMEBUFFER,
+                                   GL_COLOR_ATTACHMENT0,
+                                   GL_TEXTURE_CUBE_MAP_POSITIVE_X + i,
+                                   envCubemap,
+                                   0);
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+            glBindVertexArray(_captureVAO);
+            glDrawArrays(GL_TRIANGLES, 0, 36);
+        }
+
+        glBindTexture(GL_TEXTURE_CUBE_MAP, envCubemap);
+        glGenerateMipmap(GL_TEXTURE_CUBE_MAP);
+        glDeleteTextures(1, &hdrTexture);
+        glDeleteFramebuffers(1, &captureFBO);
+
+        return envCubemap;
     }
 
     u32 IBLPreprocessor::generateIrradianceMap(u32 envCubemap, i32 size) {
-        return 0;
+        u32 irradianceMap;
+        glGenTextures(1, &irradianceMap);
+        glBindTexture(GL_TEXTURE_CUBE_MAP, irradianceMap);
+        for (u32 i = 0; i < 6; i++) {
+            glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i,
+                         0,
+                         GL_RGB16F,
+                         size,
+                         size,
+                         0,
+                         GL_RGB,
+                         GL_FLOAT,
+                         nullptr);
+        }
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+        u32 captureFBO = createFramebuffer();
+        glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, size, size);
+
+        if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+            glDeleteTextures(1, &irradianceMap);
+            glDeleteFramebuffers(1, &captureFBO);
+            CHECK_GL_ERROR();
+            Panic("Failed to create framebuffer.");
+        }
+
+        glm::mat4 captureProjection = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 10.0f);
+        _irradianceShader->use();
+        _irradianceShader->setInt("uEnvironmentMap", 0);
+        _irradianceShader->setMat4("uProjection", captureProjection);
+
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_CUBE_MAP, envCubemap);
+        glViewport(0, 0, size, size);
+        glBindFramebuffer(GL_FRAMEBUFFER, captureFBO);
+
+        for (u32 i = 0; i < 6; i++) {
+            _irradianceShader->setMat4("uView", captureViews[i]);
+            glFramebufferTexture2D(GL_FRAMEBUFFER,
+                                   GL_COLOR_ATTACHMENT0,
+                                   GL_TEXTURE_CUBE_MAP_POSITIVE_X + i,
+                                   irradianceMap,
+                                   0);
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+            // Render cube
+            glBindVertexArray(_captureVAO);
+            glDrawArrays(GL_TRIANGLES, 0, 36);
+        }
+
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        glDeleteFramebuffers(1, &captureFBO);
+
+        return irradianceMap;
     }
 
     u32 IBLPreprocessor::generatePrefilterMap(u32 envCubemap, i32 size, i32 mipLevels) {
@@ -60,7 +208,7 @@ namespace x {
         glBindBuffer(GL_ARRAY_BUFFER, _captureVBO);
         glBufferData(GL_ARRAY_BUFFER, sizeof(cubeVertices), cubeVertices, GL_STATIC_DRAW);
         glEnableVertexAttribArray(0);
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(cubeVertices), (void*)0);
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(f32), (void*)0);
         glBindVertexArray(0);
         CHECK_GL_ERROR();
     }
@@ -70,18 +218,13 @@ namespace x {
         glGenFramebuffers(1, &captureFBO);
         glGenRenderbuffers(1, &captureRBO);
         CHECK_GL_ERROR();
+
         glBindFramebuffer(GL_FRAMEBUFFER, captureFBO);
         glBindRenderbuffer(GL_RENDERBUFFER, captureRBO);
         CHECK_GL_ERROR();
 
-        if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
-            glDeleteFramebuffers(1, &captureFBO);
-            glDeleteRenderbuffers(1, &captureRBO);
-            CHECK_GL_ERROR();
-            glBindFramebuffer(GL_FRAMEBUFFER, 0);
-            glBindRenderbuffer(GL_RENDERBUFFER, 0);
-            CHECK_GL_ERROR();
-        }
+        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, captureRBO);
+        CHECK_GL_ERROR();
 
         return captureFBO;
     }

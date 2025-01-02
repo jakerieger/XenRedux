@@ -34,7 +34,9 @@ public:
 
     void update(x::GameState& state) override {}
 
-    void draw(const x::GameState& state) override {}
+    void draw(const x::GameState& state) override {
+        if (_iblPreprocessor) { _iblPreprocessor->generateIBLTextures(""); }
+    }
 
     void configurePipeline() override {}
 
