@@ -14,6 +14,9 @@
 #include "Game.hpp"
 #include "IBLPreprocessor.hpp"
 #include "Filesystem/Filesystem.hpp"
+
+#include <Graphics/Shaders/Include/Skybox_FS.h>
+#include <Graphics/Shaders/Include/Skybox_VS.h>
 using namespace x::Filesystem;
 
 static Path getDataPath() {
@@ -28,6 +31,10 @@ private:
     str _exportPath;
     u32 _skyboxVAO = 0;
     u32 _skyboxVBO = 0;
+    std::shared_ptr<x::Graphics::ShaderProgram> _skyboxShader;
+    const glm::mat4 _projection = glm::perspective(glm::radians(45.f), 16.f / 9.f, 0.1f, 100.f);
+    const glm::mat4 _view =
+      glm::lookAt(glm::vec3(0, 0, 5.0), glm::vec3(0, 0, 0), glm::vec3(0, 1, 0));
 
     static ImVec4 colorToImVec4(const u32 color) {
         f32 a = CAST<f32>((color >> 24) & 0xFF) / 255.0f;
@@ -91,15 +98,57 @@ public:
 
     void loadContent(x::GameState& state) override {
         setTheme();
+
+        glGenVertexArrays(1, &_skyboxVAO);
+        glGenBuffers(1, &_skyboxVBO);
+        CHECK_GL_ERROR();
+        glBindVertexArray(_skyboxVAO);
+        glBindBuffer(GL_ARRAY_BUFFER, _skyboxVBO);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(kCubeVertices), kCubeVertices, GL_STATIC_DRAW);
+        CHECK_GL_ERROR();
+        glEnableVertexAttribArray(0);
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(f32), (void*)0);
+        CHECK_GL_ERROR();
+        glBindVertexArray(0);
+
+        _skyboxShader =
+          x::ShaderManager::instance().getShaderProgram(Skybox_VS_Source, Skybox_FS_Source);
+        if (!_skyboxShader) { Panic("Failed to load skybox shaders"); }
     }
 
-    void unloadContent() override {}
+    void unloadContent() override {
+        _skyboxShader.reset();
+        glDeleteVertexArrays(1, &_skyboxVAO);
+        glDeleteBuffers(1, &_skyboxVBO);
+    }
 
     void update(x::GameState& state) override {}
 
     void draw(const x::GameState& state) override {
         if (_textureHandles.valid()) {
+            glViewport(0, 0, 1280, 720);
+            // glBindFramebuffer(GL_FRAMEBUFFER, 0);
+            // glBindRenderbuffer(GL_RENDERBUFFER, 0);
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
             // Draw skybox
+            _skyboxShader->use();
+            _skyboxShader->setInt("uSkybox", 0);
+            glActiveTexture(GL_TEXTURE0);
+            glBindTexture(GL_TEXTURE_CUBE_MAP, _textureHandles.envCubemap);
+            CHECK_GL_ERROR();
+            // camera matrices
+            const auto viewNoTranslation =
+              glm::mat4(glm::mat3(_view));  // removes translation component
+            const auto vp = _projection * viewNoTranslation;
+            _skyboxShader->setMat4("uVP", vp);
+            glBindVertexArray(_skyboxVAO);
+            glBindBuffer(GL_ARRAY_BUFFER, _skyboxVBO);
+            glDrawArrays(GL_TRIANGLES, 0, 36);
+            CHECK_GL_ERROR();
+
+            glBindBuffer(GL_ARRAY_BUFFER, 0);
+            glBindVertexArray(0);
+            CHECK_GL_ERROR();
         }
     }
 

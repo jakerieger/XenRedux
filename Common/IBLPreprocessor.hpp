@@ -50,7 +50,7 @@ namespace x {
         u32 prefilterMap  = 0;
         u32 brdfLut       = 0;
         bool valid() const {
-            return envCubemap && irradianceMap && prefilterMap && brdfLut;
+            return envCubemap && irradianceMap && prefilterMap /*&& brdfLut*/;
         }
     };
 
