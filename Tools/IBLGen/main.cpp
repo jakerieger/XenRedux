@@ -24,7 +24,6 @@ static Path getDataPath() {
 }
 
 class IBLGen final : public x::IGame {
-private:
     std::unique_ptr<x::IBLPreprocessor> _iblPreprocessor;
     x::IBLPreprocessor::Settings _settings;
     x::IBLTextureHandles _textureHandles;
@@ -46,7 +45,7 @@ private:
 
     static void setTheme() {
         const auto fontPath = getDataPath() / "inter.ttf";
-        ImGuiIO& io         = ImGui::GetIO();
+        const ImGuiIO& io   = ImGui::GetIO();
         io.Fonts->AddFontFromFileTTF(fontPath.cStr(), 14);
 
         auto& style          = ImGui::GetStyle();
@@ -55,20 +54,21 @@ private:
         ImVec4* colors       = style.Colors;
 
         const auto accent     = colorToImVec4(0xFF585858);
-        const auto accentDark = ImVec4(accent.x, accent.y, accent.z, 0.6f);
-        const auto background = colorToImVec4(0xff1b1b1b);
+        const auto hovered    = ImVec4(accent.x, accent.y, accent.z, 0.7f);
+        const auto active     = ImVec4(accent.x, accent.y, accent.z, 0.4f);
+        const auto background = colorToImVec4(0xff212121);
         const auto input      = colorToImVec4(0xff303030);
 
         colors[ImGuiCol_HeaderHovered] = accent;  // Purple
         colors[ImGuiCol_HeaderActive]  = accent;  // Darker purple
         colors[ImGuiCol_Header]        = accent;  // Semi-transparent purple
         // Also update related UI elements that use the accent color
-        colors[ImGuiCol_Button]        = accent;      // Button color
-        colors[ImGuiCol_ButtonHovered] = accentDark;  // Button hover
-        colors[ImGuiCol_ButtonActive]  = accentDark;  // Button active
+        colors[ImGuiCol_Button]        = accent;   // Button color
+        colors[ImGuiCol_ButtonHovered] = hovered;  // Button hover
+        colors[ImGuiCol_ButtonActive]  = active;   // Button active
         // Slider and checkbox colors
         colors[ImGuiCol_SliderGrab]       = accent;
-        colors[ImGuiCol_SliderGrabActive] = accentDark;
+        colors[ImGuiCol_SliderGrabActive] = hovered;
         colors[ImGuiCol_CheckMark]        = accent;
         // Background colors
         colors[ImGuiCol_WindowBg] = background;
@@ -87,8 +87,8 @@ private:
         // Scrollbar colors
         colors[ImGuiCol_ScrollbarBg]          = input;
         colors[ImGuiCol_ScrollbarGrab]        = accent;
-        colors[ImGuiCol_ScrollbarGrabHovered] = accentDark;
-        colors[ImGuiCol_ScrollbarGrabActive]  = accentDark;
+        colors[ImGuiCol_ScrollbarGrabHovered] = hovered;
+        colors[ImGuiCol_ScrollbarGrabActive]  = active;
     }
 
 public:
@@ -107,7 +107,7 @@ public:
         glBufferData(GL_ARRAY_BUFFER, sizeof(kCubeVertices), kCubeVertices, GL_STATIC_DRAW);
         CHECK_GL_ERROR();
         glEnableVertexAttribArray(0);
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(f32), (void*)0);
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(f32), CAST<void*>(nullptr));
         CHECK_GL_ERROR();
         glBindVertexArray(0);
 
@@ -155,12 +155,12 @@ public:
     void configurePipeline() override {}
 
     void drawDebugUI(const x::GameState& state) override {
-        static i32 cubemapSize            = 1024;
-        static i32 irradianceSize         = 32;
-        static i32 prefilterSize          = 128;
-        static i32 brdfSize               = 512;
-        static i32 mipLevels              = 5;
-        static str selectedHdr            = "";
+        static i32 cubemapSize    = 1024;
+        static i32 irradianceSize = 32;
+        static i32 prefilterSize  = 128;
+        static i32 brdfSize       = 512;
+        static i32 mipLevels      = 5;
+        static str selectedHdr;
         static char exportPathBuffer[255] = {'\0'};
 
         ImGui::SetNextWindowPos(ImVec2(4, 4));
@@ -168,65 +168,66 @@ public:
                               ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize |
                               ImGuiWindowFlags_NoTitleBar;
         ImGui::Begin("Configuration", nullptr, flags);
-        auto labelWidth  = ImGui::CalcTextSize("Prefiltered Mip Levels:").x;
-        auto windowWidth = ImGui::GetContentRegionAvail().x;
-        auto inputWidth  = 100.f;
-        auto spacing     = 20.f;
-        auto buttonWidth = labelWidth + spacing + inputWidth;
-        f32 lineSpacing =
+        const auto labelWidth     = ImGui::CalcTextSize("Prefiltered Mip Levels:").x;
+        const auto windowWidth    = ImGui::GetContentRegionAvail().x;
+        constexpr auto inputWidth = 100.f;
+        constexpr auto spacing    = 20.f;
+        const auto buttonWidth    = labelWidth + spacing + inputWidth;
+        const f32 lineSpacing =
           labelWidth + spacing + 8.f;  // idk where this comes from but it's necessary
 
         if (ImGui::Button("Load HDR", ImVec2(buttonWidth, 0))) {
-            const char* title     = "Load HDR";
+            const auto title      = "Load HDR";
             const char* filters[] = {"*.hdr", "*.exr"};
             const char* filename =
               tinyfd_openFileDialog(title, getDataPath().cStr(), 2, filters, nullptr, 0);
             if (filename) {
                 selectedHdr = filename;
-                glfwSetWindowTitle(_window, ("IBLGen | " + selectedHdr).c_str());
+                glfwSetWindowTitle(_window, ("IBLGen — " + selectedHdr).c_str());
                 if (_iblPreprocessor) { _iblPreprocessor.reset(); }
                 _iblPreprocessor = std::make_unique<x::IBLPreprocessor>(Path(filename));
             }
         }
         ImGui::Spacing();
         ImGui::Spacing();
-        ImGui::Text("Settings");
-        ImGui::Spacing();
-        ImGui::Separator();
-        ImGui::Spacing();
+        if (ImGui::CollapsingHeader("Generate", ImGuiTreeNodeFlags_DefaultOpen)) {
+            ImGui::Spacing();
+            ImGui::Text("Environment Map Size:");
+            ImGui::SameLine(lineSpacing);
+            ImGui::SetNextItemWidth(inputWidth);
+            ImGui::InputInt("##cubemap", &cubemapSize);
 
-        ImGui::Text("Environment Map Size:");
-        ImGui::SameLine(lineSpacing);
-        ImGui::SetNextItemWidth(inputWidth);
-        ImGui::InputInt("##cubemap", &cubemapSize);
+            ImGui::Text("Irradiance Map Size:");
+            ImGui::SameLine(lineSpacing);
+            ImGui::SetNextItemWidth(inputWidth);
+            ImGui::InputInt("##irradiance", &irradianceSize);
 
-        ImGui::Text("Irradiance Map Size:");
-        ImGui::SameLine(lineSpacing);
-        ImGui::SetNextItemWidth(inputWidth);
-        ImGui::InputInt("##irradiance", &irradianceSize);
+            ImGui::Text("Prefiltered Map Size:");
+            ImGui::SameLine(lineSpacing);
+            ImGui::SetNextItemWidth(inputWidth);
+            ImGui::InputInt("##prefilter", &prefilterSize);
 
-        ImGui::Text("Prefiltered Map Size:");
-        ImGui::SameLine(lineSpacing);
-        ImGui::SetNextItemWidth(inputWidth);
-        ImGui::InputInt("##prefilter", &prefilterSize);
+            ImGui::Text("Prefiltered Mip Levels:");
+            ImGui::SameLine(lineSpacing);
+            ImGui::SetNextItemWidth(inputWidth);
+            ImGui::InputInt("##mips", &mipLevels);
 
-        ImGui::Text("Prefiltered Mip Levels:");
-        ImGui::SameLine(lineSpacing);
-        ImGui::SetNextItemWidth(inputWidth);
-        ImGui::InputInt("##mips", &mipLevels);
+            ImGui::Text("BRDF LUT Size:");
+            ImGui::SameLine(lineSpacing);
+            ImGui::SetNextItemWidth(inputWidth);
+            ImGui::InputInt("##brdflut", &brdfSize);
 
-        ImGui::Text("BRDF LUT Size:");
-        ImGui::SameLine(lineSpacing);
-        ImGui::SetNextItemWidth(inputWidth);
-        ImGui::InputInt("##brdflut", &brdfSize);
+            ImGui::Spacing();
 
-        ImGui::Text("Export To:");
-        ImGui::SetNextItemWidth(windowWidth - 36.f);
-        ImGui::InputText("##exportPath", exportPathBuffer, 255);
-        ImGui::SameLine();
-        if (ImGui::Button("...", ImVec2(28.f, 0))) {
-            const char* dir = tinyfd_selectFolderDialog("Export to...", getDataPath().cStr());
-            if (dir) { std::strcpy(exportPathBuffer, dir); }
+            ImGui::BeginDisabled(selectedHdr.empty());
+            if (ImGui::Button("Generate IBL", ImVec2(buttonWidth, 0))) {
+                if (_iblPreprocessor) {
+                    _textureHandles = _iblPreprocessor->generateIBLTextures(_settings);
+                }
+            }
+            ImGui::EndDisabled();
+            ImGui::Spacing();
+            ImGui::Spacing();
         }
 
         _settings.cubemapSize        = cubemapSize;
@@ -235,33 +236,33 @@ public:
         _settings.prefilterMipLevels = mipLevels;
         _settings.brdfLUTSize        = brdfSize;
 
-        ImGui::Spacing();
-        ImGui::Separator();
-        ImGui::Spacing();
-        ImGui::Spacing();
-
-        ImGui::BeginDisabled(selectedHdr.empty());
-        if (ImGui::Button("Generate IBL", ImVec2(buttonWidth, 0))) {
-            if (_iblPreprocessor) {
-                _textureHandles = _iblPreprocessor->generateIBLTextures(_settings);
+        if (ImGui::CollapsingHeader("Export##header", ImGuiTreeNodeFlags_DefaultOpen)) {
+            ImGui::Text("Export To:");
+            ImGui::SetNextItemWidth(windowWidth - 36.f);
+            ImGui::InputText("##exportPath", exportPathBuffer, 255);
+            ImGui::SameLine();
+            if (ImGui::Button("...", ImVec2(28.f, 0))) {
+                if (const char* dir =
+                      tinyfd_selectFolderDialog("Export to...", getDataPath().cStr())) {
+                    std::strcpy(exportPathBuffer, dir);
+                }
             }
-        }
-        ImGui::EndDisabled();
-
-        ImGui::Spacing();
-
-        ImGui::BeginDisabled(!_textureHandles.valid());
-        if (ImGui::Button("Export", ImVec2(buttonWidth, 0))) {
-            if (!x::IBLPreprocessor::exportIBLTextures(_textureHandles, _exportPath)) {
-                std::ignore =
-                  tinyfd_messageBox("IBLGen - Export",
-                                    "An error occurred during export. See log for more details.",
-                                    "ok",
-                                    "error",
-                                    0);
+            ImGui::Spacing();
+            ImGui::BeginDisabled(!_textureHandles.valid());
+            if (ImGui::Button("Export", ImVec2(buttonWidth, 0))) {
+                if (!x::IBLPreprocessor::exportIBLTextures(_textureHandles, _exportPath)) {
+                    std::ignore = tinyfd_messageBox(
+                      "IBLGen - Export",
+                      "An error occurred during export. See log for more details.",
+                      "ok",
+                      "error",
+                      0);
+                }
             }
+            ImGui::EndDisabled();
+            ImGui::Spacing();
+            ImGui::Spacing();
         }
-        ImGui::EndDisabled();
 
         ImGui::End();
     }
@@ -274,8 +275,9 @@ public:
 };
 
 i32 main() {
-    const auto testHdr = getDataPath() / "CloudySky_2k.hdr";
-    if (!testHdr.exists()) { Panic("Could not find test data"); }
+    if (const auto testHdr = getDataPath() / "CloudySky_2k.hdr"; !testHdr.exists()) {
+        Panic("Could not find test data");
+    }
 
     IBLGen iblGen;
     iblGen.run();
