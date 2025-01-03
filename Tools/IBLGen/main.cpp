@@ -59,9 +59,9 @@ class IBLGen final : public x::IGame {
         const auto background = colorToImVec4(0xff212121);
         const auto input      = colorToImVec4(0xff303030);
 
-        colors[ImGuiCol_HeaderHovered] = accent;  // Purple
-        colors[ImGuiCol_HeaderActive]  = accent;  // Darker purple
-        colors[ImGuiCol_Header]        = accent;  // Semi-transparent purple
+        colors[ImGuiCol_HeaderHovered] = hovered;  // Purple
+        colors[ImGuiCol_HeaderActive]  = accent;   // Darker purple
+        colors[ImGuiCol_Header]        = accent;   // Semi-transparent purple
         // Also update related UI elements that use the accent color
         colors[ImGuiCol_Button]        = accent;   // Button color
         colors[ImGuiCol_ButtonHovered] = hovered;  // Button hover

@@ -37,6 +37,7 @@ include(Modules/Memory/Memory.cmake)
 include(Modules/Physics/Physics.cmake)
 include(Modules/System/System.cmake)
 include(Modules/Thread/Thread.cmake)
+#include(Modules/UI/UI.cmake)
 
 find_package(liblzma CONFIG REQUIRED)
 find_package(ZLIB REQUIRED)
